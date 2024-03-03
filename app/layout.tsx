@@ -5,6 +5,12 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { cn } from "@/lib/utils";
 const font = Open_Sans({ subsets: ["latin"] });
+import type { AppProps } from "next/app";
+import { ruRU } from "@clerk/localizations";
+
+const localization = {
+  socialButtonsBlockButton: "Sign In with {{provider|titleize}}",
+};
 
 export const metadata: Metadata = {
   title: "Let's Talk",
@@ -17,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider localization={ruRU}>
       <html lang="en" suppressHydrationWarning>
       <body className={cn(
           font.className,
