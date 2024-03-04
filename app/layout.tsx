@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const font = Open_Sans({ subsets: ["latin"] });
 import type { AppProps } from "next/app";
 import { ruRU } from "@clerk/localizations";
+import { ModalProvider } from "@/components/providers/modal-provider";
 
 const localization = {
   socialButtonsBlockButton: "Sign In with {{provider|titleize}}",
@@ -30,6 +31,7 @@ export default function RootLayout({
           "bg-white dark:bg-[#313338]"
         )}>
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="Let's talk theme">
+              <ModalProvider/>
               {children}
             </ThemeProvider>
          </body>
