@@ -100,12 +100,12 @@ export const MembersModal = () => {
       <DialogContent className="bg-white text-black overflow-hidden">
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
-            Manage Members
+            Управление участниками
           </DialogTitle>
           <DialogDescription 
             className="text-center text-zinc-500"
           >
-            {server?.members?.length} Members
+           Участники - {server?.members?.length} 
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="mt-8 max-h-[420px] pr-6">
@@ -135,7 +135,7 @@ export const MembersModal = () => {
                           <ShieldQuestion
                             className="w-4 h-4 mr-2"
                           />
-                          <span>Role</span>
+                          <span>Роль</span>
                         </DropdownMenuSubTrigger>
                         <DropdownMenuPortal>
                           <DropdownMenuSubContent>
@@ -143,7 +143,7 @@ export const MembersModal = () => {
                               onClick={() => onRoleChange(member.id, "GUEST")}
                             >
                               <Shield className="h-4 w-4 mr-2" />
-                              Guest
+                              Гость
                               {member.role === "GUEST" && (
                                 <Check
                                   className="h-4 w-4 ml-auto"
@@ -154,7 +154,7 @@ export const MembersModal = () => {
                               onClick={() => onRoleChange(member.id, "MODERATOR")}
                             >
                               <ShieldCheck className="h-4 w-4 mr-2" />
-                              Moderator
+                              Модератор
                               {member.role === "MODERATOR" && (
                                 <Check
                                   className="h-4 w-4 ml-auto"
@@ -169,7 +169,7 @@ export const MembersModal = () => {
                         onClick={() => onKick(member.id)}
                       >
                         <Gavel className="h-4 w-4 mr-2" />
-                        Kick
+                        Исключить
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
