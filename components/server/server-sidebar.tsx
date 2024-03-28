@@ -127,7 +127,7 @@ export const ServerSidebar = async ({
               sectionType="channels"
               channelType={ChannelType.TEXT}
               role={role}
-              label="Text Channels"
+              label="Текстовые каналы"
             />
             <div className="space-y-[2px]">
               {textChannels.map((channel) => (
@@ -147,7 +147,7 @@ export const ServerSidebar = async ({
               sectionType="channels"
               channelType={ChannelType.AUDIO}
               role={role}
-              label="Voice Channels"
+              label="Аудио каналы"
             />
             <div className="space-y-[2px]">
               {audioChannels.map((channel) => (
@@ -167,7 +167,7 @@ export const ServerSidebar = async ({
               sectionType="channels"
               channelType={ChannelType.VIDEO}
               role={role}
-              label="Video Channels"
+              label="Видео каналы"
             />
             <div className="space-y-[2px]">
               {videoChannels.map((channel) => (
@@ -186,7 +186,7 @@ export const ServerSidebar = async ({
             <ServerSection
               sectionType="members"
               role={role}
-              label="Members"
+              label="Участники"
               server={server}
             />
             <div className="space-y-[2px]">
