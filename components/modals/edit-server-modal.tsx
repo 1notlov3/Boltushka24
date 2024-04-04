@@ -86,7 +86,7 @@ export const EditServerModal = () => {
             Настройте сервер!
           </DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
-          Придайте своему серверу индивидуальность с помощью имени и изображения. Вы всегда можете изменить их позже.
+          Придайте своему серверу индивидуальность с помощью имени и изображения. Вы всегда сможете изменить их позже.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

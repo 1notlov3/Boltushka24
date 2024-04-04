@@ -37,7 +37,7 @@ export async function DELETE(
           delete:{
             id:params.channelId,
             name:{
-              not: "general",
+              not: "основной",
             }
           }
         }
@@ -92,7 +92,7 @@ export async function PATCH(
             where:{
               id: params.channelId,
               NOT:{
-                name: 'основной',
+                name: "основной",
               },
             },
             data:{
