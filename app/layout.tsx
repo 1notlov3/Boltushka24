@@ -9,7 +9,7 @@ import type { AppProps } from "next/app";
 import { ruRU } from "@clerk/localizations";
 import { ModalProvider } from "@/components/providers/modal-provider";
 import { SocketProvider } from '@/components/providers/socket-provider'
-
+import { QueryProvider } from '@/components/providers/query-provider'
 const localization = {
   socialButtonsBlockButton: "Sign In with {{provider|titleize}}",
 };
@@ -34,7 +34,9 @@ export default function RootLayout({
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="Let's talk theme">
             <SocketProvider>
               <ModalProvider />
-              {children}
+              <QueryProvider>
+                {children}
+              </QueryProvider>
             </SocketProvider>
             </ThemeProvider>
          </body>
