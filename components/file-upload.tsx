@@ -41,7 +41,11 @@ export const FileUpload = ({
   }
 
   return (
-    <UploadDropzone
+    <UploadDropzone   appearance={{
+      
+      container: " border-blue-300 ",
+     
+    }}
       endpoint={endpoint}
       onClientUploadComplete={(res) => {
         onChange(res?.[0].url);
