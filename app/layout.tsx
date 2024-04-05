@@ -31,7 +31,7 @@ export default function RootLayout({
           font.className,
           "bg-white dark:bg-[#313338]"
         )}>
-            <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="Let's talk theme">
+            <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="Let's talk theme">
             <SocketProvider>
               <ModalProvider />
               <QueryProvider>
