@@ -71,12 +71,12 @@ export const ChatMessages = ({
     count: data?.pages?.[0]?.items?.length ?? 0,
   })
 
-  if (status === "loading") {
+  if (status === "pending") {
     return (
       <div className="flex flex-col flex-1 justify-center items-center">
         <Loader2 className="h-7 w-7 text-zinc-500 animate-spin my-4" />
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Loading messages...
+          Загрузка сообщений
         </p>
       </div>
     )
@@ -87,7 +87,7 @@ export const ChatMessages = ({
       <div className="flex flex-col flex-1 justify-center items-center">
         <ServerCrash className="h-7 w-7 text-zinc-500 my-4" />
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Something went wrong!
+          Что-то пошло не так!
         </p>
       </div>
     )
@@ -111,7 +111,7 @@ export const ChatMessages = ({
               onClick={() => fetchNextPage()}
               className="text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 text-xs my-4 dark:hover:text-zinc-300 transition"
             >
-              Load previous messages
+              Загрузить предыдущие сообщения
             </button>
           )}
         </div>

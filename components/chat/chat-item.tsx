@@ -183,7 +183,7 @@ export const ChatItem = ({
               {content}
               {isUpdated && !deleted && (
                 <span className="text-[10px] mx-2 text-zinc-500 dark:text-zinc-400">
-                  (edited)
+                  (изменено)
                 </span>
               )}
             </p>
@@ -203,7 +203,7 @@ export const ChatItem = ({
                             <Input
                               disabled={isLoading}
                               className="p-2 bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200"
-                              placeholder="Edited message"
+                              placeholder="Изменено"
                               {...field}
                             />
                           </div>
@@ -212,11 +212,11 @@ export const ChatItem = ({
                     )}
                   />
                   <Button disabled={isLoading} size="sm" variant="primary">
-                    Save
+                    Сохранить
                   </Button>
               </form>
               <span className="text-[10px] mt-1 text-zinc-400">
-                Press escape to cancel, enter to save
+                Нажмите esc для отмены, enter для изменения
               </span>
             </Form>
           )}
