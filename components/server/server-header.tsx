@@ -3,13 +3,14 @@ import { useModal } from "@/hooks/use-modal-store";
 import { ServerWithMembersWithProfiles } from "@/types";
 import { MemberRole } from "@prisma/client";
 import { 
+  Airplay,
   ChevronDown, 
   LogOut, 
   PlusCircle, 
   Settings, 
   Trash, 
   UserPlus,
-  Users
+  Users,
 } from "lucide-react";
 
 import { 
@@ -43,12 +44,21 @@ export const ServerHeader = ({
           className="w-full text-md font-semibold px-3 flex items-center h-12 border-neutral-200 dark:border-neutral-800 border-b-2 hover:bg-zinc-700/10 dark:hover:bg-zinc-700/50 transition"
         >
           {server.name}
-          <ChevronDown className="h-5 w-5" />
+          <ChevronDown className="ml-1 h-5 w-5 justify-between" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className="w-56 text-xs font-medium text-black dark:text-neutral-400 space-y-[2px]"
       >
+         {(
+          <DropdownMenuItem
+            onClick={() => onOpen("watchTogether")}
+            className="text-red-600 dark:text-red-600 px-3 py-2 text-sm cursor-pointer"
+          >
+            Cовместный просмотр
+            <Airplay className="h-4 w-4 ml-auto" />
+          </DropdownMenuItem>
+        )}
         {isModerator && (
           <DropdownMenuItem
             onClick={() => onOpen("invite", { server })}
@@ -102,6 +112,7 @@ export const ServerHeader = ({
             <LogOut className="h-4 w-4 ml-auto" />
           </DropdownMenuItem>
         )}
+       
       </DropdownMenuContent>
     </DropdownMenu>
   )
