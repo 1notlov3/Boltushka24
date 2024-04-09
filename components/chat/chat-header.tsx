@@ -1,9 +1,12 @@
-import { Hash } from "lucide-react";
+"use client";
+import { Hash, Airplay ,} from "lucide-react";
 
 import { MobileToggle } from "@/components/mobile-toggle";
 import { UserAvatar } from "@/components/user-avatar";
 import { SocketIndicator } from "@/components/socket-indicator";
 import { ChatVideoButton } from "./chat-video-button";
+import { useModal } from "@/hooks/use-modal-store";
+import { ActionTooltip } from "../action-tooltip";
 
 interface ChatHeaderProps {
   serverId: string;
@@ -18,6 +21,8 @@ export const ChatHeader = ({
   type,
   imageUrl
 }: ChatHeaderProps) => {
+  const {onOpen} = useModal();
+ 
   return (
     <div className="text-md font-semibold px-3 flex items-center h-12 border-neutral-200 dark:border-neutral-800 border-b-2">
       <MobileToggle serverId={serverId}/>
@@ -36,8 +41,15 @@ export const ChatHeader = ({
       <div className="ml-auto flex items-center">
       {type === "conversation" && (
           <ChatVideoButton />
+          
         )}
+         <ActionTooltip side="bottom" label="Начать совместный просмотр">
+      <button onClick={() => onOpen("watchTogether")} className="group transition mr-4">
+        <Airplay className="h-6 w-6 group-hover:text-red-500 dark:text-zinc-400" />
+      </button>
+    </ActionTooltip>
         <SocketIndicator />
+        
       </div>
     </div>
   )

@@ -38,6 +38,7 @@
     "date-fns": "^3.6.0",
     "dropzone": "^6.0.0-beta.2",
     "emoji-mart": "^5.5.2",
+    "http-proxy-middleware": "^3.0.0",
     "i18next": "^23.10.1",
     "livekit-server-sdk": "^2.1.2",
     "lucide-react": "^0.331.0",
@@ -58,6 +59,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

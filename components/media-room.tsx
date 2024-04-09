@@ -1,15 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AudioConference, GridLayout, ControlBar, LiveKitRoom, ParticipantTile, VideoConference, useTracks, DisconnectButton, Chat } from "@livekit/components-react";
+import { AudioConference, GridLayout, ControlBar, LiveKitRoom, ParticipantTile, VideoConference, useTracks, DisconnectButton, Chat, MediaDeviceSelect, TrackToggle } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { Channel } from "@prisma/client";
 import { useUser } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
 import { Track } from 'livekit-client';
-import { Member, MemberRole, Profile } from "@prisma/client";
-import { UserAvatar } from "./user-avatar";
-import { ChatToggle } from "@livekit/components-react";
+import { useRouter } from "next/navigation";
+
 interface MediaRoomProps {
   chatId: string;
   video: boolean;
@@ -21,6 +19,7 @@ export const MediaRoom = ({
   video,
   audio
 }: MediaRoomProps) => {
+  const router = useRouter();
   const { user } = useUser();
   const [token, setToken] = useState("");
 
@@ -53,7 +52,6 @@ export const MediaRoom = ({
       </div>
     )
   }
-
   return (
     <LiveKitRoom
       data-lk-theme="default"
@@ -66,7 +64,13 @@ export const MediaRoom = ({
     >
       
       <MyVideoConference/>
-      <ControlBar/>
+      <div className="flex  justify-center">
+      <TrackToggle className="m-2 h-10" source={Track.Source.Microphone} />
+      <TrackToggle className="m-2 h-10" source={Track.Source.Camera} />
+      <DisconnectButton className="m-2 h-10" onClick = {()=>router.push(`/`)}>Выйти</DisconnectButton>
+      
+      </div>
+      
       
       
     </LiveKitRoom>
