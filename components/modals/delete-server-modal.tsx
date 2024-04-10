@@ -45,11 +45,11 @@ export const DeleteServerModal = () => {
       <DialogContent className="bg-white text-black p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
-            Удалить сервер
+            Удалить сообщество
           </DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
-            Вы точно хотите удалить сервер? <br />
-            <span className="text-indigo-500 font-semibold">{server?.name}</span> будет полностью удален.
+            Вы точно хотите удалить сообщество? <br />
+            <span className="text-indigo-500 font-semibold">{server?.name}</span> будет полностью удалено.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="bg-gray-100 px-6 py-4">

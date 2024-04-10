@@ -30,10 +30,10 @@ import { useModal } from "@/hooks/use-modal-store";
 
 const formSchema = z.object({
   name: z.string().min(1, {
-    message: "Название сервера обязательно"
+    message: "Название сообщества обязательно"
   }),
   imageUrl: z.string().min(1, {
-    message: "Изображение сервера обязательно"
+    message: "Изображение сообщества обязательно"
   })
 });
 
@@ -83,10 +83,10 @@ export const EditServerModal = () => {
       <DialogContent className="bg-white text-black p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
-            Настройте сервер!
+            Настройте сообщество!
           </DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
-          Придайте своему серверу индивидуальность с помощью имени и изображения. Вы всегда сможете изменить их позже.
+          Придайте своему сообществу индивидуальность с помощью имени и изображения. Вы всегда сможете изменить их позже.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -118,13 +118,13 @@ export const EditServerModal = () => {
                     <FormLabel
                       className="uppercase text-xs font-bold text-zinc-500 dark:text-secondary/70"
                     >
-                      Название сервера
+                      Название сообщества
                     </FormLabel>
                     <FormControl>
                       <Input
                         disabled={isLoading}
                         className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black focus-visible:ring-offset-0"
-                        placeholder="Введите название сервера"
+                        placeholder="Введите название сообщества"
                         {...field}
                       />
                     </FormControl>
@@ -135,7 +135,7 @@ export const EditServerModal = () => {
             </div>
             <DialogFooter className="bg-gray-100 px-6 py-4">
               <Button variant="primary" disabled={isLoading}>
-                Изменить сервер!
+                Изменить сообщество!
               </Button>
             </DialogFooter>
           </form>

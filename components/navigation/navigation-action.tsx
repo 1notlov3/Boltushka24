@@ -11,7 +11,7 @@ export const NavigationAction = () => {
       <ActionTooltip
         side="right"
         align="center"
-        label="Добавить сервер"
+        label="Добавить сообщество"
       >
         <button onClick={() => onOpen("createServer")}
           className="group flex items-center"

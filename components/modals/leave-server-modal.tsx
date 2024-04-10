@@ -45,10 +45,10 @@ export const LeaveServerModal = () => {
       <DialogContent className="bg-white text-black p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
-            Покинуть сервер
+            Покинуть сообщество
           </DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
-            Вы точно хотите покинуть сервер <span className="font-semibold text-indigo-500">{server?.name}</span>?
+            Вы точно хотите покинуть сообщество <span className="font-semibold text-indigo-500">{server?.name}</span>?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="bg-gray-100 px-6 py-4">
