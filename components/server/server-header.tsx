@@ -4,6 +4,7 @@ import { ServerWithMembersWithProfiles } from "@/types";
 import { MemberRole } from "@prisma/client";
 import { 
   Airplay,
+  BarChart,
   ChevronDown, 
   LogOut, 
   PlusCircle, 
@@ -50,15 +51,7 @@ export const ServerHeader = ({
       <DropdownMenuContent
         className="w-56 text-xs font-medium text-black dark:text-neutral-400 space-y-[2px]"
       >
-         {(
-          <DropdownMenuItem
-            onClick={() => onOpen("watchTogether")}
-            className="text-red-600 dark:text-red-600 px-3 py-2 text-sm cursor-pointer"
-          >
-            Cовместный просмотр
-            <Airplay className="h-4 w-4 ml-auto" />
-          </DropdownMenuItem>
-        )}
+    
         {isModerator && (
           <DropdownMenuItem
             onClick={() => onOpen("invite", { server })}
@@ -96,6 +89,14 @@ export const ServerHeader = ({
         {isModerator && (
           <DropdownMenuSeparator />
         )}
+         {/* Новый пункт рейтинга */}
+         <DropdownMenuItem
+          onClick={() => onOpen("userRating")}
+          className="px-3 py-2 text-sm cursor-pointer"
+        >
+          Рейтинг пользователей
+          <BarChart className="h-4 w-4 ml-auto" />
+        </DropdownMenuItem>
         {isAdmin && (
           <DropdownMenuItem onClick={() => onOpen("deleteServer", { server })}
             className="text-rose-500 px-3 py-2 text-sm cursor-pointer"

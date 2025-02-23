@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/local"
+}
+
+datasource localDb {
+  provider     = "mysql"
+  url          = env("LOCAL_DATABASE_URL")
+  relationMode = "prisma"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model  {
+id_______ Int @id @map("id_оценки") @localDb.UnsignedInt
+id__________ Int @map("id_участника") @localDb.UnsignedInt
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// оценка Decimal @map("оценка") @localDb.Decimal(2, 1)
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// дата_оценки DateTime @default(dbgenerated("(curdate())")) @map("дата_оценки") @localDb.Date
+@@index([id__________], map: "id_участника")
+@@map("оценки")
+}
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model  {
+id_____________ Int @id @map("id_пользователя") @localDb.UnsignedInt
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// логин String @map("логин") @localDb.VarChar(20)
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// пароль String @map("пароль") @localDb.VarChar(255)
+email String @localDb.VarChar(75)
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// дата_регистрации DateTime @default(dbgenerated("(curdate())")) @map("дата_регистрации") @localDb.Date
+@@map("пользователи")
+}
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model  {
+id_______________ Int @id @map("id_предупреждения") @localDb.UnsignedInt
+id__________ Int @map("id_участника") @localDb.UnsignedInt
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// дата_предупреждения DateTime @default(dbgenerated("(curdate())")) @map("дата_предупреждения") @localDb.Date
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// тип_предупреждения String @map("тип_предупреждения") @localDb.VarChar(50)
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// описание String? @map("описание") @localDb.VarChar(300)
+@@index([id__________], map: "id_участника")
+@@map("предупреждения")
+}
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model  {
+id_____ Int @map("id_роли") @localDb.UnsignedInt
+id___________ Int @map("id_сообщества") @localDb.UnsignedInt
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// название_роли String @map("название_роли") @localDb.VarChar(50)
+@@id([id_____, id___________])
+@@index([id___________], map: "id_сообщества")
+@@map("роли")
+}
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model  {
+id_______ Int @id @map("id_сессии") @localDb.UnsignedInt
+id_____________ Int @map("id_пользователя") @localDb.UnsignedInt
+id___________ Int @map("id_устройства") @localDb.UnsignedInt
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// дата_входа DateTime @default(dbgenerated("(curdate())")) @map("дата_входа") @localDb.Date
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// дата_выхода DateTime? @map("дата_выхода") @localDb.Date
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// статус String @map("статус") @localDb.VarChar(15)
+@@index([id_____________], map: "id_пользователя")
+@@map("сессии")
+}
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model  {
+id__________ Int @id @map("id_сообщения") @localDb.UnsignedInt
+id__________ Int @map("id_участника") @localDb.UnsignedInt
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// содержание String @map("содержание") @localDb.VarChar(500)
+@@index([id__________], map: "id_участника")
+@@map("сообщения")
+}
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model  {
+id___________ Int @id @map("id_сообщества") @localDb.UnsignedInt
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// название_сообщества String @map("название_сообщества") @localDb.VarChar(100)
+URL_________ String? @map("URL_картинки") @localDb.VarChar(200)
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// описание String? @map("описание") @localDb.VarChar(300)
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// дата_создания DateTime @default(dbgenerated("(curdate())")) @map("дата_создания") @localDb.Date
+@@map("сообщества")
+}
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model  {
+id__________ Int @id @map("id_участника") @localDb.UnsignedInt
+id_____________ Int @map("id_пользователя") @localDb.UnsignedInt
+id___________ Int @map("id_сообщества") @localDb.UnsignedInt
+id_____ Int @map("id_роли") @localDb.UnsignedInt
+/// This field was commented out because of an invalid name. Please provide a valid one that matches [a-zA-Z][a-zA-Z0-9_]*
+// дата_вступления DateTime @default(dbgenerated("(curdate())")) @map("дата_вступления") @localDb.Date
+@@index([id_____________], map: "id_пользователя")
+@@index([id_____], map: "id_роли")
+@@index([id___________], map: "id_сообщества")
+@@map("участники")
+}
