@@ -21,17 +21,17 @@ export const UserRatingModal = () => {
     {
       id: "1",
       name: "user1",
-      rating: 1.12
+      rating: 1.11
     },
     {
       id: "2",
       name: "user2",
-      rating: 0.77
+      rating: 0.71
     },
     {
       id: "3",
       name: "user3",
-      rating: 0.43
+      rating: 0.40
     }
   ]);
 
