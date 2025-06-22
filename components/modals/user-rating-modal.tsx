@@ -20,18 +20,18 @@ export const UserRatingModal = () => {
   const [users] = useState<User[]>([
     {
       id: "1",
-      name: "John",
-      rating: 1.12
+      name: "Jon Melton",
+      rating: 1.11
     },
     {
       id: "2",
-      name: "max",
+      name: "Maxim Grachev",
       rating: 0.71
     },
     {
       id: "3",
-      name: "alex",
-      rating: 0.40
+      name: "alex alex",
+      rating: 0.43
     }
   ]);
 
