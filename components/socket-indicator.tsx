@@ -10,9 +10,9 @@ export const SocketIndicator = () => {
     return (
       <Badge 
         variant="outline" 
-        className="bg-yellow-600 text-white border-none"
-      >
-        Ошибка: попытка переподключения...
+      className="bg-emerald-600 text-white border-none"
+    >
+      В сети
       </Badge>
     )
   }
