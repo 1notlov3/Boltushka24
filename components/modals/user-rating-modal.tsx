@@ -21,7 +21,7 @@ export const UserRatingModal = () => {
     {
       id: "1",
       name: "Jon Melton",
-      rating: 1.11
+      rating: 1.29
     },
     {
       id: "2",
