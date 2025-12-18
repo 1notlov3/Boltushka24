@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
 import { Edit, FileIcon, ShieldAlert, ShieldCheck, Trash } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { ActionTooltip } from "@/components/action-tooltip";
@@ -49,7 +49,7 @@ const formSchema = z.object({
   content: z.string().min(1),
 });
 
-export const ChatItem = ({
+export const ChatItem = memo(({
   id,
   content,
   member,
@@ -244,4 +244,6 @@ export const ChatItem = ({
       )}
     </div>
   )
-}
+})
+
+ChatItem.displayName = "ChatItem";
