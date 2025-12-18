@@ -33,6 +33,7 @@ export const NavigationItem = ({
       <button
         onClick={onClick}
         className="group relative flex items-center"
+        aria-label={name}
       >
         <div className={cn(
           "absolute left-0 bg-primary rounded-r-full transition-all w-[4px]",
@@ -46,7 +47,7 @@ export const NavigationItem = ({
           <Image
             fill
             src={imageUrl}
-            alt="Channel"
+            alt=""
           />
         </div>
       </button>
