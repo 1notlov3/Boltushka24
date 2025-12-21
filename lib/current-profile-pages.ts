@@ -1,18 +1,23 @@
 import { NextApiRequest } from "next";
-import { getAuth } from "@clerk/nextjs/server";
-
+import { verifyToken } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export const currentProfilePages = async (req: NextApiRequest) => {
-  const { userId } = getAuth(req);
+  const token = req.cookies.token;
 
-  if (!userId) {
+  if (!token) {
+    return null;
+  }
+
+  const payload = verifyToken(token) as { userId: string } | null;
+
+  if (!payload) {
     return null;
   }
 
   const profile = await db.profile.findUnique({
     where: {
-      userId
+      userId: payload.userId
     }
   });
 
