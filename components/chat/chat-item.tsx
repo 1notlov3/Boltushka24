@@ -83,7 +83,7 @@ export const ChatItem = memo(({
 
     window.addEventListener("keydown", handleKeyDown);
 
-    return () => window.removeEventListener("keyDown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -115,7 +115,7 @@ export const ChatItem = memo(({
     form.reset({
       content: content,
     })
-  }, [content]);
+  }, [content, form]);
 
   const fileType = fileUrl?.split(".").pop();
 
