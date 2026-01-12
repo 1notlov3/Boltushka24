@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { AudioConference, GridLayout, ControlBar, LiveKitRoom, ParticipantTile, VideoConference, useTracks, DisconnectButton, Chat, MediaDeviceSelect, TrackToggle } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { useAuth } from "@/components/providers/auth-provider";
 import { Loader2 } from "lucide-react";
 import { Track } from 'livekit-client';
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 interface MediaRoomProps {
   chatId: string;
@@ -20,13 +20,13 @@ export const MediaRoom = ({
   audio
 }: MediaRoomProps) => {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useUser();
   const [token, setToken] = useState("");
 
   useEffect(() => {
-    if (!user?.name) return;
+    if (!user) return;
 
-    const name = user.name;
+    const name = user.fullName || user.username || "User";
 
     (async () => {
       try {
@@ -39,8 +39,9 @@ export const MediaRoom = ({
         console.log(e);
       }
     })()
-  }, [user?.name, chatId]);
-  if (token === "") {
+  }, [user, chatId]);
+
+  if (!user || token === "") {
     return (
       <div className="flex flex-col flex-1 justify-center items-center">
         <Loader2

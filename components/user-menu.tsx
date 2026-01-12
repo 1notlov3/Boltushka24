@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuth } from "@/components/providers/auth-provider";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -9,9 +8,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut } from "lucide-react";
+import { useClerk, useUser } from "@clerk/nextjs";
 
 export const UserMenu = () => {
-  const { user, logout } = useAuth();
+  const { user } = useUser();
+  const { signOut } = useClerk();
 
   if (!user) return null;
 
@@ -23,7 +24,7 @@ export const UserMenu = () => {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-red-600">
+        <DropdownMenuItem onClick={() => signOut({ redirectUrl: "/sign-in" })} className="cursor-pointer text-red-600">
           <LogOut className="h-4 w-4 mr-2" />
           Log out
         </DropdownMenuItem>

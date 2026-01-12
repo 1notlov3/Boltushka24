@@ -1,26 +1,40 @@
-import { cookies } from "next/headers";
-import { verifyToken } from "@/lib/auth";
+import { auth, currentUser } from "@clerk/nextjs";
 import { db } from "@/lib/db";
 
 export const currentProfile = async () => {
-  const cookieStore = cookies();
-  const token = cookieStore.get("token")?.value;
+  const { userId } = auth();
 
-  if (!token) {
+  if (!userId) {
     return null;
   }
 
-  const payload = verifyToken(token) as { userId: string } | null;
-
-  if (!payload) {
-    return null;
-  }
-
-  const profile = await db.profile.findUnique({
+  let profile = await db.profile.findUnique({
     where: {
-      userId: payload.userId
+      userId
     }
   });
+
+  if (!profile) {
+    const user = await currentUser();
+
+    if (!user) {
+      return null;
+    }
+
+    const fallbackName = user.username || user.id;
+    const fullName = user.fullName || fallbackName;
+    const emailAddress = user.emailAddresses[0]?.emailAddress || "";
+
+    profile = await db.profile.create({
+      data: {
+        userId,
+        name: fullName,
+        email: emailAddress,
+        imageUrl: user.imageUrl,
+        password: null,
+      },
+    });
+  }
 
   return profile;
 }
