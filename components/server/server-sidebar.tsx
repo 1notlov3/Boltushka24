@@ -43,38 +43,18 @@ export const ServerSidebar = async ({
     where: {
       id: serverId,
     },
-    select: {
-      id: true,
-      name: true,
-      imageUrl: true,
-      inviteCode: true,
-      profileId: true,
+    include: {
       channels: {
         orderBy: {
           createdAt: "asc",
         },
-        select: {
-          id: true,
-          name: true,
-          type: true,
-        },
       },
       members: {
+        include: {
+          profile: true,
+        },
         orderBy: {
           role: "asc",
-        },
-        select: {
-          id: true,
-          role: true,
-          profileId: true,
-          profile: {
-            select: {
-              id: true,
-              name: true,
-              imageUrl: true,
-              email: true,
-            },
-          },
         },
       },
     },
