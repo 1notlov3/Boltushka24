@@ -36,6 +36,9 @@ export async function PATCH(
             profileId: profile.id
           }
         }
+      },
+      select: {
+        id: true,
       }
     });
 
