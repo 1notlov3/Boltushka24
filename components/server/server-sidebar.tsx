@@ -43,21 +43,41 @@ export const ServerSidebar = async ({
     where: {
       id: serverId,
     },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      imageUrl: true,
+      inviteCode: true,
+      profileId: true,
       channels: {
         orderBy: {
           createdAt: "asc",
         },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        },
       },
       members: {
-        include: {
-          profile: true,
-        },
         orderBy: {
           role: "asc",
-        }
-      }
-    }
+        },
+        select: {
+          id: true,
+          role: true,
+          profileId: true,
+          profile: {
+            select: {
+              id: true,
+              name: true,
+              imageUrl: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   const textChannels = server?.channels.filter((channel) => channel.type === ChannelType.TEXT)
