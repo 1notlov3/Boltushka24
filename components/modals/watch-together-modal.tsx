@@ -1,5 +1,4 @@
 "use client";
-import "@uploadthing/react/styles.css";
 import axios from "axios";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,7 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileUpload } from "@/components/file-upload";
 import { useModal } from "@/hooks/use-modal-store";
-import { UploadDropzone } from "@uploadthing/react";
 import { useState } from "react";
 
 const formSchema = z.object({
