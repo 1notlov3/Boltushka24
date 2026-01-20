@@ -1,4 +1,4 @@
-import { ChannelType, MemberRole } from "@prisma/client";
+import { Channel, ChannelType, MemberRole } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { Hash, Mic, ShieldAlert, ShieldCheck, Video } from "lucide-react";
 
@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { ServerWithMembersWithProfiles } from "@/types";
 
 import { ServerHeader } from "./server-header";
 import { ServerSearch } from "./server-search";
@@ -51,14 +52,24 @@ export const ServerSidebar = async ({
       },
       members: {
         include: {
-          profile: true,
+          profile: {
+            // ⚡ Bolt Optimization: Select only necessary fields for members
+            // This reduces payload size by excluding password, createdAt, updatedAt, and userId.
+            // Verified that downstream components (ServerMember, MembersModal) only use these fields.
+            select: {
+              id: true,
+              name: true,
+              imageUrl: true,
+              email: true,
+            }
+          },
         },
         orderBy: {
           role: "asc",
         },
       },
     },
-  });
+  }) as unknown as ServerWithMembersWithProfiles & { channels: Channel[] };
 
   const textChannels = server?.channels.filter((channel) => channel.type === ChannelType.TEXT)
   const audioChannels = server?.channels.filter((channel) => channel.type === ChannelType.AUDIO)
