@@ -34,6 +34,7 @@ export const ServerSection = ({
           <button
             onClick={() => onOpen("createChannel", { channelType })}
             className="text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300 transition"
+            aria-label="Создать канал"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -44,6 +45,7 @@ export const ServerSection = ({
           <button
             onClick={() => onOpen("members", { server })}
             className="text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300 transition"
+            aria-label="Управлять участниками"
           >
             <Settings className="h-4 w-4" />
           </button>
