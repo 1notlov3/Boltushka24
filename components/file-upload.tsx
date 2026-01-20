@@ -2,7 +2,7 @@
 
 import { FileIcon, X } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState, type ChangeEvent } from "react";
+import { CldUploadButton } from "next-cloudinary";
 
 import { Button } from "@/components/ui/button";
 
@@ -17,55 +17,7 @@ export const FileUpload = ({
   value,
   endpoint
 }: FileUploadProps) => {
-  const [isUploading, setIsUploading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const fileType = value?.split(".").pop();
-  const isMessageFile = endpoint === "messageFile";
-  const accept = isMessageFile ? "image/*,application/pdf" : "image/*";
-
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-    if (!cloudName || !uploadPreset) {
-      console.error("Cloudinary env vars are missing");
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
-
-      const resourceType = isMessageFile ? "auto" : "image";
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const data = await response.json();
-      onChange(data.secure_url);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsUploading(false);
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
-    }
-  };
 
   if (value && fileType !== "pdf") {
     return (
@@ -111,26 +63,28 @@ export const FileUpload = ({
   }
 
   return (
-    <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-6 py-4 text-center">
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        onChange={handleFileChange}
-        disabled={isUploading}
-        className="hidden"
-      />
-      <Button
-        type="button"
-        variant="primary"
-        disabled={isUploading}
-        onClick={() => inputRef.current?.click()}
-      >
-        {isUploading ? "Загрузка..." : "Загрузить"}
-      </Button>
-      <p className="text-xs text-zinc-500">
-        {isMessageFile ? "PNG/JPG или PDF" : "PNG/JPG"}
-      </p>
-    </div>
+    <CldUploadButton
+      onSuccess={(result: any) => {
+        onChange(result?.info?.secure_url);
+      }}
+      options={{
+        maxFiles: 1,
+        resourceType: endpoint === "messageFile" ? "auto" : "image",
+        clientAllowedFormats: endpoint === "messageFile" ? ["png", "jpg", "jpeg", "pdf"] : ["png", "jpg", "jpeg"]
+      }}
+      uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+    >
+      <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-6 py-4 text-center cursor-pointer hover:bg-zinc-100/50 transition">
+        <div className="relative flex items-center justify-center">
+            {/* Visual button placeholder since CldUploadButton wraps the whole area */}
+            <div className="h-10 px-4 py-2 bg-indigo-500 text-white rounded-md text-sm font-medium hover:bg-indigo-500/90">
+               Загрузить
+            </div>
+        </div>
+        <p className="text-xs text-zinc-500">
+          {endpoint === "messageFile" ? "PNG/JPG или PDF" : "PNG/JPG"}
+        </p>
+      </div>
+    </CldUploadButton>
   )
 }
