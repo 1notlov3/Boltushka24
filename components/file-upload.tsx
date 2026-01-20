@@ -2,9 +2,9 @@
 
 import { FileIcon, X } from "lucide-react";
 import Image from "next/image";
+import { CldUploadButton } from "next-cloudinary";
 
-import { UploadDropzone } from "@/lib/uploadthing";
-import "@uploadthing/react/styles.css";
+import { Button } from "@/components/ui/button";
 
 interface FileUploadProps {
   onChange: (url?: string) => void;
@@ -63,14 +63,28 @@ export const FileUpload = ({
   }
 
   return (
-    <UploadDropzone
-      endpoint={endpoint}
-      onClientUploadComplete={(res) => {
-        onChange(res?.[0].url);
+    <CldUploadButton
+      onSuccess={(result: any) => {
+        onChange(result?.info?.secure_url);
       }}
-      onUploadError={(error: Error) => {
-        console.log(error);
+      options={{
+        maxFiles: 1,
+        resourceType: endpoint === "messageFile" ? "auto" : "image",
+        clientAllowedFormats: endpoint === "messageFile" ? ["png", "jpg", "jpeg", "pdf"] : ["png", "jpg", "jpeg"]
       }}
-    />
+      uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+    >
+      <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-6 py-4 text-center cursor-pointer hover:bg-zinc-100/50 transition">
+        <div className="relative flex items-center justify-center">
+            {/* Visual button placeholder since CldUploadButton wraps the whole area */}
+            <div className="h-10 px-4 py-2 bg-indigo-500 text-white rounded-md text-sm font-medium hover:bg-indigo-500/90">
+               Загрузить
+            </div>
+        </div>
+        <p className="text-xs text-zinc-500">
+          {endpoint === "messageFile" ? "PNG/JPG или PDF" : "PNG/JPG"}
+        </p>
+      </div>
+    </CldUploadButton>
   )
 }
