@@ -17,6 +17,8 @@ export const FileUpload = ({
   value,
   endpoint
 }: FileUploadProps) => {
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
   const fileType = value?.split(".").pop();
 
   if (value && fileType !== "pdf") {
@@ -62,17 +64,29 @@ export const FileUpload = ({
     )
   }
 
+  if (!uploadPreset) {
+    return (
+      <div className="flex flex-col items-center justify-center p-4 border border-dashed border-red-500 rounded-md bg-red-50 text-red-500">
+        <p className="text-sm font-bold">Error: Cloudinary Upload Preset is missing.</p>
+        <p className="text-xs">Please check your environment variables.</p>
+      </div>
+    );
+  }
+
   return (
     <CldUploadButton
       onSuccess={(result: any) => {
         onChange(result?.info?.secure_url);
+      }}
+      onError={(error: any) => {
+        console.error("Cloudinary Error:", error);
       }}
       options={{
         maxFiles: 1,
         resourceType: endpoint === "messageFile" ? "auto" : "image",
         clientAllowedFormats: endpoint === "messageFile" ? ["png", "jpg", "jpeg", "pdf"] : ["png", "jpg", "jpeg"]
       }}
-      uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+      uploadPreset={uploadPreset}
     >
       <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-6 py-4 text-center cursor-pointer hover:bg-zinc-100/50 transition">
         <div className="relative flex items-center justify-center">
