@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+
+const UpdateServerSchema = z.object({
+  name: z.string().min(1).max(100),
+  imageUrl: z.string().url(),
+});
 
 export async function DELETE(
   req: Request,
@@ -39,6 +45,12 @@ export async function PATCH(
 
     if (!profile) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const validationResult = UpdateServerSchema.safeParse({ name, imageUrl });
+
+    if (!validationResult.success) {
+      return new NextResponse("Validation Error", { status: 400 });
     }
 
     const server = await db.server.update({

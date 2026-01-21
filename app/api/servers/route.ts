@@ -1,11 +1,15 @@
 import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
 import { MemberRole } from "@prisma/client";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 
-
+const CreateServerSchema = z.object({
+  name: z.string().min(1).max(100),
+  imageUrl: z.string().url(),
+});
 
 export async function POST(req: Request) {
   try {
@@ -14,6 +18,12 @@ export async function POST(req: Request) {
 
     if (!profile) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const validationResult = CreateServerSchema.safeParse({ name, imageUrl });
+
+    if (!validationResult.success) {
+      return new NextResponse("Validation Error", { status: 400 });
     }
 
     const server = await db.server.create({
