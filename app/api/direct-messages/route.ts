@@ -26,6 +26,7 @@ export async function GET(
 
     let messages: DirectMessage[] = [];
 
+    // Optimize: Select only necessary profile fields to reduce payload size
     if (cursor) {
       messages = await db.directMessage.findMany({
         take: MESSAGES_BATCH,
@@ -39,7 +40,13 @@ export async function GET(
         include: {
           member: {
             include: {
-              profile: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           }
         },
@@ -56,7 +63,13 @@ export async function GET(
         include: {
           member: {
             include: {
-              profile: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           }
         },
