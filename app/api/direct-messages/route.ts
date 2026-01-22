@@ -38,8 +38,17 @@ export async function GET(
         },
         include: {
           member: {
-            include: {
-              profile: true,
+            // ⚡ Bolt Optimization: Select only necessary fields for member and profile
+            select: {
+              id: true,
+              role: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           }
         },
@@ -55,8 +64,17 @@ export async function GET(
         },
         include: {
           member: {
-            include: {
-              profile: true,
+            // ⚡ Bolt Optimization: Select only necessary fields for member and profile
+            select: {
+              id: true,
+              role: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           }
         },
