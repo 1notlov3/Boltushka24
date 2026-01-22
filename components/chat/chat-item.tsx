@@ -226,19 +226,28 @@ export const ChatItem = memo(({
         <div className="hidden group-hover:flex items-center gap-x-2 absolute p-1 -top-2 right-5 bg-white dark:bg-zinc-800 border rounded-sm">
           {canEditMessage && (
             <ActionTooltip label="Edit">
-              <Edit
+              <button
                 onClick={() => setIsEditing(true)}
-                className="cursor-pointer ml-auto w-4 h-4 text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
-              />
+                className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+                aria-label="Edit"
+                type="button"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
             </ActionTooltip>
           )}
           <ActionTooltip label="Delete">
-            <Trash onClick={() => onOpen("deleteMessage", { 
+            <button
+              onClick={() => onOpen("deleteMessage", {
                 apiUrl: `${socketUrl}/${id}`,
                 query: socketQuery,
-               })}
-              className="cursor-pointer ml-auto w-4 h-4 text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
-            />
+              })}
+              className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+              aria-label="Delete"
+              type="button"
+            >
+              <Trash className="w-4 h-4" />
+            </button>
           </ActionTooltip>
         </div>
       )}

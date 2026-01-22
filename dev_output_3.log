@@ -1,0 +1,17 @@
+
+> my-app@0.1.0 dev
+> next dev
+
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3000
+
+ ✓ Ready in 2.5s
+ ○ Compiling /test-chat-item ...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled /test-chat-item in 9.1s (1895 modules)
+ ✓ Compiled in 1107ms (906 modules)
+ ✓ Compiled in 2.2s (2189 modules)
+ ✓ Compiled in 532ms (962 modules)
+[?25h
