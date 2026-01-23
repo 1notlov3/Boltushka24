@@ -25,6 +25,12 @@ export const NavigationSidebar = async () => {
           profileId: profile.id
         }
       }
+    },
+    // ⚡ Bolt Optimization: Select only necessary fields
+    select: {
+      id: true,
+      name: true,
+      imageUrl: true,
     }
   });
 
