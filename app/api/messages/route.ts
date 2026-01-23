@@ -24,6 +24,23 @@ export async function GET(
       return new NextResponse("Channel ID missing", { status: 400 });
     }
 
+    const channel = await db.channel.findFirst({
+      where: {
+        id: channelId,
+        server: {
+          members: {
+            some: {
+              profileId: profile.id,
+            }
+          }
+        }
+      }
+    });
+
+    if (!channel) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     let messages: Message[] = [];
 
     if (cursor) {
