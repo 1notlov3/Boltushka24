@@ -17,7 +17,7 @@ export const MobileToggle = ({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden ">
+        <Button variant="ghost" size="icon" className="md:hidden" aria-label="Открыть меню">
           <Menu />
         </Button>
       </SheetTrigger>
