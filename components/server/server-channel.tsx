@@ -37,49 +37,68 @@ export const ServerChannel = ({
 
   const Icon = iconMap[channel.type];
 
-  const onClick =()=>{
+  const onClick = () => {
     router.push(`/servers/${params?.serverId}/channels/${channel.id}`)
   }
 
-  const onAction = (e: React.MouseEvent,action: ModalType) => {
+  const onAction = (e: React.MouseEvent, action: ModalType) => {
     e.stopPropagation();
-    onOpen(action,{channel,server})
+    onOpen(action, { channel, server })
   }
 
   return (
-    <button
-      onClick={onClick}
+    <div
       className={cn(
-        "group px-2 py-2 rounded-md flex items-center gap-x-2 w-full hover:bg-zinc-700/10 dark:hover:bg-zinc-700/50 transition mb-1",
+        "group rounded-md flex items-center w-full hover:bg-zinc-700/10 dark:hover:bg-zinc-700/50 transition mb-1",
         params?.channelId === channel.id && "bg-zinc-700/20 dark:bg-zinc-700"
       )}
     >
-      <Icon className="flex-shrink-0 w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-      <p className={cn(
-        "line-clamp-1 font-semibold text-sm text-zinc-500 group-hover:text-zinc-600 dark:text-zinc-400 dark:group-hover:text-zinc-300 transition",
-        params?.channelId === channel.id && "text-primary dark:text-zinc-200 dark:group-hover:text-white"
-      )}>
-        {channel.name}
-      </p>
+      <button
+        onClick={onClick}
+        className={cn(
+          "flex-1 text-left flex items-center gap-x-2 px-2 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:focus-visible:ring-zinc-400 focus-visible:ring-offset-2 rounded-md transition",
+          params?.channelId === channel.id && "text-primary dark:text-zinc-200 dark:group-hover:text-white"
+        )}
+        aria-label={`Открыть канал ${channel.name}`}
+      >
+        <Icon className="flex-shrink-0 w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+        <p className={cn(
+          "line-clamp-1 font-semibold text-sm text-zinc-500 group-hover:text-zinc-600 dark:text-zinc-400 dark:group-hover:text-zinc-300 transition",
+          params?.channelId === channel.id && "text-primary dark:text-zinc-200 dark:group-hover:text-white"
+        )}>
+          {channel.name}
+        </p>
+      </button>
+
       {channel.name !== "основной" && role !== MemberRole.GUEST && (
-        <div className="ml-auto flex items-center gap-x-2">
+        <div className="ml-auto flex items-center gap-x-2 pr-2">
           <ActionTooltip label="Редактировать">
-            <Edit onClick={(e) => onAction(e,'editChannel')}
-              className="hidden group-hover:block w-4 h-4 text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300 transition"
-            />
+            <button
+              onClick={(e) => onAction(e, 'editChannel')}
+              className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition w-4 h-4 text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300"
+              aria-label="Редактировать"
+              type="button"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
           </ActionTooltip>
           <ActionTooltip label="Удалить">
-            <Trash onClick={(e) => onAction(e,'deleteChannel')}
-              className="hidden group-hover:block w-4 h-4 text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300 transition"
-            />
+            <button
+              onClick={(e) => onAction(e, 'deleteChannel')}
+              className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition w-4 h-4 text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300"
+              aria-label="Удалить"
+              type="button"
+            >
+              <Trash className="w-4 h-4" />
+            </button>
           </ActionTooltip>
         </div>
       )}
       {channel.name === "основной" && (
         <Lock
-          className="ml-auto w-4 h-4 text-zinc-500 dark:text-zinc-400"
+          className="ml-auto w-4 h-4 text-zinc-500 dark:text-zinc-400 mr-2"
         />
       )}
-    </button>
+    </div>
   )
 }
