@@ -49,6 +49,13 @@ export const ServerSidebar = async ({
         orderBy: {
           createdAt: "asc",
         },
+        // ⚡ Bolt Optimization: Select only necessary fields for channels
+        // This reduces payload size by excluding createdAt, updatedAt, profileId, and serverId.
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        },
       },
       members: {
         include: {
