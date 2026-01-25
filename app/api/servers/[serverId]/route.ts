@@ -3,10 +3,19 @@ import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { serverIconDataUri } from "@/lib/server-icon";
+
+const ImageUrlSchema = z
+  .string()
+  .min(1)
+  .refine(
+    (v) => v.startsWith("data:image/") || /^https?:\/\//.test(v),
+    "imageUrl must be an http(s) URL or a data:image/* URI"
+  );
 
 const UpdateServerSchema = z.object({
   name: z.string().min(1).max(100),
-  imageUrl: z.string().url(),
+  imageUrl: ImageUrlSchema.optional(),
 });
 
 export async function DELETE(
@@ -41,17 +50,20 @@ export async function PATCH(
 ) {
   try {
     const profile = await currentProfile();
-    const { name, imageUrl } = await req.json();
+    const body = await req.json();
 
     if (!profile) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const validationResult = UpdateServerSchema.safeParse({ name, imageUrl });
+    const validationResult = UpdateServerSchema.safeParse(body);
 
     if (!validationResult.success) {
       return new NextResponse("Validation Error", { status: 400 });
     }
+
+    const { name } = validationResult.data;
+    const imageUrl = validationResult.data.imageUrl || serverIconDataUri(name);
 
     const server = await db.server.update({
       where: {
@@ -61,7 +73,7 @@ export async function PATCH(
       data: {
         name,
         imageUrl,
-      }
+      },
     });
 
     return NextResponse.json(server);

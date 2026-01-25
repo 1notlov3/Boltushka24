@@ -32,9 +32,7 @@ const formSchema = z.object({
   name: z.string().min(1, {
     message: "Название сообщества обязательно"
   }),
-  imageUrl: z.string().min(1, {
-    message: "Изображение сообщества обязательно"
-  })
+  imageUrl: z.string().optional(),
 });
 
 export const EditServerModal = () => {
