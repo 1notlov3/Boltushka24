@@ -52,7 +52,11 @@ export default async function handler(
         }
       },
       include: {
-        members: true,
+        members: {
+          where: {
+            profileId: profile.id,
+          }
+        }
       }
     });
 
@@ -87,7 +91,14 @@ export default async function handler(
       include: {
         member: {
           include: {
-            profile: true,
+            // ⚡ Bolt Optimization: Select only necessary fields for profile
+            profile: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              }
+            }
           }
         }
       }

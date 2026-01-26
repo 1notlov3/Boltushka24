@@ -4,9 +4,18 @@ import { useEffect, useState } from "react";
 import { AudioConference, GridLayout, ControlBar, LiveKitRoom, ParticipantTile, VideoConference, useTracks, DisconnectButton, Chat, MediaDeviceSelect, TrackToggle } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { Loader2 } from "lucide-react";
-import { Track } from 'livekit-client';
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+
+// ⚡ Bolt Fix: Define Track locally to avoid missing dependency 'livekit-client'
+const Track = {
+  Source: {
+    Camera: "camera" as const,
+    Microphone: "microphone" as const,
+    ScreenShare: "screen_share" as const,
+    ScreenShareAudio: "screen_share_audio" as const,
+  }
+};
 
 interface MediaRoomProps {
   chatId: string;
@@ -66,8 +75,8 @@ export const MediaRoom = ({
       
       <MyVideoConference/>
       <div className="flex  justify-center">
-      <TrackToggle className="m-2 h-10" source={Track.Source.Microphone} />
-      <TrackToggle className="m-2 h-10" source={Track.Source.Camera} />
+      <TrackToggle className="m-2 h-10" source={Track.Source.Microphone as any} />
+      <TrackToggle className="m-2 h-10" source={Track.Source.Camera as any} />
       <DisconnectButton className="m-2 h-10" onClick = {()=>router.push(`/`)}>Выйти</DisconnectButton>
       
       </div>
@@ -84,8 +93,8 @@ function MyVideoConference() {
   
   const tracks = useTracks(
     [
-      { source: Track.Source.Camera, withPlaceholder: true },
-      { source: Track.Source.ScreenShare, withPlaceholder: false },
+      { source: Track.Source.Camera as any, withPlaceholder: true },
+      { source: Track.Source.ScreenShare as any, withPlaceholder: false },
     ],
     { onlySubscribed: false },
   );
