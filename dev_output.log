@@ -1,251 +1,93 @@
 
-> my-app@0.1.0 dev
+> my-app@0.1.0 dev /app
 > next dev
 
    ▲ Next.js 14.1.0
    - Local:        http://localhost:3000
 
- ✓ Ready in 1891ms
+npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm.
+npm warn Unknown env config "npm-globalconfig". This will stop working in the next major version of npm.
+npm warn Unknown env config "_jsr-registry". This will stop working in the next major version of npm.
+ ✓ Ready in 3s
  ○ Compiling /middleware ...
- ✓ Compiled /middleware in 1104ms (172 modules)
+ ✓ Compiled /middleware in 1196ms (172 modules)
  ⨯ Error: @clerk/nextjs: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
-    at <unknown> (webpack-internal:///(middleware)/./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184)
-    at Object.throwMissingPublishableKeyError (webpack-internal:///(middleware)/./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
-    at eval (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:220)
-    at assertKey (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/utils.js:181:9)
-    at authMiddleware (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:77)
+    at <unknown> (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184)
+    at Object.throwMissingPublishableKeyError (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
+    at eval (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:220)
+    at assertKey (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/utils.js:181:9)
+    at authMiddleware (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:77)
     at eval (webpack-internal:///(middleware)/./middleware.ts:8:134)
     at (middleware)/./middleware.ts (file:///app/.next/server/middleware.js:61:1)
     at __webpack_require__ (file:///app/.next/server/edge-runtime-webpack.js:37:33)
     at fn (file:///app/.next/server/edge-runtime-webpack.js:268:21)
-    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:72)
-    at (middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///app/.next/server/middleware.js:50:1) {
+    at eval (webpack-internal:///(middleware)/./node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:72)
+    at (middleware)/./node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///app/.next/server/middleware.js:50:1) {
   middleware: true
 }
  ○ Compiling /_error ...
- ✓ Compiled /_error in 1486ms (191 modules)
+ ✓ Compiled /_error in 1559ms (191 modules)
  ○ Compiling /not-found ...
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ Error: @clerk/nextjs: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at <unknown> (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184)
+    at Object.throwMissingPublishableKeyError (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
+    at eval (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:220)
+    at assertKey (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/utils.js:181:9)
+    at authMiddleware (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:77)
+    at eval (webpack-internal:///(middleware)/./middleware.ts:8:134)
+    at (middleware)/./middleware.ts (file:///app/.next/server/middleware.js:61:1)
+    at __webpack_require__ (file:///app/.next/server/edge-runtime-webpack.js:37:33)
+    at fn (file:///app/.next/server/edge-runtime-webpack.js:268:21)
+    at eval (webpack-internal:///(middleware)/./node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:72)
+    at (middleware)/./node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///app/.next/server/middleware.js:50:1) {
+  middleware: true
+}
 <w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (100kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
  ⨯ Error: @clerk/nextjs: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
-    at <unknown> (webpack-internal:///(middleware)/./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184)
-    at Object.throwMissingPublishableKeyError (webpack-internal:///(middleware)/./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
-    at eval (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:220)
-    at assertKey (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/utils.js:181:9)
-    at authMiddleware (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:77)
+    at <unknown> (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184)
+    at Object.throwMissingPublishableKeyError (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
+    at eval (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:220)
+    at assertKey (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/utils.js:181:9)
+    at authMiddleware (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:77)
     at eval (webpack-internal:///(middleware)/./middleware.ts:8:134)
     at (middleware)/./middleware.ts (file:///app/.next/server/middleware.js:61:1)
     at __webpack_require__ (file:///app/.next/server/edge-runtime-webpack.js:37:33)
     at fn (file:///app/.next/server/edge-runtime-webpack.js:268:21)
-    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:72)
-    at (middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///app/.next/server/middleware.js:50:1) {
+    at eval (webpack-internal:///(middleware)/./node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:72)
+    at (middleware)/./node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///app/.next/server/middleware.js:50:1) {
   middleware: true
 }
-Browserslist: caniuse-lite is outdated. Please run:
-  npx update-browserslist-db@latest
-  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled /not-found in 16.9s (2077 modules)
  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
  ⨯ Error: @clerk/nextjs: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
-    at <unknown> (webpack-internal:///(middleware)/./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184)
-    at Object.throwMissingPublishableKeyError (webpack-internal:///(middleware)/./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
-    at eval (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:220)
-    at assertKey (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/utils.js:181:9)
-    at authMiddleware (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:77)
+    at <unknown> (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184)
+    at Object.throwMissingPublishableKeyError (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
+    at eval (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:220)
+    at assertKey (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/utils.js:181:9)
+    at authMiddleware (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:77)
     at eval (webpack-internal:///(middleware)/./middleware.ts:8:134)
     at (middleware)/./middleware.ts (file:///app/.next/server/middleware.js:61:1)
     at __webpack_require__ (file:///app/.next/server/edge-runtime-webpack.js:37:33)
     at fn (file:///app/.next/server/edge-runtime-webpack.js:268:21)
-    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:72)
-    at (middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///app/.next/server/middleware.js:50:1) {
-  middleware: true
-}
- ✓ Compiled /not-found in 25.1s (2312 modules)
- ⨯ node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs (158:12) @ Object.throwMissingPublishableKeyError
- ⨯ Internal error: Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
-    at Object.throwMissingPublishableKeyError (./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
-    at ClerkProviderBase (./node_modules/@clerk/clerk-react/dist/index.mjs:1906:75)
-    at as (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:43309)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at ax (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
-    at a_ (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
-    at ax (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
-    at a_ (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
-    at al (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7390)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10825)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at ax (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
-    at a_ (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:39541)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at al (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7390)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10825)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-null
- ⨯ node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs (158:12) @ Object.throwMissingPublishableKeyError
- ⨯ Internal error: Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
-    at Object.throwMissingPublishableKeyError (./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
-    at ClerkProviderBase (./node_modules/@clerk/clerk-react/dist/index.mjs:1906:75)
-    at as (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:43309)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at ax (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
-    at a_ (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
-    at ax (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
-    at a_ (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
-    at al (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7390)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10825)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at ax (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
-    at a_ (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:39541)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at al (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7390)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10825)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-null
- ⚠ Fast Refresh had to perform a full reload due to a runtime error.
- ⨯ Error: @clerk/nextjs: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
-    at <unknown> (webpack-internal:///(middleware)/./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184)
-    at Object.throwMissingPublishableKeyError (webpack-internal:///(middleware)/./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
-    at eval (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:220)
-    at assertKey (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/utils.js:181:9)
-    at authMiddleware (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:77)
-    at eval (webpack-internal:///(middleware)/./middleware.ts:8:134)
-    at (middleware)/./middleware.ts (file:///app/.next/server/middleware.js:61:1)
-    at __webpack_require__ (file:///app/.next/server/edge-runtime-webpack.js:37:33)
-    at fn (file:///app/.next/server/edge-runtime-webpack.js:268:21)
-    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:72)
-    at (middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///app/.next/server/middleware.js:50:1) {
+    at eval (webpack-internal:///(middleware)/./node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:72)
+    at (middleware)/./node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///app/.next/server/middleware.js:50:1) {
   middleware: true
 }
  ⨯ Error: @clerk/nextjs: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
-    at <unknown> (webpack-internal:///(middleware)/./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184)
-    at Object.throwMissingPublishableKeyError (webpack-internal:///(middleware)/./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
-    at eval (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:220)
-    at assertKey (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/utils.js:181:9)
-    at authMiddleware (webpack-internal:///(middleware)/./node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:77)
+    at <unknown> (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184)
+    at Object.throwMissingPublishableKeyError (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
+    at eval (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:220)
+    at assertKey (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/utils.js:181:9)
+    at authMiddleware (webpack-internal:///(middleware)/./node_modules/.pnpm/@clerk+nextjs@5.7.5_next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react_5c4873f982485d92395009b872a40105/node_modules/@clerk/nextjs/dist/esm/server/authMiddleware.js:49:77)
     at eval (webpack-internal:///(middleware)/./middleware.ts:8:134)
     at (middleware)/./middleware.ts (file:///app/.next/server/middleware.js:61:1)
     at __webpack_require__ (file:///app/.next/server/edge-runtime-webpack.js:37:33)
     at fn (file:///app/.next/server/edge-runtime-webpack.js:268:21)
-    at eval (webpack-internal:///(middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:72)
-    at (middleware)/./node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///app/.next/server/middleware.js:50:1) {
+    at eval (webpack-internal:///(middleware)/./node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D!:7:72)
+    at (middleware)/./node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2Fapp%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2Fapp&matchers=&preferredRegion=&middlewareConfig=e30%3D! (file:///app/.next/server/middleware.js:50:1) {
   middleware: true
 }
- ⨯ node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs (158:12) @ Object.throwMissingPublishableKeyError
- ⨯ Internal error: Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
-    at Object.throwMissingPublishableKeyError (./node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
-    at ClerkProviderBase (./node_modules/@clerk/clerk-react/dist/index.mjs:1906:75)
-    at as (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:43309)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at ax (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
-    at a_ (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
-    at ax (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
-    at a_ (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
-    at al (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7390)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10825)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at ax (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
-    at a_ (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:39541)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at al (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7390)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10825)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at av (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
-    at /app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-    at aw (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
-    at ak (/app/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
-null
+ ✓ Compiled in 11ms
 [?25h

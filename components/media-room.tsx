@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { AudioConference, GridLayout, ControlBar, LiveKitRoom, ParticipantTile, VideoConference, useTracks, DisconnectButton, Chat, MediaDeviceSelect, TrackToggle } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { Loader2 } from "lucide-react";
-import { Track } from 'livekit-client';
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
@@ -12,6 +11,15 @@ interface MediaRoomProps {
   chatId: string;
   video: boolean;
   audio: boolean;
+};
+
+// Mock Track since livekit-client is not installed
+const Track = {
+  Source: {
+    Camera: "camera" as any,
+    Microphone: "microphone" as any,
+    ScreenShare: "screen_share" as any,
+  }
 };
 
 export const MediaRoom = ({

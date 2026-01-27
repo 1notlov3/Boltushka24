@@ -10,9 +10,10 @@ export const SocketIndicator = () => {
     return (
       <Badge 
         variant="outline" 
-      className="bg-emerald-600 text-white border-none"
-    >
-      В сети
+        className="bg-yellow-600 text-white border-none"
+        title="Подключение к серверу"
+      >
+        Подключение...
       </Badge>
     )
   }
@@ -21,6 +22,7 @@ export const SocketIndicator = () => {
     <Badge 
       variant="outline" 
       className="bg-emerald-600 text-white border-none"
+      title="Соединение установлено"
     >
       В сети
     </Badge>
