@@ -50,9 +50,6 @@ export default async function handler(
             profileId: profile.id
           }
         }
-      },
-      include: {
-        members: true,
       }
     });
 
@@ -71,7 +68,12 @@ export default async function handler(
       return res.status(404).json({ message: "Channel not found" });
     }
 
-    const member = server.members.find((member) => member.profileId === profile.id);
+    const member = await db.member.findFirst({
+      where: {
+        serverId: serverId as string,
+        profileId: profile.id,
+      }
+    });
 
     if (!member) {
       return res.status(404).json({ message: "Member not found" });
