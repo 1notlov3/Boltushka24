@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
-import { MemberRole } from "@prisma/client";
+import { MemberRole, ChannelType } from "@prisma/client";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+
+const CreateChannelSchema = z.object({
+  name: z.string().min(1, {
+    message: "Channel name is required",
+  }).max(100, {
+    message: "Channel name cannot be longer than 100 characters",
+  }).refine((name) => name !== "основной", {
+    message: "Name cannot be 'основной'",
+  }),
+  type: z.nativeEnum(ChannelType),
+});
 
 export async function POST(
   req: Request
@@ -22,8 +34,10 @@ export async function POST(
       return new NextResponse("Server ID missing", { status: 400 });
     }
 
-    if (name === "основной") {
-      return new NextResponse("Name cannot be 'основной'", { status: 400 });
+    const validationResult = CreateChannelSchema.safeParse({ name, type });
+
+    if (!validationResult.success) {
+      return new NextResponse(validationResult.error.errors[0].message, { status: 400 });
     }
 
     const server = await db.server.update({
