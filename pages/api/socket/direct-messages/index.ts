@@ -1,8 +1,14 @@
 import { NextApiRequest } from "next";
+import { z } from "zod";
 
 import { NextApiResponseServerIo } from "@/types";
 import { currentProfilePages } from "@/lib/current-profile-pages";
 import { db } from "@/lib/db";
+
+const directMessageSchema = z.object({
+  content: z.string().min(1, "Content is required").max(4000, "Content too long"),
+  fileUrl: z.string().url("Invalid file URL").optional().nullable(),
+});
 
 export default async function handler(
   req: NextApiRequest,
@@ -14,7 +20,6 @@ export default async function handler(
 
   try {
     const profile = await currentProfilePages(req);
-    const { content, fileUrl } = req.body;
     const { conversationId } = req.query;
 
     if (!profile) {
@@ -25,9 +30,13 @@ export default async function handler(
       return res.status(400).json({ error: "Conversation ID missing" });
     }
 
-    if (!content) {
-      return res.status(400).json({ error: "Content missing" });
+    const validation = directMessageSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({ error: validation.error.errors[0].message });
     }
+
+    const { content, fileUrl } = validation.data;
 
 
     const conversation = await db.conversation.findFirst({

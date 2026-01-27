@@ -1,9 +1,14 @@
 import { NextApiRequest } from "next";
+import { z } from "zod";
 import { MemberRole } from "@prisma/client";
 
 import { NextApiResponseServerIo } from "@/types";
 import { currentProfilePages } from "@/lib/current-profile-pages";
 import { db } from "@/lib/db";
+
+const directMessageUpdateSchema = z.object({
+  content: z.string().min(1, "Content is required").max(4000, "Content too long"),
+});
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,7 +21,6 @@ export default async function handler(
   try {
     const profile = await currentProfilePages(req);
     const { directMessageId, conversationId } = req.query;
-    const { content } = req.body;
 
     if (!profile) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -117,6 +121,14 @@ export default async function handler(
       if (!isMessageOwner) {
         return res.status(401).json({ error: "Unauthorized" });
       }
+
+      const validation = directMessageUpdateSchema.safeParse(req.body);
+
+      if (!validation.success) {
+        return res.status(400).json({ error: validation.error.errors[0].message });
+      }
+
+      const { content } = validation.data;
 
       directMessage = await db.directMessage.update({
         where: {
