@@ -22,7 +22,7 @@ export const EmojiPicker = ({
 
   return (
     <Popover>
-      <PopoverTrigger>
+      <PopoverTrigger aria-label="Добавить эмодзи">
         <Smile
           className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
         />
