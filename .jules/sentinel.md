@@ -14,3 +14,8 @@
 **Vulnerability:** The `/api/livekit` endpoint generated tokens for any `room` and `username` without checking if the user was authenticated or authorized to access that room. It also allowed client-side `username` spoofing.
 **Learning:** External service integrations (like LiveKit) often require generating tokens server-side. These endpoints must be protected with the same rigor as data access endpoints, ensuring the user has access to the context (channel/conversation) the token is for.
 **Prevention:** Verify `currentProfile` authentication and check membership in the target Channel or Conversation before generating tokens. Use server-side user data (`profile.id`, `profile.name`) for token identity instead of client-provided values.
+
+## 2024-05-25 - Inconsistent Validation in Socket Endpoints
+**Vulnerability:** Socket-based Direct Message endpoints lacked input validation for content length and format, whereas Channel Message endpoints were secured.
+**Learning:** Inconsistent security implementation across similar features (e.g., Channel Messages vs. Direct Messages) creates gaps. Security patterns must be applied uniformly to all variations of a feature.
+**Prevention:** Use shared validation schemas for similar data structures and conduct security reviews that specifically compare implementation of parallel features.
