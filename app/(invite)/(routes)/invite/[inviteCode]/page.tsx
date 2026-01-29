@@ -30,6 +30,10 @@ const InviteCodePage = async ({
           profileId: profile.id
         }
       }
+    },
+    // ⚡ Bolt Optimization: Select only id for redirection
+    select: {
+      id: true,
     }
   });
 
