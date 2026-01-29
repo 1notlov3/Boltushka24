@@ -14,3 +14,8 @@
 **Vulnerability:** The `/api/livekit` endpoint generated tokens for any `room` and `username` without checking if the user was authenticated or authorized to access that room. It also allowed client-side `username` spoofing.
 **Learning:** External service integrations (like LiveKit) often require generating tokens server-side. These endpoints must be protected with the same rigor as data access endpoints, ensuring the user has access to the context (channel/conversation) the token is for.
 **Prevention:** Verify `currentProfile` authentication and check membership in the target Channel or Conversation before generating tokens. Use server-side user data (`profile.id`, `profile.name`) for token identity instead of client-provided values.
+
+## 2024-05-25 - Missing Input Validation in Socket Handlers
+**Vulnerability:** Socket.io message handlers (`pages/api/socket/...`) lacked input validation for `content` on PATCH requests and POST requests for direct messages, allowing for empty or excessively long messages.
+**Learning:** While App Router API routes were secured, Pages Router API routes used for Socket.io fallback were missed. Consistent validation must be applied across both router types.
+**Prevention:** Apply Zod validation schemas to all API routes, including those in `pages/api/socket`, to ensure `content` length constraints (1-4000 chars) are enforced.
