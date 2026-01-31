@@ -14,3 +14,8 @@
 **Vulnerability:** The `/api/livekit` endpoint generated tokens for any `room` and `username` without checking if the user was authenticated or authorized to access that room. It also allowed client-side `username` spoofing.
 **Learning:** External service integrations (like LiveKit) often require generating tokens server-side. These endpoints must be protected with the same rigor as data access endpoints, ensuring the user has access to the context (channel/conversation) the token is for.
 **Prevention:** Verify `currentProfile` authentication and check membership in the target Channel or Conversation before generating tokens. Use server-side user data (`profile.id`, `profile.name`) for token identity instead of client-provided values.
+
+## 2024-05-25 - Excessive Data Exposure in Socket Events
+**Vulnerability:** Socket IO events (`pages/api/socket/...`) were broadcasting full `profile` objects (including email addresses) to all users in a channel/conversation via `include: { profile: true }`.
+**Learning:** `include: true` in Prisma selects ALL scalar fields, including sensitive ones. In real-time apps, this data is broadcasted to many users, making PII leakage severe.
+**Prevention:** Always use `select` to explicitly pick only the public fields (e.g., `id`, `name`, `imageUrl`) when including related user profiles in public or semi-public responses.

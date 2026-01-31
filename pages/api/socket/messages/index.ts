@@ -34,6 +34,18 @@ export default async function handler(
       return res.status(400).json({ error: "Channel ID missing" });
     }
 
+    // 🛡️ Sentinel: Validate UUIDs to prevent errors and ensure data integrity
+    const querySchema = z.object({
+      serverId: z.string().uuid("Invalid Server ID"),
+      channelId: z.string().uuid("Invalid Channel ID"),
+    });
+
+    const queryValidation = querySchema.safeParse(req.query);
+
+    if (!queryValidation.success) {
+      return res.status(400).json({ error: queryValidation.error.errors[0].message });
+    }
+
     const validation = messageSchema.safeParse(req.body);
 
     if (!validation.success) {
@@ -89,7 +101,14 @@ export default async function handler(
       include: {
         member: {
           include: {
-            profile: true,
+            // 🛡️ Sentinel: Prevent PII (email) leakage by selecting only necessary fields
+            profile: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              }
+            }
           }
         }
       }

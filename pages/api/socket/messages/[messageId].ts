@@ -1,5 +1,6 @@
 import { NextApiRequest } from "next";
 import { MemberRole } from "@prisma/client";
+import { z } from "zod";
 
 import { NextApiResponseServerIo } from "@/types";
 import { currentProfilePages } from "@/lib/current-profile-pages";
@@ -28,6 +29,19 @@ export default async function handler(
 
     if (!channelId) {
       return res.status(400).json({ error: "Channel ID missing" });
+    }
+
+    // 🛡️ Sentinel: Validate UUIDs
+    const querySchema = z.object({
+      messageId: z.string().uuid("Invalid Message ID"),
+      serverId: z.string().uuid("Invalid Server ID"),
+      channelId: z.string().uuid("Invalid Channel ID"),
+    });
+
+    const queryValidation = querySchema.safeParse(req.query);
+
+    if (!queryValidation.success) {
+      return res.status(400).json({ error: queryValidation.error.errors[0].message });
     }
 
     const member = await db.member.findFirst({
@@ -60,7 +74,13 @@ export default async function handler(
       include: {
         member: {
           include: {
-            profile: true,
+            profile: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              }
+            }
           }
         }
       }
@@ -92,7 +112,13 @@ export default async function handler(
         include: {
           member: {
             include: {
-              profile: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           }
         }
@@ -102,6 +128,16 @@ export default async function handler(
     if (req.method === "PATCH") {
       if (!isMessageOwner) {
         return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const contentSchema = z.object({
+        content: z.string().min(1).max(4000),
+      });
+
+      const contentValidation = contentSchema.safeParse(req.body);
+
+      if (!contentValidation.success) {
+        return res.status(400).json({ error: contentValidation.error.errors[0].message });
       }
 
       message = await db.message.update({
@@ -114,7 +150,13 @@ export default async function handler(
         include: {
           member: {
             include: {
-              profile: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           }
         }
