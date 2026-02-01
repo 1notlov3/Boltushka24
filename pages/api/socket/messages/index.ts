@@ -42,38 +42,25 @@ export default async function handler(
 
     const { content, fileUrl } = validation.data;
 
-    const server = await db.server.findFirst({
-      where: {
-        id: serverId as string,
-        members: {
-          some: {
-            profileId: profile.id
-          }
+    // ⚡ Bolt Optimization: Parallelize independent DB queries
+    const [channel, member] = await Promise.all([
+      db.channel.findFirst({
+        where: {
+          id: channelId as string,
+          serverId: serverId as string,
         }
-      }
-    });
-
-    if (!server) {
-      return res.status(404).json({ message: "Server not found" });
-    }
-
-    const channel = await db.channel.findFirst({
-      where: {
-        id: channelId as string,
-        serverId: serverId as string,
-      }
-    });
+      }),
+      db.member.findFirst({
+        where: {
+          serverId: serverId as string,
+          profileId: profile.id,
+        }
+      })
+    ]);
 
     if (!channel) {
       return res.status(404).json({ message: "Channel not found" });
     }
-
-    const member = await db.member.findFirst({
-      where: {
-        serverId: serverId as string,
-        profileId: profile.id,
-      }
-    });
 
     if (!member) {
       return res.status(404).json({ message: "Member not found" });
