@@ -81,10 +81,12 @@ export const ChatItem = memo(({
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    if (isEditing) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isEditing]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
