@@ -27,6 +27,7 @@ import { useModal } from "@/hooks/use-modal-store";
 import { ServerWithMembersWithProfiles } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserAvatar } from "@/components/user-avatar";
+import { ActionTooltip } from "@/components/action-tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -124,9 +125,11 @@ export const MembersModal = () => {
               {server.profileId !== member.profileId && loadingId !== member.id && (
                 <div className="ml-auto">
                   <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <MoreVertical className="h-4 w-4 text-zinc-500" />
-                    </DropdownMenuTrigger>
+                    <ActionTooltip side="left" label="Параметры">
+                      <DropdownMenuTrigger aria-label={`Параметры участника ${member.profile.name}`}>
+                        <MoreVertical className="h-4 w-4 text-zinc-500" />
+                      </DropdownMenuTrigger>
+                    </ActionTooltip>
                     <DropdownMenuContent side="left">
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger
