@@ -80,7 +80,13 @@ export default async function handler(
       include: {
         member: {
           include: {
-            profile: true,
+            profile: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              }
+            }
           }
         }
       }
