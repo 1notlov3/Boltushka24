@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
+import { MemberRole } from "@prisma/client";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+
+const RouteParamsSchema = z.object({
+  memberId: z.string().uuid(),
+});
+
+const SearchParamsSchema = z.object({
+  serverId: z.string().uuid(),
+});
+
+const UpdateRoleSchema = z.object({
+  role: z.nativeEnum(MemberRole),
+});
 
 export async function DELETE(
   req: Request,
@@ -23,6 +37,16 @@ export async function DELETE(
 
     if (!params.memberId) {
       return new NextResponse("Member ID missing", { status: 400 });
+    }
+
+    const paramsValidation = RouteParamsSchema.safeParse(params);
+    if (!paramsValidation.success) {
+      return new NextResponse("Invalid Member ID", { status: 400 });
+    }
+
+    const searchValidation = SearchParamsSchema.safeParse({ serverId });
+    if (!searchValidation.success) {
+      return new NextResponse("Invalid Server ID", { status: 400 });
     }
 
     const server = await db.server.update({
@@ -66,7 +90,7 @@ export async function PATCH(
   try {
     const profile = await currentProfile();
     const { searchParams } = new URL(req.url);
-    const { role } = await req.json();
+    const body = await req.json();
 
     const serverId = searchParams.get("serverId");
 
@@ -81,6 +105,22 @@ export async function PATCH(
     if (!params.memberId) {
       return new NextResponse("Member ID missing", { status: 400 });
     }
+
+    const paramsValidation = RouteParamsSchema.safeParse(params);
+    if (!paramsValidation.success) {
+      return new NextResponse("Invalid Member ID", { status: 400 });
+    }
+
+    const searchValidation = SearchParamsSchema.safeParse({ serverId });
+    if (!searchValidation.success) {
+      return new NextResponse("Invalid Server ID", { status: 400 });
+    }
+
+    const roleValidation = UpdateRoleSchema.safeParse(body);
+    if (!roleValidation.success) {
+      return new NextResponse("Invalid Role", { status: 400 });
+    }
+    const { role } = roleValidation.data;
 
     const server = await db.server.update({
       where: {
