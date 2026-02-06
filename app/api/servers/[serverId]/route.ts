@@ -56,7 +56,10 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const validationResult = UpdateServerSchema.safeParse(body);
+    const validationResult = UpdateServerSchema.safeParse({
+      ...body,
+      imageUrl: body.imageUrl || undefined
+    });
 
     if (!validationResult.success) {
       return new NextResponse("Validation Error", { status: 400 });

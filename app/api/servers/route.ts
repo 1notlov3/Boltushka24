@@ -29,7 +29,10 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const validationResult = CreateServerSchema.safeParse(body);
+    const validationResult = CreateServerSchema.safeParse({
+      ...body,
+      imageUrl: body.imageUrl || undefined
+    });
 
     if (!validationResult.success) {
       return new NextResponse("Validation Error", { status: 400 });
