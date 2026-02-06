@@ -25,6 +25,10 @@ const ServerIdLayout = async ({
           profileId: profile.id
         }
       }
+    },
+    // ⚡ Bolt Optimization: Select only id for existence check
+    select: {
+      id: true,
     }
   });
 
