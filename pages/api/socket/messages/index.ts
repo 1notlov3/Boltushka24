@@ -10,6 +10,11 @@ const messageSchema = z.object({
   fileUrl: z.string().url("Invalid file URL").optional().nullable(),
 });
 
+const querySchema = z.object({
+  serverId: z.string().uuid("Invalid Server ID"),
+  channelId: z.string().uuid("Invalid Channel ID"),
+});
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponseServerIo,
@@ -26,12 +31,14 @@ export default async function handler(
       return res.status(401).json({ error: "Unauthorized" });
     }    
 
-    if (!serverId) {
-      return res.status(400).json({ error: "Server ID missing" });
-    }
+    // Validate Query Params
+    const queryValidation = querySchema.safeParse({
+      serverId: serverId as string,
+      channelId: channelId as string,
+    });
 
-    if (!channelId) {
-      return res.status(400).json({ error: "Channel ID missing" });
+    if (!queryValidation.success) {
+      return res.status(400).json({ error: queryValidation.error.errors[0].message });
     }
 
     const validation = messageSchema.safeParse(req.body);
@@ -50,6 +57,10 @@ export default async function handler(
             profileId: profile.id
           }
         }
+      },
+      // ⚡ Bolt Optimization: Select only id for existence check
+      select: {
+        id: true,
       }
     });
 
@@ -61,6 +72,10 @@ export default async function handler(
       where: {
         id: channelId as string,
         serverId: serverId as string,
+      },
+      // ⚡ Bolt Optimization: Select only id for existence check
+      select: {
+        id: true,
       }
     });
 
@@ -72,6 +87,11 @@ export default async function handler(
       where: {
         serverId: serverId as string,
         profileId: profile.id,
+      },
+      // ⚡ Bolt Optimization: Select only id.
+      // We only need the ID to associate with the message.
+      select: {
+        id: true,
       }
     });
 
@@ -89,7 +109,13 @@ export default async function handler(
       include: {
         member: {
           include: {
-            profile: true,
+            profile: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              }
+            }
           }
         }
       }

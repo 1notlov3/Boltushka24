@@ -75,16 +75,24 @@ export const ChatItem = memo(({
   }
 
   useEffect(() => {
+    // ⚡ Bolt Optimization: Only attach keydown listener when editing
+    // This prevents O(N) event listeners for N messages, reducing memory usage and event overhead.
+    if (!isEditing) return;
+
     const handleKeyDown = (event: any) => {
       if (event.key === "Escape" || event.keyCode === 27) {
         setIsEditing(false);
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    if (isEditing) {
+      // ⚡ Bolt Optimization: Only add the keydown listener when editing
+      // This prevents having N active listeners for N messages in the chat
+      window.addEventListener("keydown", handleKeyDown);
+    }
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isEditing]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -171,7 +179,7 @@ export const ChatItem = memo(({
                 rel="noopener noreferrer"
                 className="ml-2 text-sm text-indigo-500 dark:text-indigo-400 hover:underline"
               >
-                PDF File
+                PDF файл
               </a>
             </div>
           )}
@@ -223,27 +231,27 @@ export const ChatItem = memo(({
         </div>
       </div>
       {canDeleteMessage && (
-        <div className="hidden group-hover:flex items-center gap-x-2 absolute p-1 -top-2 right-5 bg-white dark:bg-zinc-800 border rounded-sm">
+        <div className="group-hover:opacity-100 focus-within:opacity-100 group-hover:pointer-events-auto focus-within:pointer-events-auto opacity-0 pointer-events-none flex items-center gap-x-2 absolute p-1 -top-2 right-5 bg-white dark:bg-zinc-800 border rounded-sm transition-opacity">
           {canEditMessage && (
-            <ActionTooltip label="Edit">
+            <ActionTooltip label="Редактировать">
               <button
                 onClick={() => setIsEditing(true)}
                 className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
-                aria-label="Edit"
+                aria-label="Редактировать"
                 type="button"
               >
                 <Edit className="w-4 h-4" />
               </button>
             </ActionTooltip>
           )}
-          <ActionTooltip label="Delete">
+          <ActionTooltip label="Удалить">
             <button
               onClick={() => onOpen("deleteMessage", {
                 apiUrl: `${socketUrl}/${id}`,
                 query: socketQuery,
               })}
               className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
-              aria-label="Delete"
+              aria-label="Удалить"
               type="button"
             >
               <Trash className="w-4 h-4" />
