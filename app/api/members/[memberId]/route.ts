@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
+import { MemberRole } from "@prisma/client";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+
+const UpdateMemberSchema = z.object({
+  role: z.nativeEnum(MemberRole),
+});
 
 export async function DELETE(
   req: Request,
@@ -66,13 +72,21 @@ export async function PATCH(
   try {
     const profile = await currentProfile();
     const { searchParams } = new URL(req.url);
-    const { role } = await req.json();
+    const body = await req.json();
 
     const serverId = searchParams.get("serverId");
 
     if (!profile) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    const validationResult = UpdateMemberSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      return new NextResponse(validationResult.error.errors[0].message, { status: 400 });
+    }
+
+    const { role } = validationResult.data;
 
     if (!serverId) {
       return new NextResponse("Server ID missing", { status: 400 });
