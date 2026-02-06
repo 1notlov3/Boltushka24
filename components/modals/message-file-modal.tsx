@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { FileUpload } from "@/components/file-upload";
-import { useRouter } from "next/navigation";
 import { useModal } from "@/hooks/use-modal-store";
 
 const formSchema = z.object({
@@ -33,7 +32,6 @@ const formSchema = z.object({
 
 export const MessageFileModal = () => {
   const { isOpen, onClose, type, data } = useModal();
-  const router = useRouter();
 
   const isModalOpen = isOpen && type === "messageFile";
   const { apiUrl, query } = data;
@@ -65,7 +63,6 @@ export const MessageFileModal = () => {
       });
 
       form.reset();
-      router.refresh();
       handleClose();
     } catch (error) {
       console.log(error);
