@@ -50,6 +50,10 @@ export default async function handler(
             profileId: profile.id
           }
         }
+      },
+      // ⚡ Bolt Optimization: Select only id for existence check
+      select: {
+        id: true,
       }
     });
 
@@ -61,6 +65,10 @@ export default async function handler(
       where: {
         id: channelId as string,
         serverId: serverId as string,
+      },
+      // ⚡ Bolt Optimization: Select only id for existence check
+      select: {
+        id: true,
       }
     });
 
@@ -72,6 +80,11 @@ export default async function handler(
       where: {
         serverId: serverId as string,
         profileId: profile.id,
+      },
+      // ⚡ Bolt Optimization: Select only id.
+      // We only need the ID to associate with the message.
+      select: {
+        id: true,
       }
     });
 
@@ -89,7 +102,13 @@ export default async function handler(
       include: {
         member: {
           include: {
-            profile: true,
+            profile: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              }
+            }
           }
         }
       }

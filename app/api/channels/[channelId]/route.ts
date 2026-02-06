@@ -1,7 +1,16 @@
 import { currentProfile } from "@/lib/current-profile";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { MemberRole } from "@prisma/client";
+import { MemberRole, ChannelType } from "@prisma/client";
+import { z } from "zod";
+
+const UpdateChannelSchema = z.object({
+  name: z.string().min(1).max(100).refine((name) => name !== "основной", {
+    message: "Название канала не может быть \"основной\""
+  }).optional(),
+  type: z.nativeEnum(ChannelType).optional()
+});
+
 export async function DELETE(
   req: Request,
   {params}: {params:{channelId:string}}
@@ -57,9 +66,10 @@ export async function PATCH(
 ) {
   try{
     const {searchParams} = new URL(req.url);
-    const {name,type} = await req.json();
+    const body = await req.json();
     const serverId = searchParams.get('serverId');
     const profile= await currentProfile();
+
     if (!profile){
       return new NextResponse('Unauthorized', {status:401});
     }
@@ -70,9 +80,13 @@ export async function PATCH(
       return new NextResponse('Channel id is missing', {status:400});
     }
 
-    if (name === 'основной'){
-      return new NextResponse('Название канала не может быть "основной"', {status:400});
+    const result = UpdateChannelSchema.safeParse(body);
+
+    if (!result.success) {
+      return new NextResponse(result.error.errors[0].message, { status: 400 });
     }
+
+    const { name, type } = result.data;
 
     const server = await db.server.update({
       where:{
