@@ -9,6 +9,14 @@ const UpdateMemberSchema = z.object({
   role: z.nativeEnum(MemberRole),
 });
 
+const ParamsSchema = z.object({
+  memberId: z.string().uuid("Invalid Member ID"),
+});
+
+const QuerySchema = z.object({
+  serverId: z.string().uuid("Invalid Server ID"),
+});
+
 export async function DELETE(
   req: Request,
   { params }: { params: { memberId: string } }
@@ -29,6 +37,17 @@ export async function DELETE(
 
     if (!params.memberId) {
       return new NextResponse("Member ID missing", { status: 400 });
+    }
+
+    const paramsValidation = ParamsSchema.safeParse(params);
+    const queryValidation = QuerySchema.safeParse({ serverId });
+
+    if (!paramsValidation.success) {
+      return new NextResponse(paramsValidation.error.errors[0].message, { status: 400 });
+    }
+
+    if (!queryValidation.success) {
+      return new NextResponse(queryValidation.error.errors[0].message, { status: 400 });
     }
 
     const server = await db.server.update({
@@ -94,6 +113,17 @@ export async function PATCH(
 
     if (!params.memberId) {
       return new NextResponse("Member ID missing", { status: 400 });
+    }
+
+    const paramsValidation = ParamsSchema.safeParse(params);
+    const queryValidation = QuerySchema.safeParse({ serverId });
+
+    if (!paramsValidation.success) {
+      return new NextResponse(paramsValidation.error.errors[0].message, { status: 400 });
+    }
+
+    if (!queryValidation.success) {
+      return new NextResponse(queryValidation.error.errors[0].message, { status: 400 });
     }
 
     const server = await db.server.update({

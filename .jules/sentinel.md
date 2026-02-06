@@ -14,3 +14,8 @@
 **Vulnerability:** The `/api/livekit` endpoint generated tokens for any `room` and `username` without checking if the user was authenticated or authorized to access that room. It also allowed client-side `username` spoofing.
 **Learning:** External service integrations (like LiveKit) often require generating tokens server-side. These endpoints must be protected with the same rigor as data access endpoints, ensuring the user has access to the context (channel/conversation) the token is for.
 **Prevention:** Verify `currentProfile` authentication and check membership in the target Channel or Conversation before generating tokens. Use server-side user data (`profile.id`, `profile.name`) for token identity instead of client-provided values.
+
+## 2024-05-25 - Unvalidated Route Parameters
+**Vulnerability:** API routes (e.g., `app/api/members/[memberId]/route.ts`) were using `params.memberId` and `searchParams.get("serverId")` directly in Prisma queries without validating that they were valid UUIDs.
+**Learning:** While Prisma might handle invalid UUIDs gracefully, explicit validation is crucial for defense-in-depth, ensuring data integrity, and providing clear 400 Bad Request errors to clients.
+**Prevention:** Always define Zod schemas for route parameters (`params`) and query parameters (`searchParams`) and validate them using `.uuid()` before use.
