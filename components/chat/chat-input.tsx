@@ -6,7 +6,6 @@ import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 import {
   Form,
@@ -36,7 +35,6 @@ export const ChatInput = ({
   type,
 }: ChatInputProps) => {
   const { onOpen } = useModal();
-  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,7 +55,6 @@ export const ChatInput = ({
       await axios.post(url, values);
 
       form.reset();
-      router.refresh();
     } catch (error) {
       console.log(error);
     }
