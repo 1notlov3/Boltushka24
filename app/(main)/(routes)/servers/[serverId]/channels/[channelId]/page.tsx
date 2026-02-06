@@ -24,18 +24,20 @@ const ChannelIdPage = async ({
     return redirect("/sign-in");
   }
 
-  const channel = await db.channel.findUnique({
-    where: {
-      id: params.channelId,
-    },
-  });
-
-  const member = await db.member.findFirst({
-    where: {
-      serverId: params.serverId,
-      profileId: profile.id,
-    }
-  });
+  // ⚡ Bolt Optimization: Parallelize independent queries to reduce waterfall
+  const [channel, member] = await Promise.all([
+    db.channel.findUnique({
+      where: {
+        id: params.channelId,
+      },
+    }),
+    db.member.findFirst({
+      where: {
+        serverId: params.serverId,
+        profileId: profile.id,
+      }
+    })
+  ]);
 
   if (!channel || !member) {
     redirect("/");
