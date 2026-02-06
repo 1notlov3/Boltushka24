@@ -49,51 +49,41 @@ export default async function handler(
 
     const { content, fileUrl } = validation.data;
 
-    const server = await db.server.findFirst({
-      where: {
-        id: serverId as string,
-        members: {
-          some: {
-            profileId: profile.id
+    const [server, channel, member] = await Promise.all([
+      db.server.findFirst({
+        where: {
+          id: serverId as string,
+          members: {
+            some: {
+              profileId: profile.id
+            }
           }
-        }
-      },
-      // ⚡ Bolt Optimization: Select only id for existence check
-      select: {
-        id: true,
-      }
-    });
+        },
+        select: { id: true }
+      }),
+      db.channel.findFirst({
+        where: {
+          id: channelId as string,
+          serverId: serverId as string,
+        },
+        select: { id: true }
+      }),
+      db.member.findFirst({
+        where: {
+          serverId: serverId as string,
+          profileId: profile.id,
+        },
+        select: { id: true }
+      })
+    ]);
 
     if (!server) {
       return res.status(404).json({ message: "Server not found" });
     }
 
-    const channel = await db.channel.findFirst({
-      where: {
-        id: channelId as string,
-        serverId: serverId as string,
-      },
-      // ⚡ Bolt Optimization: Select only id for existence check
-      select: {
-        id: true,
-      }
-    });
-
     if (!channel) {
       return res.status(404).json({ message: "Channel not found" });
     }
-
-    const member = await db.member.findFirst({
-      where: {
-        serverId: serverId as string,
-        profileId: profile.id,
-      },
-      // ⚡ Bolt Optimization: Select only id.
-      // We only need the ID to associate with the message.
-      select: {
-        id: true,
-      }
-    });
 
     if (!member) {
       return res.status(404).json({ message: "Member not found" });

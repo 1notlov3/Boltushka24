@@ -56,13 +56,15 @@ export default async function handler(
       },
       include: {
         memberOne: {
-          include: {
-            profile: true,
+          select: {
+            id: true,
+            profileId: true,
           }
         },
         memberTwo: {
-          include: {
-            profile: true,
+          select: {
+            id: true,
+            profileId: true,
           }
         }
       }
