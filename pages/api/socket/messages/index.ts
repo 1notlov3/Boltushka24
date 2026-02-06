@@ -10,6 +10,11 @@ const messageSchema = z.object({
   fileUrl: z.string().url("Invalid file URL").optional().nullable(),
 });
 
+const querySchema = z.object({
+  serverId: z.string().uuid("Invalid Server ID"),
+  channelId: z.string().uuid("Invalid Channel ID"),
+});
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponseServerIo,
@@ -26,12 +31,14 @@ export default async function handler(
       return res.status(401).json({ error: "Unauthorized" });
     }    
 
-    if (!serverId) {
-      return res.status(400).json({ error: "Server ID missing" });
-    }
+    // Validate Query Params
+    const queryValidation = querySchema.safeParse({
+      serverId: serverId as string,
+      channelId: channelId as string,
+    });
 
-    if (!channelId) {
-      return res.status(400).json({ error: "Channel ID missing" });
+    if (!queryValidation.success) {
+      return res.status(400).json({ error: queryValidation.error.errors[0].message });
     }
 
     const validation = messageSchema.safeParse(req.body);
