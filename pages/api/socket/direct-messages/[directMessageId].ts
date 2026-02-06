@@ -30,35 +30,50 @@ export default async function handler(
       return res.status(400).json({ error: "Conversation ID missing" });
     }
 
-    const conversation = await db.conversation.findFirst({
-      where: {
-        id: conversationId as string,
-        OR: [
-          {
-            memberOne: {
-              profileId: profile.id,
+    const [conversation, directMessage] = await Promise.all([
+      db.conversation.findFirst({
+        where: {
+          id: conversationId as string,
+          OR: [
+            {
+              memberOne: {
+                profileId: profile.id,
+              }
+            },
+            {
+              memberTwo: {
+                profileId: profile.id,
+              }
+            }
+          ]
+        },
+        include: {
+          memberOne: {
+            include: {
+              profile: true,
             }
           },
-          {
-            memberTwo: {
-              profileId: profile.id,
+          memberTwo: {
+            include: {
+              profile: true,
             }
           }
-        ]
-      },
-      include: {
-        memberOne: {
-          include: {
-            profile: true,
-          }
+        }
+      }),
+      db.directMessage.findFirst({
+        where: {
+          id: directMessageId as string,
+          conversationId: conversationId as string,
         },
-        memberTwo: {
-          include: {
-            profile: true,
+        include: {
+          member: {
+            include: {
+              profile: true,
+            }
           }
         }
-      }
-    })
+      })
+    ]);
 
     if (!conversation) {
       return res.status(404).json({ error: "Conversation not found" });
@@ -69,20 +84,6 @@ export default async function handler(
     if (!member) {
       return res.status(404).json({ error: "Member not found" });
     }
-
-    let directMessage = await db.directMessage.findFirst({
-      where: {
-        id: directMessageId as string,
-        conversationId: conversationId as string,
-      },
-      include: {
-        member: {
-          include: {
-            profile: true,
-          }
-        }
-      }
-    })
 
     if (!directMessage || directMessage.deleted) {
       return res.status(404).json({ error: "Message not found" });
