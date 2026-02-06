@@ -69,6 +69,7 @@ export const DeleteChannelModal = () => {
             </Button>
             <Button
               disabled={isLoading}
+              isLoading={isLoading}
               variant="primary"
               onClick={onClick}
             >
