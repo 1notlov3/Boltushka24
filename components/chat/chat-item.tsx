@@ -82,6 +82,8 @@ export const ChatItem = memo(({
     };
 
     if (isEditing) {
+      // ⚡ Bolt Optimization: Only add the keydown listener when editing
+      // This prevents having N active listeners for N messages in the chat
       window.addEventListener("keydown", handleKeyDown);
     }
 
