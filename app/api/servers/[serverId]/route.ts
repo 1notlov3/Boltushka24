@@ -5,6 +5,10 @@ import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { serverIconDataUri } from "@/lib/server-icon";
 
+const ParamsSchema = z.object({
+  serverId: z.string().uuid(),
+});
+
 const ImageUrlSchema = z
   .string()
   .min(1)
@@ -27,6 +31,12 @@ export async function DELETE(
 
     if (!profile) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const paramsValidation = ParamsSchema.safeParse(params);
+
+    if (!paramsValidation.success) {
+      return new NextResponse("Invalid Server ID", { status: 400 });
     }
 
     const server = await db.server.delete({
@@ -54,6 +64,12 @@ export async function PATCH(
 
     if (!profile) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const paramsValidation = ParamsSchema.safeParse(params);
+
+    if (!paramsValidation.success) {
+      return new NextResponse("Invalid Server ID", { status: 400 });
     }
 
     const validationResult = UpdateServerSchema.safeParse({
