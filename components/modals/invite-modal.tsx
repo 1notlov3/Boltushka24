@@ -15,6 +15,7 @@ import { useModal } from "@/hooks/use-modal-store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useOrigin } from "@/hooks/use-origin";
+import { cn } from "@/lib/utils";
 
 export const InviteModal = () => {
   const { onOpen, isOpen, onClose, type, data } = useModal();
@@ -60,17 +61,20 @@ export const InviteModal = () => {
         </DialogHeader>
         <div className="p-6">
           <Label
+            htmlFor="invite-link"
             className="uppercase text-xs font-bold text-zinc-500 dark:text-secondary/70"
           >
             Ссылка для приглашения
           </Label>
           <div className="flex items-center mt-2 gap-x-2">
             <Input
+              id="invite-link"
               disabled={isLoading}
+              readOnly
               className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black focus-visible:ring-offset-0"
               value={inviteUrl}
             />
-            <Button disabled={isLoading} onClick={onCopy} size="icon">
+            <Button disabled={isLoading} onClick={onCopy} size="icon" aria-label="Копировать ссылку">
               {copied 
                 ? <Check className="w-4 h-4" /> 
                 : <Copy className="w-4 h-4" />
@@ -85,7 +89,7 @@ export const InviteModal = () => {
             className="text-xs text-zinc-500 mt-4"
           >
             Создать новую ссылку
-            <RefreshCw className="w-4 h-4 ml-2" />
+            <RefreshCw className={cn("w-4 h-4 ml-2", isLoading && "animate-spin")} />
           </Button>
         </div>
       </DialogContent>
