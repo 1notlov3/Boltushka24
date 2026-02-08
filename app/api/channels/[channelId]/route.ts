@@ -11,6 +11,14 @@ const UpdateChannelSchema = z.object({
   type: z.nativeEnum(ChannelType).optional()
 });
 
+const ParamsSchema = z.object({
+  channelId: z.string().uuid("Invalid Channel ID"),
+});
+
+const QuerySchema = z.object({
+  serverId: z.string().uuid("Invalid Server ID"),
+});
+
 export async function DELETE(
   req: Request,
   {params}: {params:{channelId:string}}
@@ -19,14 +27,28 @@ export async function DELETE(
     const {searchParams} = new URL(req.url);
     const serverId = searchParams.get('serverId');
     const profile= await currentProfile();
+
     if (!profile){
       return new NextResponse('Unauthorized', {status:401});
     }
+
     if (!serverId){
       return new NextResponse('Server id is missing', {status:400});
     }
+
     if (!params.channelId){
       return new NextResponse('Channel id is missing', {status:400});
+    }
+
+    const paramsValidation = ParamsSchema.safeParse(params);
+    const queryValidation = QuerySchema.safeParse({ serverId });
+
+    if (!paramsValidation.success) {
+      return new NextResponse(paramsValidation.error.errors[0].message, { status: 400 });
+    }
+
+    if (!queryValidation.success) {
+      return new NextResponse(queryValidation.error.errors[0].message, { status: 400 });
     }
 
     const server = await db.server.update({
@@ -78,6 +100,17 @@ export async function PATCH(
     }
     if (!params.channelId){
       return new NextResponse('Channel id is missing', {status:400});
+    }
+
+    const paramsValidation = ParamsSchema.safeParse(params);
+    const queryValidation = QuerySchema.safeParse({ serverId });
+
+    if (!paramsValidation.success) {
+      return new NextResponse(paramsValidation.error.errors[0].message, { status: 400 });
+    }
+
+    if (!queryValidation.success) {
+      return new NextResponse(queryValidation.error.errors[0].message, { status: 400 });
     }
 
     const result = UpdateChannelSchema.safeParse(body);
