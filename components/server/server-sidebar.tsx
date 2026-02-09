@@ -1,19 +1,17 @@
-import { Channel, ChannelType, MemberRole } from "@prisma/client";
+import { ChannelType, MemberRole } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { Hash, Mic, ShieldAlert, ShieldCheck, Video } from "lucide-react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { currentProfile } from "@/lib/current-profile";
-import { db } from "@/lib/db";
-import { ServerWithMembersWithProfiles } from "@/types";
+import { getServerDetails } from "@/lib/data-service";
 
 import { ServerHeader } from "./server-header";
 import { ServerSearch } from "./server-search";
 import { ServerSection } from "./server-section";
 import { ServerChannel } from "./server-channel";
 import { ServerMember } from "./server-member";
-
 
 interface ServerSidebarProps {
   serverId: string;
@@ -40,52 +38,16 @@ export const ServerSidebar = async ({
     return redirect("/");
   }
 
-  const server = await db.server.findUnique({
-    where: {
-      id: serverId,
-    },
-    include: {
-      channels: {
-        orderBy: {
-          createdAt: "asc",
-        },
-        // ⚡ Bolt Optimization: Select only necessary fields for channels
-        // This reduces payload size by excluding createdAt, updatedAt, profileId, and serverId.
-        select: {
-          id: true,
-          name: true,
-          type: true,
-        },
-      },
-      members: {
-        include: {
-          profile: {
-            // ⚡ Bolt Optimization: Select only necessary fields for members
-            // This reduces payload size by excluding password, createdAt, updatedAt, and userId.
-            // Verified that downstream components (ServerMember, MembersModal) only use these fields.
-            select: {
-              id: true,
-              name: true,
-              imageUrl: true,
-              email: true,
-            }
-          },
-        },
-        orderBy: {
-          role: "asc",
-        },
-      },
-    },
-  }) as unknown as ServerWithMembersWithProfiles & { channels: Channel[] };
+  const server = await getServerDetails(serverId);
+
+  if (!server) {
+    return redirect("/");
+  }
 
   const textChannels = server?.channels.filter((channel) => channel.type === ChannelType.TEXT)
   const audioChannels = server?.channels.filter((channel) => channel.type === ChannelType.AUDIO)
   const videoChannels = server?.channels.filter((channel) => channel.type === ChannelType.VIDEO)
   const members = server?.members.filter((member) => member.profileId !== profile.id)
-
-  if (!server) {
-    return redirect("/");
-  }
 
   const role = server.members.find((member) => member.profileId === profile.id)?.role;
 
