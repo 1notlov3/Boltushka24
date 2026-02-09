@@ -30,7 +30,7 @@ export default async function handler(
       return res.status(400).json({ error: "Conversation ID missing" });
     }
 
-    const [conversation, directMessage] = await Promise.all([
+    let [conversation, directMessage] = await Promise.all([
       db.conversation.findFirst({
         where: {
           id: conversationId as string,
@@ -50,12 +50,24 @@ export default async function handler(
         include: {
           memberOne: {
             include: {
-              profile: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           },
           memberTwo: {
             include: {
-              profile: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           }
         }
@@ -68,7 +80,13 @@ export default async function handler(
         include: {
           member: {
             include: {
-              profile: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           }
         }
@@ -111,7 +129,13 @@ export default async function handler(
         include: {
           member: {
             include: {
-              profile: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           }
         }
@@ -141,7 +165,13 @@ export default async function handler(
         include: {
           member: {
             include: {
-              profile: true,
+              profile: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                }
+              }
             }
           }
         }
