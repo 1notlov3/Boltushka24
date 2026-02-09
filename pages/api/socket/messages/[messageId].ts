@@ -34,7 +34,7 @@ export default async function handler(
       return res.status(400).json({ error: "Channel ID missing" });
     }
 
-    const [member, channel, message] = await Promise.all([
+    const [member, channel, messageResult] = await Promise.all([
       db.member.findFirst({
         where: {
           serverId: serverId as string,
@@ -61,6 +61,8 @@ export default async function handler(
         }
       })
     ]);
+
+    let message = messageResult;
 
     if (!member) {
       return res.status(404).json({ error: "Member not found" });

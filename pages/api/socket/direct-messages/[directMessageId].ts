@@ -30,7 +30,7 @@ export default async function handler(
       return res.status(400).json({ error: "Conversation ID missing" });
     }
 
-    const [conversation, directMessage] = await Promise.all([
+    const [conversation, directMessageResult] = await Promise.all([
       db.conversation.findFirst({
         where: {
           id: conversationId as string,
@@ -74,6 +74,8 @@ export default async function handler(
         }
       })
     ]);
+
+    let directMessage = directMessageResult;
 
     if (!conversation) {
       return res.status(404).json({ error: "Conversation not found" });

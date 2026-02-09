@@ -32,7 +32,7 @@ export const FileUpload = ({
         />
         <button
           onClick={() => onChange("")}
-          className="bg-rose-500 text-white p-1 rounded-full absolute top-0 right-0 shadow-sm"
+          className="bg-rose-500 text-white p-1 rounded-full absolute top-0 right-0 shadow-sm hover:bg-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 transition"
           type="button"
           aria-label="Удалить файл"
         >
@@ -51,12 +51,14 @@ export const FileUpload = ({
           target="_blank"
           rel="noopener noreferrer"
           className="ml-2 text-sm text-indigo-500 dark:text-indigo-400 hover:underline"
+          title={value}
+          aria-label="Просмотреть PDF файл"
         >
-          {value}
+          PDF файл
         </a>
         <button
           onClick={() => onChange("")}
-          className="bg-rose-500 text-white p-1 rounded-full absolute -top-2 -right-2 shadow-sm"
+          className="bg-rose-500 text-white p-1 rounded-full absolute -top-2 -right-2 shadow-sm hover:bg-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 transition"
           type="button"
           aria-label="Удалить файл"
         >
