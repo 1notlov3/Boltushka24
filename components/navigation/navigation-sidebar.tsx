@@ -4,35 +4,18 @@ import { redirect } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Separator } from "@/components/ui/separator";
-import { currentProfile } from "@/lib/current-profile"
-import { db } from "@/lib/db";
 import { UserMenu } from "@/components/user-menu";
+import { getServers } from "@/lib/data-service";
 
 import { NavigationAction } from "./navigation-action";
 import { NavigationItem } from "./navigation-item";
 
 export const NavigationSidebar = async () => {
-  const profile = await currentProfile();
+  const servers = await getServers();
 
-  if (!profile) {
+  if (!servers) {
     return redirect("/");
   }
-
-  const servers = await db.server.findMany({
-    where: {
-      members: {
-        some: {
-          profileId: profile.id
-        }
-      }
-    },
-    // ⚡ Bolt Optimization: Select only necessary fields
-    select: {
-      id: true,
-      name: true,
-      imageUrl: true,
-    }
-  });
 
   return (
     <div
