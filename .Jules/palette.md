@@ -9,3 +9,7 @@
 ## 2026-01-29 - Live Status Regions
 **Learning:** The `SocketIndicator` was visually indicating status (though incorrectly due to a bug) but lacked semantic announcements. Real-time status changes need `aria-live="polite"` so screen readers announce "Connecting..." or "Online" without user interaction.
 **Action:** Add `role="status"` and `aria-live="polite"` to any component that displays real-time connection or system status.
+
+## 2024-05-24 - Contextual Loading States
+**Learning:** The generic `Button` component's `isLoading` prop prepends a spinner, which can be redundant when the button already contains a relevant icon (e.g., `RefreshCw`).
+**Action:** For buttons with specific action icons, manually animate the icon (e.g., `animate-spin`) instead of using the `isLoading` prop to provide cleaner, context-aware feedback.
