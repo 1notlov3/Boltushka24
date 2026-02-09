@@ -1,8 +1,13 @@
 import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+
+const ParamsSchema = z.object({
+  serverId: z.string().uuid(),
+});
 
 export async function PATCH(
   req: Request,
@@ -17,6 +22,12 @@ export async function PATCH(
 
     if (!params.serverId) {
       return new NextResponse("Server ID Missing", { status: 400 });
+    }
+
+    const paramsValidation = ParamsSchema.safeParse(params);
+
+    if (!paramsValidation.success) {
+      return new NextResponse("Invalid Server ID", { status: 400 });
     }
 
     const server = await db.server.update({
