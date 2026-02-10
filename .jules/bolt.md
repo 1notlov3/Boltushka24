@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-10-27 - [Redundant Relational Queries]
+**Learning:** Checking for server existence (`db.server.findFirst`) in API routes is redundant if we are also checking for membership (`db.member.findFirst`). The existence of a member record implicitly confirms the server exists.
+**Action:** Eliminated the separate `db.server.findFirst` query in `pages/api/socket/messages/index.ts`, relying on `db.member.findFirst` to validate both membership and server existence, saving one DB roundtrip.
