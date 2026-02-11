@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Message } from "@prisma/client";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
@@ -22,6 +23,18 @@ export async function GET(
 
     if (!channelId) {
       return new NextResponse("Channel ID missing", { status: 400 });
+    }
+
+    const channelIdValidation = z.string().uuid().safeParse(channelId);
+    if (!channelIdValidation.success) {
+      return new NextResponse("Invalid Channel ID", { status: 400 });
+    }
+
+    if (cursor) {
+      const cursorValidation = z.string().uuid().safeParse(cursor);
+      if (!cursorValidation.success) {
+        return new NextResponse("Invalid Cursor ID", { status: 400 });
+      }
     }
 
     const channel = await db.channel.findFirst({

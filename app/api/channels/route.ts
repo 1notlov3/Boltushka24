@@ -34,6 +34,11 @@ export async function POST(
       return new NextResponse("Server ID missing", { status: 400 });
     }
 
+    const serverIdValidation = z.string().uuid().safeParse(serverId);
+    if (!serverIdValidation.success) {
+      return new NextResponse("Invalid Server ID", { status: 400 });
+    }
+
     const validationResult = CreateChannelSchema.safeParse({ name, type });
 
     if (!validationResult.success) {

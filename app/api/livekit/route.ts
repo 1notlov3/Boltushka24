@@ -1,5 +1,6 @@
 import { AccessToken } from "livekit-server-sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
@@ -18,6 +19,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing "room" query parameter' }, { status: 400 });
   } else if (!username) {
     return NextResponse.json({ error: 'Missing "username" query parameter' }, { status: 400 });
+  }
+
+  const roomValidation = z.string().uuid().safeParse(room);
+  if (!roomValidation.success) {
+    return NextResponse.json({ error: 'Invalid room ID' }, { status: 400 });
   }
 
   // Verify access to channel or conversation
