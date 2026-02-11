@@ -1,6 +1,6 @@
 "use client";
 
-import { Smile } from "lucide-react";
+import { Loader2, Smile } from "lucide-react";
 import dynamic from "next/dynamic";
 
 import {
@@ -16,7 +16,11 @@ interface EmojiPickerProps {
 // Lazy load emoji picker to reduce initial bundle size
 const EmojiPickerWrapper = dynamic(() => import("./emoji-picker-wrapper"), {
   ssr: false,
-  loading: () => <p>Loading...</p>
+  loading: () => (
+    <div className="flex items-center justify-center w-full h-[435px]">
+      <Loader2 className="h-8 w-8 text-zinc-500 animate-spin" />
+    </div>
+  )
 });
 
 export const EmojiPicker = ({
