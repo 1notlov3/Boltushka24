@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-25 - [Minimizing PII Payload]
+**Learning:** `getServerDetails` was fetching `email` for every member of a server, which was then passed to client components (`ServerSidebar` -> `ServerHeader`). This resulted in a massive payload bloat and exposed all member emails to every user in the server via the network tab.
+**Action:** Removed `email` from the `select` clause in `getServerDetails`. Only fetch strictly necessary fields. If specific sensitive data is needed (like in admin panels), it should be fetched on demand, not in the initial page load.

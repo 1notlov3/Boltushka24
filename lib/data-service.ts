@@ -59,7 +59,8 @@ export const getServerDetails = cache(async (serverId: string) => {
               id: true,
               name: true,
               imageUrl: true,
-              email: true,
+              // Bolt Optimization: Remove email to reduce payload size and prevent PII leak
+              // email: true,
             }
           },
         },
