@@ -19,3 +19,8 @@
 **Vulnerability:** API routes (e.g., `app/api/members/[memberId]/route.ts`) were using `params.memberId` and `searchParams.get("serverId")` directly in Prisma queries without validating that they were valid UUIDs.
 **Learning:** While Prisma might handle invalid UUIDs gracefully, explicit validation is crucial for defense-in-depth, ensuring data integrity, and providing clear 400 Bad Request errors to clients.
 **Prevention:** Always define Zod schemas for route parameters (`params`) and query parameters (`searchParams`) and validate them using `.uuid()` before use.
+
+## 2024-05-26 - Stored XSS via Dangerous URL Schemes
+**Vulnerability:** The `fileUrl` field in message endpoints accepted any valid URL, including dangerous schemes like `javascript:` or `vbscript:`, which could lead to Stored XSS when rendered in `href` attributes.
+**Learning:** `z.string().url()` validates URL structure but does not restrict protocols. It is permissive by design.
+**Prevention:** Always use `.refine()` to explicitly whitelist safe protocols (e.g., `http:`, `https:`) when accepting URLs that will be rendered as links. Ensure checks are case-insensitive.
