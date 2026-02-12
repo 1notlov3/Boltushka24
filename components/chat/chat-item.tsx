@@ -147,9 +147,13 @@ export const ChatItem = memo(({
             <p onClick={onMemberClick} className="font-semibold text-sm hover:underline cursor-pointer">
                 {member.profile.name}
               </p>
-              <ActionTooltip label={member.role}>
-                {roleIconMap[member.role]}
-              </ActionTooltip>
+              {/* ⚡ Bolt Optimization: Only render ActionTooltip if role has an icon.
+                  This prevents rendering empty tooltips for Guests (majority of users). */}
+              {roleIconMap[member.role] && (
+                <ActionTooltip label={member.role}>
+                  {roleIconMap[member.role]}
+                </ActionTooltip>
+              )}
             </div>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
               {timestamp}
