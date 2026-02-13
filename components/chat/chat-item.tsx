@@ -219,7 +219,10 @@ export const ChatItem = memo(({
                       </FormItem>
                     )}
                   />
-                  <Button disabled={isLoading} size="sm" variant="primary">
+                  <Button disabled={isLoading} onClick={() => setIsEditing(false)} size="sm" variant="ghost" type="button">
+                    Отмена
+                  </Button>
+                  <Button disabled={isLoading} size="sm" variant="primary" isLoading={isLoading}>
                     Сохранить
                   </Button>
               </form>
