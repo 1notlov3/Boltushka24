@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-25 - [Lazy Loading Client Components in RSC]
+**Learning:** `next/dynamic` is highly effective in Server Components for code-splitting heavy Client Components like `MediaRoom` (LiveKit). Named exports require `.then(mod => mod.Component)` handling.
+**Action:** Always lazy load heavy, conditionally rendered client components (especially those using `window` or heavy deps) in Server Components using `ssr: false`.

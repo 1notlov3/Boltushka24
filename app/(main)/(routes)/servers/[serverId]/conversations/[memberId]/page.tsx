@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
 
 import { getOrCreateConversation } from "@/lib/conversation";
 import { currentProfile } from "@/lib/current-profile";
@@ -6,7 +8,18 @@ import { db } from "@/lib/db";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessages } from "@/components/chat/chat-messages";
-import { MediaRoom } from "@/components/media-room";
+
+const MediaRoom = dynamic(() => import("@/components/media-room").then((mod) => mod.MediaRoom), {
+  loading: () => (
+    <div className="flex flex-col flex-1 justify-center items-center">
+      <Loader2 className="h-7 w-7 text-zinc-500 animate-spin my-4" />
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        Loading...
+      </p>
+    </div>
+  ),
+  ssr: false,
+});
 
 interface MemberIdPageProps {
   params: {
