@@ -13,3 +13,7 @@
 ## 2024-05-24 - Contextual Loading States
 **Learning:** The generic `Button` component's `isLoading` prop prepends a spinner, which can be redundant when the button already contains a relevant icon (e.g., `RefreshCw`).
 **Action:** For buttons with specific action icons, manually animate the icon (e.g., `animate-spin`) instead of using the `isLoading` prop to provide cleaner, context-aware feedback.
+
+## 2026-02-15 - Visible Cancel Actions
+**Learning:** Inline editing forms often rely on keyboard shortcuts (like Escape) for cancellation, which is undiscoverable for many users and inaccessible for mouse/touch-only users.
+**Action:** Always include a visible "Cancel" button (e.g., variant="ghost") alongside the submit action in inline forms to ensure accessibility and usability.
