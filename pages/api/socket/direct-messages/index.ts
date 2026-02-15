@@ -7,7 +7,14 @@ import { db } from "@/lib/db";
 
 const messageSchema = z.object({
   content: z.string().min(1, "Content is required").max(4000, "Content too long"),
-  fileUrl: z.string().url("Invalid file URL").optional().nullable(),
+  fileUrl: z.string().url("Invalid file URL").refine((val) => {
+    try {
+      const url = new URL(val);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "File URL must use http or https protocol").optional().nullable(),
 });
 
 export default async function handler(
