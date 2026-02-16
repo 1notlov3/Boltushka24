@@ -118,9 +118,11 @@ export const MembersModal = () => {
                   {member.profile.name}
                   {roleIconMap[member.role]}
                 </div>
-                <p className="text-xs text-zinc-500">
-                  {member.profile.email}
-                </p>
+                {member.profile.email && (
+                  <p className="text-xs text-zinc-500">
+                    {member.profile.email}
+                  </p>
+                )}
               </div>
               {server.profileId !== member.profileId && loadingId !== member.id && (
                 <div className="ml-auto">
