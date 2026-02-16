@@ -147,9 +147,11 @@ export const ChatItem = memo(({
             <p onClick={onMemberClick} className="font-semibold text-sm hover:underline cursor-pointer">
                 {member.profile.name}
               </p>
-              <ActionTooltip label={member.role}>
-                {roleIconMap[member.role]}
-              </ActionTooltip>
+              {roleIconMap[member.role] && (
+                <ActionTooltip label={member.role}>
+                  {roleIconMap[member.role]}
+                </ActionTooltip>
+              )}
             </div>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
               {timestamp}
@@ -219,6 +221,15 @@ export const ChatItem = memo(({
                       </FormItem>
                     )}
                   />
+                  <Button
+                    disabled={isLoading}
+                    onClick={() => setIsEditing(false)}
+                    size="sm"
+                    variant="ghost"
+                    type="button"
+                  >
+                    Отмена
+                  </Button>
                   <Button disabled={isLoading} size="sm" variant="primary">
                     Сохранить
                   </Button>
