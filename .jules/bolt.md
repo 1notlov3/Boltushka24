@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-07-28 - [Unused Props in Client Components]
+**Learning:** `ServerMember` (a Client Component rendered for each member) was receiving the full `server` object (including all channels and members) as a prop, but not using it. This caused massive unnecessary serialization overhead for every member in the list.
+**Action:** Removed the unused `server` prop from `ServerMember` and its usage in `ServerSidebar`. Always verify that props passed to Client Components are actually used, especially in large lists.
