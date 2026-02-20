@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { DirectMessage } from "@prisma/client";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
@@ -22,6 +23,18 @@ export async function GET(
 
     if (!conversationId) {
       return new NextResponse("Conversation ID missing", { status: 400 });
+    }
+
+    const conversationIdValidation = z.string().uuid().safeParse(conversationId);
+    if (!conversationIdValidation.success) {
+      return new NextResponse("Invalid Conversation ID", { status: 400 });
+    }
+
+    if (cursor) {
+      const cursorValidation = z.string().uuid().safeParse(cursor);
+      if (!cursorValidation.success) {
+        return new NextResponse("Invalid Cursor ID", { status: 400 });
+      }
     }
 
     const conversation = await db.conversation.findFirst({
