@@ -91,7 +91,7 @@ export const ServerHeader = ({
         )}
          {/* Новый пункт рейтинга */}
          <DropdownMenuItem
-          onClick={() => onOpen("userRating")}
+          onClick={() => onOpen("userRating", { server })}
           className="px-3 py-2 text-sm cursor-pointer"
         >
           Рейтинг пользователей
