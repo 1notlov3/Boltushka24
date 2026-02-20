@@ -64,7 +64,7 @@ export const DeleteMessageModal = () => {
             <Button
               disabled={isLoading}
               isLoading={isLoading}
-              variant="primary"
+              variant="destructive"
               onClick={onClick}
             >
               Удалить

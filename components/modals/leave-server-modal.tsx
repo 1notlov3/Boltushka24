@@ -63,7 +63,7 @@ export const LeaveServerModal = () => {
             <Button
               disabled={isLoading}
               isLoading={isLoading}
-              variant="primary"
+              variant="destructive"
               onClick={onClick}
             >
               Покинуть
