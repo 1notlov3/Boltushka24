@@ -59,7 +59,6 @@ export const getServerDetails = cache(async (serverId: string) => {
               id: true,
               name: true,
               imageUrl: true,
-              email: true,
             }
           },
         },
