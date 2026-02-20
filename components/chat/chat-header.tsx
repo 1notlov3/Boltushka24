@@ -1,12 +1,10 @@
-"use client";
-
-import { Hash, Airplay } from "lucide-react";
+import { Hash } from "lucide-react";
 
 import { MobileToggle } from "@/components/mobile-toggle";
 import { UserAvatar } from "@/components/user-avatar";
 import { SocketIndicator } from "@/components/socket-indicator";
 import { ChatVideoButton } from "./chat-video-button";
-import { useModal } from "@/hooks/use-modal-store";
+import { WatchTogetherTrigger } from "./watch-together-trigger";
 
 interface ChatHeaderProps {
   serverId: string;
@@ -23,8 +21,6 @@ export const ChatHeader = ({
   imageUrl,
   channelId,
 }: ChatHeaderProps) => {
-  const { onOpen } = useModal();
-
   return (
     <div className="text-md font-semibold px-3 flex items-center h-12 border-neutral-200 dark:border-neutral-800 border-b-2">
       <MobileToggle serverId={serverId} />
@@ -34,23 +30,14 @@ export const ChatHeader = ({
       )}
 
       {type === "conversation" && (
-        <UserAvatar
-          src={imageUrl}
-          className="h-8 w-8 md:h-8 md:w-8 mr-2"
-        />
+        <UserAvatar src={imageUrl} className="h-8 w-8 md:h-8 md:w-8 mr-2" />
       )}
 
       <p className="font-semibold text-md text-black dark:text-white">{name}</p>
 
       <div className="ml-auto flex items-center gap-1">
         {type === "channel" && channelId && (
-          <button
-            onClick={() => onOpen("watchTogether", { query: { serverId, channelId } })}
-            className="hover:opacity-75 transition mr-2"
-            title="Совместный просмотр YouTube"
-          >
-            <Airplay className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-          </button>
+          <WatchTogetherTrigger serverId={serverId} channelId={channelId} />
         )}
 
         {type === "conversation" && <ChatVideoButton />}
