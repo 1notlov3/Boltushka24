@@ -1,9 +1,10 @@
 "use client";
-import axios from "axios";
+
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+
 import {
   Dialog,
   DialogContent,
@@ -17,58 +18,100 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FileUpload } from "@/components/file-upload";
 import { useModal } from "@/hooks/use-modal-store";
-import { useState } from "react";
 
 const formSchema = z.object({
   url: z.string().min(1, {
-    message: "Ссылка на видео обязательна"
+    message: "Ссылка на YouTube обязательна",
   }),
 });
 
-export const WatchTogetherModal = () => {
-    const [videoUrl, setVideoUrl] = useState("");
-  const {isOpen,onClose,type} = useModal();
-  const router = useRouter();
-  const isModalOpen = isOpen && type === "watchTogether";
+const extractYoutubeId = (url: string): string | null => {
+  const trimmed = url.trim();
 
-  const form = useForm({
+  // direct ID paste
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = trimmed.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+
+  return null;
+};
+
+export const WatchTogetherModal = () => {
+  const { isOpen, onClose, type, data } = useModal();
+  const router = useRouter();
+
+  const isModalOpen = isOpen && type === "watchTogether";
+  const serverId = data.query?.serverId as string | undefined;
+  const channelId = data.query?.channelId as string | undefined;
+
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       url: "",
-    }
+    },
   });
 
   const isLoading = form.formState.isSubmitting;
 
-  const onSubmit = async (values:any) => {
-    window.open(`https://www.watchparty.me/create?video=${values.url}`, '_blank')
-  }
-const handleClose = () => {
-  form.reset();
-  onClose();
-}
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const videoId = extractYoutubeId(values.url);
+
+    if (!videoId) {
+      form.setError("url", {
+        message: "Не смог распознать YouTube ссылку. Вставь полную ссылку или ID видео",
+      });
+      return;
+    }
+
+    if (!serverId || !channelId) {
+      form.setError("url", {
+        message: "Открой модалку из шапки канала, чтобы запустить просмотр в нужном канале",
+      });
+      return;
+    }
+
+    form.reset();
+    onClose();
+    router.push(`/servers/${serverId}/channels/${channelId}/watch?v=${videoId}`);
+  };
+
+  const handleClose = () => {
+    form.reset();
+    onClose();
+  };
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
       <DialogContent className="bg-white text-black p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
-            Смотрите и слушайте вместе!
+            Совместный просмотр YouTube
           </DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
-          Создайте комнату для совместного просмотра фильма или прослушивания музыки 
+            Вставь YouTube ссылку и запусти просмотр прямо внутри Boltushka24
           </DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className=" space-y-8 px-6">
+            <div className="space-y-8 px-6">
               <FormField
                 control={form.control}
                 name="url"
@@ -78,7 +121,7 @@ const handleClose = () => {
                       <Input
                         disabled={isLoading}
                         className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black focus-visible:ring-offset-0"
-                        placeholder="Введите url видео для совместного просмотра"
+                        placeholder="https://www.youtube.com/watch?v=..."
                         {...field}
                       />
                     </FormControl>
@@ -87,14 +130,15 @@ const handleClose = () => {
                 )}
               />
             </div>
+
             <DialogFooter className="bg-gray-100 px-6 py-4">
               <Button variant="primary" disabled={isLoading}>
-                Смотреть!
+                Запустить просмотр
               </Button>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

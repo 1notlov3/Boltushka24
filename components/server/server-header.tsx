@@ -3,7 +3,6 @@ import { useModal } from "@/hooks/use-modal-store";
 import { ServerWithMembersWithProfiles } from "@/types";
 import { MemberRole } from "@prisma/client";
 import { 
-  Airplay,
   BarChart,
   ChevronDown, 
   LogOut, 

@@ -48,6 +48,7 @@ const ChannelIdPage = async ({
       <ChatHeader
         name={channel.name}
         serverId={channel.serverId}
+        channelId={channel.id}
         type="channel"
       />
       {channel.type === ChannelType.TEXT && (
