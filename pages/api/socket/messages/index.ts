@@ -49,18 +49,9 @@ export default async function handler(
 
     const { content, fileUrl } = validation.data;
 
-    const [server, channel, member] = await Promise.all([
-      db.server.findFirst({
-        where: {
-          id: serverId as string,
-          members: {
-            some: {
-              profileId: profile.id
-            }
-          }
-        },
-        select: { id: true }
-      }),
+    // Optimized: Reduced from 3 queries to 2.
+    // `db.member.findFirst` implicitly confirms server existence and membership, making `db.server.findFirst` redundant.
+    const [channel, member] = await Promise.all([
       db.channel.findFirst({
         where: {
           id: channelId as string,
@@ -76,10 +67,6 @@ export default async function handler(
         select: { id: true }
       })
     ]);
-
-    if (!server) {
-      return res.status(404).json({ message: "Server not found" });
-    }
 
     if (!channel) {
       return res.status(404).json({ message: "Channel not found" });
