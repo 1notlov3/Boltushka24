@@ -115,7 +115,7 @@ model Message {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([channelId])
+  @@index([channelId, createdAt])
   @@index([memberId])
 }
 
@@ -152,5 +152,5 @@ model DirectMessage {
   updatedAt DateTime @updatedAt
 
   @@index([memberId])
-  @@index([conversationId])
+  @@index([conversationId, createdAt])
 }
