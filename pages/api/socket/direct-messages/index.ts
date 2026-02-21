@@ -7,7 +7,20 @@ import { db } from "@/lib/db";
 
 const messageSchema = z.object({
   content: z.string().min(1, "Content is required").max(4000, "Content too long"),
-  fileUrl: z.string().url("Invalid file URL").regex(/^(http|https):\/\//i, "Invalid file URL protocol").optional().nullable(),
+  fileUrl: z.string()
+    .url("Invalid file URL")
+    .regex(/^(http|https):\/\//i, "Invalid file URL protocol")
+    // 🛡️ Sentinel: Enforce allowed extensions on the pathname to prevent Stored XSS via File Upload
+    .refine((url) => {
+      try {
+        const { pathname } = new URL(url);
+        return /\.(jpg|jpeg|png|webp|gif|pdf)$/i.test(pathname);
+      } catch {
+        return false;
+      }
+    }, "Invalid file type. Only images (JPG, PNG, GIF, WEBP) and PDF are allowed.")
+    .optional()
+    .nullable(),
 });
 
 export default async function handler(

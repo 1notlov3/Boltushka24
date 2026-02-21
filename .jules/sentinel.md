@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Stored XSS via File Extensions
+**Vulnerability:** The application allowed file uploads with any extension as long as the URL was valid and used http/https. This permitted malicious files like SVGs (containing scripts) or HTML files to be uploaded and rendered, leading to Stored XSS when opened by other users.
+**Learning:** Validating the URL format and protocol is insufficient. Simple regex checks on the full string can be bypassed (e.g., `malicious.html?.jpg`). Proper URL parsing is required to isolate the pathname for extension validation.
+**Prevention:** Enforce a strict allowlist of file extensions (e.g., .jpg, .png, .pdf) by parsing the URL (e.g. `new URL(url).pathname`) and validating the path ending.
