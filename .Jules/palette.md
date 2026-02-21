@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2024-11-20 - Clickable Non-Interactive Elements
+**Learning:** The `ChatItem` component used `div` and `p` tags with `onClick` handlers for user navigation, excluding keyboard users from this functionality.
+**Action:** Replace non-interactive elements with semantic `button` elements or ensure they have `role="button"`, `tabIndex="0"`, and `onKeyDown` handlers for accessibility.

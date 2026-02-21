@@ -41,8 +41,8 @@ interface ChatItemProps {
 
 const roleIconMap = {
   "GUEST": null,
-  "MODERATOR": <ShieldCheck className="h-4 w-4 ml-2 text-indigo-500" />,
-  "ADMIN": <ShieldAlert className="h-4 w-4 ml-2 text-rose-500" />,
+  "MODERATOR": <ShieldCheck className="h-4 w-4 ml-2 text-indigo-500" tabIndex={0} role="img" aria-label="Moderator" />,
+  "ADMIN": <ShieldAlert className="h-4 w-4 ml-2 text-rose-500" tabIndex={0} role="img" aria-label="Admin" />,
 }
 
 const formSchema = z.object({
@@ -138,15 +138,30 @@ export const ChatItem = memo(({
   return (
     <div className="relative group flex items-center hover:bg-black/5 p-4 transition w-full">
       <div className="group flex gap-x-2 items-start w-full">
-      <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition">
+      <button
+        onClick={onMemberClick}
+        className="cursor-pointer hover:drop-shadow-md transition bg-transparent border-none p-0"
+        type="button"
+      >
           <UserAvatar src={member.profile.imageUrl} />
-        </div>
+        </button>
         <div className="flex flex-col w-full">
           <div className="flex items-center gap-x-2">
             <div className="flex items-center">
-            <p onClick={onMemberClick} className="font-semibold text-sm hover:underline cursor-pointer">
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={onMemberClick}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onMemberClick();
+                }
+              }}
+              className="font-semibold text-sm hover:underline cursor-pointer"
+            >
                 {member.profile.name}
-              </p>
+            </span>
               {roleIconMap[member.role] && (
                 <ActionTooltip label={member.role}>
                   {roleIconMap[member.role]}
