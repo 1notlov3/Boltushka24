@@ -53,7 +53,10 @@ export const getServerDetails = cache(async (serverId: string) => {
         },
       },
       members: {
-        include: {
+        select: {
+          id: true,
+          role: true,
+          profileId: true,
           profile: {
             select: {
               id: true,

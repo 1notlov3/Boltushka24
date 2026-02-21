@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user-avatar";
 
 interface ServerMemberProps {
-  member: Member & { profile: Profile };
+  member: Pick<Member, "id" | "role" | "profileId"> & {
+    profile: Pick<Profile, "id" | "name" | "imageUrl">
+  };
 }
 
 const roleIconMap = {
