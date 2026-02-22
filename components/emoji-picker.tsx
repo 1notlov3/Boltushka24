@@ -8,6 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ActionTooltip } from "@/components/action-tooltip";
 
 interface EmojiPickerProps {
   onChange: (value: string) => void;
@@ -28,11 +29,13 @@ export const EmojiPicker = ({
 }: EmojiPickerProps) => {
   return (
     <Popover>
-      <PopoverTrigger aria-label="Добавить эмодзи">
-        <Smile
-          className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
-        />
-      </PopoverTrigger>
+      <ActionTooltip label="Добавить эмодзи" side="right">
+        <PopoverTrigger aria-label="Добавить эмодзи">
+          <Smile
+            className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
+          />
+        </PopoverTrigger>
+      </ActionTooltip>
       <PopoverContent
         side="right"
         sideOffset={40}
