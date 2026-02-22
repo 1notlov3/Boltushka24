@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Unauthenticated Socket Connection
+**Vulnerability:** The Socket.IO server at `/api/socket/io` allows connections without authentication. While message *submission* is protected by API routes, message *reception* relies on clients subscribing to specific channel events. If channel IDs are known (e.g., leaked or guessed), an unauthenticated attacker could listen to real-time messages.
+**Learning:** Initializing `Socket.IO` in a Next.js API route without an explicit `connection` handler middleware leaves the socket server open. Relying solely on `io.emit` for broadcasting assumes all connected clients are authorized.
+**Prevention:** Implement `io.use()` middleware to verify authentication tokens (e.g., from cookies) upon connection handshake. Ensure clients join specific rooms (e.g., `socket.join(channelId)`) authorized by server-side checks, rather than broadcasting to all clients.
