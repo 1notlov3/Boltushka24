@@ -16,7 +16,7 @@ import React from "react";
 
 interface ServerChannelProps {
   channel: Channel;
-  server: Server;
+  server: Pick<Server, "id">;
   role?: MemberRole;
 }
 
@@ -43,7 +43,8 @@ export const ServerChannel = ({
 
   const onAction = (e: React.MouseEvent, action: ModalType) => {
     e.stopPropagation();
-    onOpen(action, { channel, server })
+    // ⚡ Bolt Optimization: Use query.serverId to avoid passing the full server object.
+    onOpen(action, { channel, query: { serverId: server.id } })
   }
 
   return (

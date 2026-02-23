@@ -115,7 +115,8 @@ export const ServerSidebar = async ({
                   key={channel.id}
                   channel={channel}
                   role={role}
-                  server={server}
+                  // ⚡ Bolt Optimization: Pass only server ID to reduce Client Component payload.
+                  server={{ id: server.id }}
                 />
               ))}
             </div>
@@ -135,7 +136,8 @@ export const ServerSidebar = async ({
                   key={channel.id}
                   channel={channel}
                   role={role}
-                  server={server}
+                  // ⚡ Bolt Optimization: Pass only server ID to reduce Client Component payload.
+                  server={{ id: server.id }}
                 />
               ))}
             </div>
@@ -155,7 +157,8 @@ export const ServerSidebar = async ({
                   key={channel.id}
                   channel={channel}
                   role={role}
-                  server={server}
+                  // ⚡ Bolt Optimization: Pass only server ID to reduce Client Component payload.
+                  server={{ id: server.id }}
                 />
               ))}
             </div>
