@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2026-02-23 - Contextual Tooltips for Icon-Only Buttons
+**Learning:** In file upload previews, icon-only buttons for removing files (like the 'X' button) were accessible via `aria-label` but lacked visual cues for sighted users, potentially leading to confusion about the button's function.
+**Action:** Wrap icon-only buttons with `ActionTooltip` to provide a hover/focus tooltip, ensuring that sighted users receive the same context as screen reader users (who rely on `aria-label`). This improves usability without cluttering the UI.
