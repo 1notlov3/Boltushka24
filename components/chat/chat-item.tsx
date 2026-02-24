@@ -9,6 +9,7 @@ import { Member, MemberRole, Profile } from "@prisma/client";
 import { Edit, FileIcon, ShieldAlert, ShieldCheck, Trash } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, memo } from "react";
+import { format } from "date-fns";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { ActionTooltip } from "@/components/action-tooltip";
@@ -38,6 +39,8 @@ interface ChatItemProps {
   socketUrl: string;
   socketQuery: Record<string, string>;
 };
+
+const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
 const roleIconMap = {
   "GUEST": null,
@@ -73,6 +76,9 @@ export const ChatItem = memo(({
 
     router.push(`/servers/${params?.serverId}/conversations/${member.id}`);
   }
+
+  // ⚡ Bolt Optimization: Format date inside component to prevent O(N) formatting in parent loop
+  const formattedTimestamp = format(new Date(timestamp), DATE_FORMAT);
 
   useEffect(() => {
     // ⚡ Bolt Optimization: Only attach keydown listener when editing
@@ -154,7 +160,7 @@ export const ChatItem = memo(({
               )}
             </div>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              {timestamp}
+              {formattedTimestamp}
             </span>
           </div>
           {isImage && (
