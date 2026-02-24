@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2026-02-24 - Destructive Dropdown Items
+**Learning:** `DropdownMenuItem` lacks a `variant` prop (unlike Button). Standard focus styles (`bg-accent`) can obscure the semantic meaning of destructive actions (red text).
+**Action:** Manually add `focus:text-red-600` and a subtle red background (e.g., `focus:bg-red-50`) to destructive dropdown items to ensure they remain visually distinct during keyboard navigation.
