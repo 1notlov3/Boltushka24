@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Unvalidated Socket API Parameters
+**Vulnerability:** Socket.io API handlers in `pages/api/socket` accessed `req.query` parameters (e.g., `conversationId`) directly without validation, potentially allowing invalid data to reach the database query.
+**Learning:** Legacy Pages Router API routes require explicit Zod validation for `req.query` parameters, as they are not typed or validated by the framework. This is easily overlooked when focusing on body validation.
+**Prevention:** Always define a Zod schema for `req.query` in Pages Router API handlers and validate it before use, ensuring all IDs are valid UUIDs.
