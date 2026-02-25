@@ -53,14 +53,19 @@ export const getServerDetails = cache(async (serverId: string) => {
         },
       },
       members: {
-        include: {
+        // ⚡ Bolt Optimization: Use select instead of include to fetch only necessary fields
+        // (id, role, profileId) to reduce payload size and query execution time.
+        select: {
+          id: true,
+          role: true,
+          profileId: true,
           profile: {
             select: {
               id: true,
               name: true,
               imageUrl: true,
             }
-          },
+          }
         },
         orderBy: {
           role: "asc",
