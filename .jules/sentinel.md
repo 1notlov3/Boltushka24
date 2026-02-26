@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Missing Validation in Socket Handler
+**Vulnerability:** The Direct Messages socket handler (`pages/api/socket/direct-messages/index.ts`) failed to validate `conversationId` as a UUID, relying only on an existence check.
+**Learning:** Socket handlers in `pages/api` often use `req.query` directly; consistent validation patterns must be applied across all API styles (App Router and Pages Router).
+**Prevention:** Audit all `pages/api` routes to ensure they match the validation rigor of App Router handlers.
