@@ -6,9 +6,10 @@ import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
+import { format } from "date-fns";
 import { Edit, FileIcon, ShieldAlert, ShieldCheck, Trash } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useMemo } from "react";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { ActionTooltip } from "@/components/action-tooltip";
@@ -45,6 +46,8 @@ const roleIconMap = {
   "ADMIN": <ShieldAlert className="h-4 w-4 ml-2 text-rose-500" />,
 }
 
+const DATE_FORMAT = "d MMM yyyy, HH:mm";
+
 const formSchema = z.object({
   content: z.string().min(1),
 });
@@ -65,6 +68,10 @@ export const ChatItem = memo(({
   const { onOpen } = useModal();
   const params = useParams();
   const router = useRouter();
+
+  const formattedTimestamp = useMemo(() => {
+    return format(new Date(timestamp), DATE_FORMAT);
+  }, [timestamp]);
 
   const onMemberClick = () => {
     if (member.id === currentMember.id) {
@@ -154,7 +161,7 @@ export const ChatItem = memo(({
               )}
             </div>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              {timestamp}
+              {formattedTimestamp}
             </span>
           </div>
           {isImage && (
