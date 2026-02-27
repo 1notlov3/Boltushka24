@@ -75,10 +75,6 @@ export const ChatItem = memo(({
   }
 
   useEffect(() => {
-    // ⚡ Bolt Optimization: Only attach keydown listener when editing
-    // This prevents O(N) event listeners for N messages, reducing memory usage and event overhead.
-    if (!isEditing) return;
-
     const handleKeyDown = (event: any) => {
       if (event.key === "Escape" || event.keyCode === 27) {
         setIsEditing(false);
@@ -86,8 +82,6 @@ export const ChatItem = memo(({
     };
 
     if (isEditing) {
-      // ⚡ Bolt Optimization: Only add the keydown listener when editing
-      // This prevents having N active listeners for N messages in the chat
       window.addEventListener("keydown", handleKeyDown);
     }
 

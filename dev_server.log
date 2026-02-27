@@ -1,0 +1,73 @@
+
+> my-app@0.1.0 dev
+> next dev
+
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3000
+
+ ✓ Ready in 2.5s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 744ms (64 modules)
+ ○ Compiling /test-chat-perf ...
+ ✓ Compiled /test-chat-perf in 16.6s (2274 modules)
+ ⨯ node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs (158:12) @ Object.throwMissingPublishableKeyError
+ ⨯ Internal error: Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (./node_modules/.pnpm/@clerk+shared@2.9.2_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/shared/dist/chunk-T4WHYQYX.mjs:184:19)
+    at ClerkProviderBase (./node_modules/.pnpm/@clerk+clerk-react@5.12.0_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@clerk/clerk-react/dist/index.mjs:1906:75)
+    at as (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:6391)
+    at /app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11242
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:43309)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at ax (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
+    at a_ (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
+    at ax (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
+    at a_ (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
+    at al (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7390)
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10825)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at ax (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:50458)
+    at a_ (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49564)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46881)
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:39541)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at al (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7390)
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10825)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at av (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:7809)
+    at /app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:12972
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:13009)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+    at aw (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:41912)
+    at ak (/app/node_modules/.pnpm/next@14.1.0_@babel+core@7.28.6_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:46552)
+null
+ ✓ Compiled in 1525ms (1004 modules)
+ ⚠ Your page app/test-chat-perf/page.tsx did not have a root layout. We created app/test-chat-perf/layout.tsx for you.
+ ✓ Compiled in 1117ms (833 modules)
+ ✓ Compiled in 529ms (866 modules)
+ ✓ Compiled in 228ms (381 modules)
+ ✓ Compiled in 935ms (172 modules)
+ ✓ Compiled in 3s (2252 modules)
+ ✓ Compiled in 776ms (1170 modules)
