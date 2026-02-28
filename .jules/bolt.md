@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-21 - [Memoizing Formatting in Lists]
+**Learning:** Calling `format()` from `date-fns` inside the `.map()` loop of a long list component (like `ChatMessages`) causes O(N) formatting computations on every re-render.
+**Action:** Pass raw data (e.g., ISO date strings or Date objects) to the child item component (e.g., `ChatItem`). Perform the formatting inside the child component and wrap it in a `useMemo` hook. This reduces formatting complexity to O(1) for existing items during parent re-renders.

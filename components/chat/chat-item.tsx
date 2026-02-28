@@ -8,7 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
 import { Edit, FileIcon, ShieldAlert, ShieldCheck, Trash } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useMemo } from "react";
+import { format } from "date-fns";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { ActionTooltip } from "@/components/action-tooltip";
@@ -30,7 +31,7 @@ interface ChatItemProps {
   member: Member & {
     profile: Profile;
   };
-  timestamp: string;
+  timestamp: string | Date;
   fileUrl: string | null;
   deleted: boolean;
   currentMember: Member;
@@ -49,6 +50,8 @@ const formSchema = z.object({
   content: z.string().min(1),
 });
 
+const DATE_FORMAT = "d MMM yyyy, HH:mm";
+
 export const ChatItem = memo(({
   id,
   content,
@@ -65,6 +68,13 @@ export const ChatItem = memo(({
   const { onOpen } = useModal();
   const params = useParams();
   const router = useRouter();
+
+  // ⚡ Bolt Optimization: Memoize expensive date formatting
+  // Moving date-fns formatting out of the parent's map loop and memoizing it here
+  // prevents redundant calculations during re-renders, especially in long chat histories.
+  const formattedTimestamp = useMemo(() => {
+    return format(new Date(timestamp), DATE_FORMAT);
+  }, [timestamp]);
 
   const onMemberClick = () => {
     if (member.id === currentMember.id) {
@@ -154,7 +164,7 @@ export const ChatItem = memo(({
               )}
             </div>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              {timestamp}
+              {formattedTimestamp}
             </span>
           </div>
           {isImage && (

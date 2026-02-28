@@ -1,7 +1,6 @@
 "use client";
 
 import { Fragment, useRef, ElementRef } from "react";
-import { format } from "date-fns";
 import { Member, Message, Profile } from "@prisma/client";
 import { Loader2, ServerCrash } from "lucide-react";
 
@@ -11,8 +10,6 @@ import { useChatScroll } from "@/hooks/use-chat-scroll";
 
 import { ChatWelcome } from "./chat-welcome";
 import { ChatItem } from "./chat-item";
-
-const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
 type MessageWithMemberWithProfile = Message & {
   member: Member & {
@@ -128,7 +125,7 @@ export const ChatMessages = ({
                 content={message.content}
                 fileUrl={message.fileUrl}
                 deleted={message.deleted}
-                timestamp={format(new Date(message.createdAt), DATE_FORMAT)}
+                timestamp={message.createdAt}
                 isUpdated={message.updatedAt !== message.createdAt}
                 socketUrl={socketUrl}
                 socketQuery={socketQuery}
