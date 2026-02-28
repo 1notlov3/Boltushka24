@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2024-05-25 - Icon-only Tooltip Triggers
+**Learning:** Icons serving as tooltip triggers (e.g., user role badges in `ActionTooltip`) must be wrapped in a focusable container (e.g., `<span tabIndex={0} role="img" aria-label="...">`) to ensure keyboard accessibility, as raw SVGs are not natively focusable.
+**Action:** Always wrap SVG icons in a focusable `span` when used directly as Radix `TooltipTrigger`s.
