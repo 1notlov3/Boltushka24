@@ -14,6 +14,10 @@ const SetupPage = async () => {
         },
       },
     },
+    // ⚡ Bolt Optimization: Select only id for existence check
+    select: {
+      id: true,
+    }
   });
 
   if (server) {

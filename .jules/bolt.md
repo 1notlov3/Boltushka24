@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2024-05-23 - [Prisma Existence Checks & Payload Minimization]
+**Learning:** Found that `db.server.findUnique` and `db.server.findFirst` queries in `ServerIdPage` and `SetupPage` were fetching all scalar fields of `Server` and `Channel` models just to check existence or find an ID.
+**Action:** Replaced `include: { channels: ... }` with `select: { channels: { select: { id: true, name: true } } }` in `ServerIdPage`. Added `select: { id: true }` in `SetupPage` for existence checks. This significantly minimizes data transfer and memory usage.
