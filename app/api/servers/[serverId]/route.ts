@@ -13,7 +13,7 @@ const ImageUrlSchema = z
   .string()
   .min(1)
   .refine(
-    (v) => v.startsWith("data:image/") || /^https?:\/\//.test(v),
+    (v) => v.startsWith("data:image/") || (z.string().url().safeParse(v).success && /^https?:\/\//i.test(v)),
     "imageUrl must be an http(s) URL or a data:image/* URI"
   );
 
