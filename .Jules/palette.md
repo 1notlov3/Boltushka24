@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2026-03-02 - Icon-Only Button Tooltips
+**Learning:** Icon-only buttons (like the Watch Together trigger) using native `title` attributes provide inconsistent visual experiences and sub-optimal screen reader support compared to standard patterns.
+**Action:** Always wrap icon-only buttons in `ActionTooltip` for consistent visual tooltips and replace native `title` attributes with an explicit `aria-label` matching the tooltip text.
