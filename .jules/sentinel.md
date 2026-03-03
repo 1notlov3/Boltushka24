@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-24 - [CRITICAL] Insufficient URL Validation for `imageUrl` fields
+**Vulnerability:** The `ImageUrlSchema` validation only checked if the string matched `^https?://`. Attackers could bypass this check by prepending `https://` to an otherwise malformed URL or using special characters that bypass the naive check, leading to SSRF or potential Stored XSS when rendering user-provided URLs as images.
+**Learning:** Standard regex anchors are insufficient for comprehensive URL validation, especially when the schema must accommodate multiple distinct protocols (like HTTP and `data:` URIs). Native URL parsers behave unpredictably with malformed strings.
+**Prevention:** Always combine structural URL validation (e.g., `z.string().url().safeParse`) with strict protocol enforcement (using `^https?://i`), and explicitly handle edge cases like `data:` URIs as an isolated OR condition.
