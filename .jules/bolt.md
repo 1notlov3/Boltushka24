@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-25 - [Optimizing Initial Redirect Payloads]
+**Learning:** In routes that perform automatic redirects based on the first element of a related model (like `app/(main)/(routes)/servers/[serverId]/page.tsx` redirecting to the initial channel), using `include` fetches the entire parent model's scalar fields and the full objects of the related models. This is highly inefficient if only a single ID is needed.
+**Action:** Always replace `include` with a nested `select` in these scenarios. Instead of fetching the entire `server` and all fields of its `channels`, explicitly use `select: { id: true, channels: { select: { id: true, name: true } } }` to minimize the database transfer payload and memory serialization overhead.

@@ -27,13 +27,19 @@ const ServerIdPage = async ({
         }
       }
     },
-    include: {
+    // ⚡ Bolt Optimization: Use select instead of include to fetch only the required initial channel ID, minimizing payload and memory overhead
+    select: {
+      id: true,
       channels: {
         where: {
           name: "основной"
         },
         orderBy: {
           createdAt: "asc"
+        },
+        select: {
+          id: true,
+          name: true,
         }
       }
     }
