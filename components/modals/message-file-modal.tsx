@@ -27,7 +27,10 @@ import { useModal } from "@/hooks/use-modal-store";
 const formSchema = z.object({
   fileUrl: z.string().min(1, {
     message: "Attachment is required."
-  })
+  }).refine(
+    (v) => v === "" || v.startsWith("data:") || (z.string().url().safeParse(v).success && /^https?:\/\//i.test(v)),
+    "Attachment must be a valid URL"
+  )
 });
 
 export const MessageFileModal = () => {

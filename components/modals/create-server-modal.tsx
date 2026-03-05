@@ -29,7 +29,10 @@ const formSchema = z.object({
   name: z.string().min(1, {
     message: "Название сообщества обязательно"
   }),
-  imageUrl: z.string().optional(),
+  imageUrl: z.string().refine(
+    (v) => v === "" || v.startsWith("data:image/") || (z.string().url().safeParse(v).success && /^https?:\/\//i.test(v)),
+    "Изображение должно быть корректным URL (http/https) или data URI"
+  ).optional(),
 });
 
 export const CreateServerModal = () => {
