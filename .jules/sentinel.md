@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Stored XSS via File URL in MessageFileModal
+**Vulnerability:** The `fileUrl` field in `components/modals/message-file-modal.tsx` used a simple `z.string().min(1)` validation, accepting any URL format, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the uploaded file link.
+**Learning:** `z.string().min(1)` is insufficient for preventing XSS in URLs. Client-side URL validation is as critical as server-side validation to prevent malicious inputs before they are even sent to the server.
+**Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images on the client side.
