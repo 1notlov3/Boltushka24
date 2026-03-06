@@ -32,12 +32,24 @@ const findConversation = async (memberOneId: string, memberTwoId: string) => {
       include: {
         memberOne: {
           include: {
-            profile: true,
+            profile: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              }
+            }
           }
         },
         memberTwo: {
           include: {
-            profile: true,
+            profile: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              }
+            }
           }
         }
       }
@@ -57,12 +69,24 @@ const createNewConversation = async (memberOneId: string, memberTwoId: string) =
       include: {
         memberOne: {
           include: {
-            profile: true,
+            profile: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              }
+            }
           }
         },
         memberTwo: {
           include: {
-            profile: true,
+            profile: {
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+              }
+            }
           }
         }
       }

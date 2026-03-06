@@ -47,9 +47,6 @@ const MemberIdPage = async ({
       serverId: params.serverId,
       profileId: profile.id,
     },
-    include: {
-      profile: true,
-    },
   });
 
   if (!currentMember) {
