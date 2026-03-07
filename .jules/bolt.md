@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-03-07 - [High-Frequency Scroll Event Throttling]
+**Learning:** High-frequency event listeners, such as `scroll` in `useChatScroll`, repeatedly read the DOM (e.g., `scrollTop`) which can cause layout thrashing and block the main thread, especially on mobile devices.
+**Action:** Use a custom `throttle` utility in `lib/utils.ts` to wrap scroll handlers and limit the frequency of execution. Always call `.cancel()` on the throttled function in the `useEffect` cleanup to prevent lingering execution overhead.

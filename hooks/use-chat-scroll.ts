@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { throttle } from "@/lib/utils";
 
 type ChatScrollProps = {
   chatRef: React.RefObject<HTMLDivElement>;
@@ -20,18 +21,20 @@ export const useChatScroll = ({
   useEffect(() => {
     const topDiv = chatRef?.current;
 
-    const handleScroll = () => {
+    // ⚡ Bolt Optimization: Throttle high-frequency scroll events to reduce CPU overhead
+    const handleScroll = throttle(() => {
       const scrollTop = topDiv?.scrollTop;
 
       if (scrollTop === 0 && shouldLoadMore) {
         loadMore()
       }
-    };
+    }, 150);
 
     topDiv?.addEventListener("scroll", handleScroll);
 
     return () => {
       topDiv?.removeEventListener("scroll", handleScroll);
+      handleScroll.cancel();
     }
   }, [shouldLoadMore, loadMore, chatRef]);
 
