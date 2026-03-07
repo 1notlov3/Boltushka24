@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2025-05-18 - ActionTooltip and Missing ARIA Labels
+**Learning:** Wrapped buttons inside `DropdownMenuTrigger` or custom wrapper components like `ActionTooltip` require explicit `aria-label` attributes for accessibility to ensure screen readers correctly interpret the action.
+**Action:** When working with triggers and tooltips, confirm that the inner interactive element (e.g., `<button>`) has an explicit `aria-label`.
