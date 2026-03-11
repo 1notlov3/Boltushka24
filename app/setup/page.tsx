@@ -14,6 +14,10 @@ const SetupPage = async () => {
         },
       },
     },
+    // ⚡ Bolt Optimization: Use select instead of include to fetch only needed fields for redirection
+    select: {
+      id: true,
+    }
   });
 
   if (server) {
