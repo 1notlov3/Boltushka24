@@ -4,6 +4,7 @@ import { FileIcon, X } from "lucide-react";
 import Image from "next/image";
 import { CldUploadButton } from "next-cloudinary";
 
+import { ActionTooltip } from "@/components/action-tooltip";
 import { Button } from "@/components/ui/button";
 
 interface FileUploadProps {
@@ -30,14 +31,16 @@ export const FileUpload = ({
           alt="Upload"
           className="rounded-full"
         />
-        <button
-          onClick={() => onChange("")}
-          className="bg-rose-500 text-white p-1 rounded-full absolute top-0 right-0 shadow-sm"
-          type="button"
-          aria-label="Удалить файл"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <ActionTooltip label="Удалить файл" side="right">
+          <button
+            onClick={() => onChange("")}
+            className="bg-rose-500 text-white p-1 rounded-full absolute top-0 right-0 shadow-sm"
+            type="button"
+            aria-label="Удалить файл"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </ActionTooltip>
       </div>
     )
   }
@@ -54,14 +57,16 @@ export const FileUpload = ({
         >
           {value}
         </a>
-        <button
-          onClick={() => onChange("")}
-          className="bg-rose-500 text-white p-1 rounded-full absolute -top-2 -right-2 shadow-sm"
-          type="button"
-          aria-label="Удалить файл"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <ActionTooltip label="Удалить файл" side="right">
+          <button
+            onClick={() => onChange("")}
+            className="bg-rose-500 text-white p-1 rounded-full absolute -top-2 -right-2 shadow-sm"
+            type="button"
+            aria-label="Удалить файл"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </ActionTooltip>
       </div>
     )
   }
