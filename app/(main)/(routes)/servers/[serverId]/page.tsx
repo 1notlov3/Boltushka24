@@ -27,13 +27,18 @@ const ServerIdPage = async ({
         }
       }
     },
-    include: {
+    // ⚡ Bolt Optimization: Select only the required channel fields to minimize payload and memory serialization
+    select: {
       channels: {
         where: {
           name: "основной"
         },
         orderBy: {
           createdAt: "asc"
+        },
+        select: {
+          id: true,
+          name: true,
         }
       }
     }

@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2024-05-23 - [Prisma Relation Field Selection]
+**Learning:** In Next.js App Router, returning complete database models to Client Components or using them for minimal logic (e.g. initial channel redirects) inflates the serialized payload and memory usage. Including relations (`include: { channels: true }`) when only a subset of fields (like `id`) is needed is a common anti-pattern in the codebase.
+**Action:** Always prefer `select` over `include` for relational data. Used `select: { channels: { select: { id: true, name: true } } }` in `ServerIdPage` to minimize payload sizes and Next.js serialization overhead.
