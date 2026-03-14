@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2024-11-20 - Focus Management on Navigable Items
+**Learning:** List items that serve as navigation triggers (e.g., `ServerMember`) may act as buttons but miss standard semantic and visual feedback. Relying purely on hover states for interaction cues creates barriers for keyboard users who cannot easily see which element is focused.
+**Action:** Always ensure that structural elements doubling as triggers (like member list entries) receive an explicit `aria-label` representing their action (e.g., `Начать беседу с ...`) and include `focus-visible` utility classes so they become visually prominent during tab navigation.
