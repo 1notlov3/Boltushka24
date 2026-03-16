@@ -44,12 +44,32 @@ export const ServerSidebar = async ({
     return redirect("/");
   }
 
-  const textChannels = server?.channels.filter((channel) => channel.type === ChannelType.TEXT)
-  const audioChannels = server?.channels.filter((channel) => channel.type === ChannelType.AUDIO)
-  const videoChannels = server?.channels.filter((channel) => channel.type === ChannelType.VIDEO)
-  const members = server?.members.filter((member) => member.profileId !== profile.id)
+  // ⚡ Bolt Optimization: Consolidate multiple sequential array iterations into a single pass.
+  // This reduces CPU overhead and redundant traversals in O(N) time for large servers.
+  const textChannels = [];
+  const audioChannels = [];
+  const videoChannels = [];
 
-  const role = server.members.find((member) => member.profileId === profile.id)?.role;
+  if (server?.channels) {
+    for (const channel of server.channels) {
+      if (channel.type === ChannelType.TEXT) textChannels.push(channel);
+      else if (channel.type === ChannelType.AUDIO) audioChannels.push(channel);
+      else if (channel.type === ChannelType.VIDEO) videoChannels.push(channel);
+    }
+  }
+
+  const members = [];
+  let role: MemberRole | undefined;
+
+  if (server?.members) {
+    for (const member of server.members) {
+      if (member.profileId !== profile.id) {
+        members.push(member);
+      } else {
+        role = member.role;
+      }
+    }
+  }
 
   return (
     <div className="flex flex-col h-full text-primary w-full dark:bg-[#2B2D31] bg-[#F2F3F5]">
