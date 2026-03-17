@@ -8,7 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
 import { Edit, FileIcon, ShieldAlert, ShieldCheck, Trash } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useMemo } from "react";
+import { format } from "date-fns";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { ActionTooltip } from "@/components/action-tooltip";
@@ -30,7 +31,7 @@ interface ChatItemProps {
   member: Member & {
     profile: Profile;
   };
-  timestamp: string;
+  timestamp: string | Date;
   fileUrl: string | null;
   deleted: boolean;
   currentMember: Member;
@@ -44,6 +45,8 @@ const roleIconMap = {
   "MODERATOR": <ShieldCheck className="h-4 w-4 ml-2 text-indigo-500" />,
   "ADMIN": <ShieldAlert className="h-4 w-4 ml-2 text-rose-500" />,
 }
+
+const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
 const formSchema = z.object({
   content: z.string().min(1),
@@ -65,6 +68,12 @@ export const ChatItem = memo(({
   const { onOpen } = useModal();
   const params = useParams();
   const router = useRouter();
+
+  // ⚡ Bolt Optimization: Memoize expensive date formatting so it doesn't recalculate
+  // on every render of ChatItem, and avoids blocking the main thread during ChatMessages list render.
+  const formattedTimestamp = useMemo(() => {
+    return format(new Date(timestamp), DATE_FORMAT);
+  }, [timestamp]);
 
   const onMemberClick = () => {
     if (member.id === currentMember.id) {
@@ -154,7 +163,7 @@ export const ChatItem = memo(({
               )}
             </div>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              {timestamp}
+              {formattedTimestamp}
             </span>
           </div>
           {isImage && (
