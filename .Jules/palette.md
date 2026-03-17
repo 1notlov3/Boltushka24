@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2025-03-17 - Non-Interactive Click Targets
+**Learning:** Chat interface commonly uses non-interactive elements (`<div onClick={...}>` or `<p onClick={...}>`) for user profiles, breaking keyboard navigation and screen reader support since they lack roles, tab order, and `onKeyDown` handlers.
+**Action:** Refactor clickable avatars and names into semantic `<button type="button">` elements with an appropriate `aria-label` and `focus-visible` ring utilities to ensure keyboard accessibility.
