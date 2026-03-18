@@ -15,3 +15,4 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+## 2026-07-25 - [Prisma Select Optimization for Redirections]\n**Learning:** In routing components that simply redirect based on a fetched relational record (like finding a server's default channel), fetching the entire object with `include` is wasteful. \n**Action:** Use Prisma's `select` to only fetch the necessary IDs and string comparisons needed for the redirect logic to minimize payload size.
