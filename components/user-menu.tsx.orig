@@ -19,7 +19,7 @@ export const UserMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button aria-label="Посмотреть профиль пользователя" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-full">
+        <button aria-label="User menu" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-full">
           <Avatar className="h-[48px] w-[48px]">
             <AvatarImage src={user.imageUrl} />
           </Avatar>
