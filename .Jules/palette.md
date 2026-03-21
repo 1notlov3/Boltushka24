@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## $(date +%Y-%m-%d) - Interactive Elements inside DropdownMenuTrigger wrapping Non-interactive Components
+**Learning:** When using Radix UI `DropdownMenuTrigger` to wrap a non-interactive element like `Avatar`, it must use the `asChild` prop and be wrapped in a `<button>` tag to allow custom keyboard focus styles (`focus-visible:ring-2`) and `aria-label`s. In addition, when dealing with destructive `DropdownMenuItem` elements (e.g. Logout, Delete), manual focus states overrides (`focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950`) are required to maintain semantic warning colors, as the default Radix UI focus styles overwrite them.
+**Action:** When wrapping non-interactive components like avatars in trigger components, always use `asChild` with a semantic button wrapper for screen reader labeling and keyboard focus indication. Check for destructive items and explicitly set focus hover colors.
