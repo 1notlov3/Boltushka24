@@ -14,6 +14,10 @@ const SetupPage = async () => {
         },
       },
     },
+    // ⚡ Bolt Optimization: Use select instead of fetching all fields when only id is needed
+    select: {
+      id: true,
+    }
   });
 
   if (server) {
