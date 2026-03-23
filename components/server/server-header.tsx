@@ -98,7 +98,7 @@ export const ServerHeader = ({
         </DropdownMenuItem>
         {isAdmin && (
           <DropdownMenuItem onClick={() => onOpen("deleteServer", { server })}
-            className="text-rose-500 px-3 py-2 text-sm cursor-pointer"
+            className="text-rose-500 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950 px-3 py-2 text-sm cursor-pointer"
           >
             Удалить сообщество
             <Trash className="h-4 w-4 ml-auto" />
@@ -106,7 +106,7 @@ export const ServerHeader = ({
         )}
         {!isAdmin && (
           <DropdownMenuItem onClick={() => onOpen("leaveServer", { server })}
-            className="text-rose-500 px-3 py-2 text-sm cursor-pointer"
+            className="text-rose-500 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950 px-3 py-2 text-sm cursor-pointer"
           >
             Покинуть сообщество
             <LogOut className="h-4 w-4 ml-auto" />

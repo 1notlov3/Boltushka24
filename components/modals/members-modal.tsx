@@ -167,6 +167,7 @@ export const MembersModal = () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => onKick(member.id)}
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
                       >
                         <Gavel className="h-4 w-4 mr-2" />
                         Исключить
