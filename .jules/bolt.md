@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-21 - [Extracting Regex Patterns]
+**Learning:** Defining literal regex patterns (e.g., `/regex/` or `new RegExp()`) and arrays inside frequently called functions (like `extractYoutubeId`) causes redundant object creation and recompilation overhead on every function call.
+**Action:** Always extract regular expressions and static arrays used in frequently called functions to module-level constants to prevent redundant recompilation overhead.
