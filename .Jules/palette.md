@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2024-05-23 - SVG Tooltip Triggers
+**Learning:** `ActionTooltip` components with raw SVG icons as triggers are inaccessible to keyboard navigation because SVGs are inherently unfocusable.
+**Action:** When using an SVG as a tooltip trigger (e.g., user role badges), wrap the icon in a focusable container `<span tabIndex={0} role="img" aria-label="...">` to ensure keyboard accessibility and provide a localized label.
