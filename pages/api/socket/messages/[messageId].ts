@@ -10,6 +10,12 @@ const messageSchema = z.object({
   content: z.string().min(1, "Content is required").max(4000, "Content too long"),
 });
 
+const querySchema = z.object({
+  messageId: z.string().uuid("Invalid message ID"),
+  serverId: z.string().uuid("Invalid server ID"),
+  channelId: z.string().uuid("Invalid channel ID"),
+});
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponseServerIo,
@@ -26,12 +32,14 @@ export default async function handler(
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    if (!serverId) {
-      return res.status(400).json({ error: "Server ID missing" });
-    }
+    const queryValidation = querySchema.safeParse({
+      messageId,
+      serverId,
+      channelId,
+    });
 
-    if (!channelId) {
-      return res.status(400).json({ error: "Channel ID missing" });
+    if (!queryValidation.success) {
+      return res.status(400).json({ error: queryValidation.error.errors[0].message });
     }
 
     let [member, channel, message] = await Promise.all([
