@@ -41,7 +41,15 @@ export const getServerDetails = cache(async (serverId: string) => {
     where: {
       id: serverId,
     },
-    include: {
+    // ⚡ Bolt Optimization: Use select instead of include to fetch only explicitly required
+    // fields for Server. inviteCode and profileId are kept since they are used by components
+    // like InviteModal and for permission checks, avoiding fetching unused scalars like createdAt, etc.
+    select: {
+      id: true,
+      name: true,
+      imageUrl: true,
+      inviteCode: true,
+      profileId: true,
       channels: {
         orderBy: {
           createdAt: "asc",
@@ -53,7 +61,10 @@ export const getServerDetails = cache(async (serverId: string) => {
         },
       },
       members: {
-        include: {
+        select: {
+          id: true,
+          role: true,
+          profileId: true,
           profile: {
             select: {
               id: true,

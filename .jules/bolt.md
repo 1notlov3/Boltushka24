@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-21 - [Optimizing Global Fetches with Prisma Select]
+**Learning:** Using top-level `include` in global fetch functions like `getServerDetails` grabs unused scalar fields (e.g., `inviteCode`, `createdAt`, `updatedAt`, `profileId` of a Server), adding unnecessary memory serialization overhead for data never displayed.
+**Action:** Replace `include` with explicit `select` even if type casting is needed. In `getServerDetails`, specify `id`, `name`, `imageUrl`, `channels`, and `members` manually to restrict data payload and boost overall load speed.
