@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-21 - [Prisma Select for Redirection Logic]
+**Learning:** Initial page loads (like navigating to a server) often fetch large objects using `include` (e.g., `include: { channels: true }`) purely to find an initial channel ID to redirect to, causing unnecessary serialization of entire objects.
+**Action:** Replace `include` with targeted nested `select` queries (e.g., `select: { channels: { select: { id: true, name: true } } }`) when fetching related objects strictly for redirection or initial state validation to minimize payload and memory overhead.

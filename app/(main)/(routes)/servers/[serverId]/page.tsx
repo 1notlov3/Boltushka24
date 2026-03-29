@@ -27,13 +27,18 @@ const ServerIdPage = async ({
         }
       }
     },
-    include: {
+    // ⚡ Bolt Optimization: Select only necessary fields for initial channel redirect
+    select: {
       channels: {
         where: {
           name: "основной"
         },
         orderBy: {
           createdAt: "asc"
+        },
+        select: {
+          id: true,
+          name: true,
         }
       }
     }
