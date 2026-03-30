@@ -41,7 +41,8 @@ export const ServerHeader = ({
         asChild
       >
         <button
-          className="w-full text-md font-semibold px-3 flex items-center h-12 border-neutral-200 dark:border-neutral-800 border-b-2 hover:bg-zinc-700/10 dark:hover:bg-zinc-700/50 transition"
+          aria-label={`Server settings for ${server.name}`}
+          className="w-full text-md font-semibold px-3 flex items-center h-12 border-neutral-200 dark:border-neutral-800 border-b-2 hover:bg-zinc-700/10 dark:hover:bg-zinc-700/50 transition focus-visible:ring-2 focus-visible:outline-none"
         >
           {server.name}
           <ChevronDown className="ml-1 h-5 w-5 justify-between" />
@@ -98,7 +99,7 @@ export const ServerHeader = ({
         </DropdownMenuItem>
         {isAdmin && (
           <DropdownMenuItem onClick={() => onOpen("deleteServer", { server })}
-            className="text-rose-500 px-3 py-2 text-sm cursor-pointer"
+            className="text-rose-500 px-3 py-2 text-sm cursor-pointer focus:text-rose-500 focus:bg-rose-50 dark:focus:bg-rose-950"
           >
             Удалить сообщество
             <Trash className="h-4 w-4 ml-auto" />
@@ -106,7 +107,7 @@ export const ServerHeader = ({
         )}
         {!isAdmin && (
           <DropdownMenuItem onClick={() => onOpen("leaveServer", { server })}
-            className="text-rose-500 px-3 py-2 text-sm cursor-pointer"
+            className="text-rose-500 px-3 py-2 text-sm cursor-pointer focus:text-rose-500 focus:bg-rose-50 dark:focus:bg-rose-950"
           >
             Покинуть сообщество
             <LogOut className="h-4 w-4 ml-auto" />

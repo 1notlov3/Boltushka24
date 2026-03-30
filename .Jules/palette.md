@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2025-03-30 - Accessible Dropdown Menu Triggers
+**Learning:** Using `Avatar` and `ChevronDown` directly inside a `DropdownMenuTrigger` lacks `aria-label` and focus visibility. Adding a `<button>` wrapping these interactive components with an `aria-label` and `focus-visible` classes significantly improves accessibility.
+**Action:** Always wrap non-interactive elements acting as `DropdownMenuTrigger` in a `<button>` with `asChild` and add an appropriate `aria-label` and `focus-visible:ring-2` class for keyboard navigation.
