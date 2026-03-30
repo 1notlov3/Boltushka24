@@ -14,6 +14,10 @@ const SetupPage = async () => {
         },
       },
     },
+    // ⚡ Bolt Optimization: Select only id for redirection
+    select: {
+      id: true,
+    }
   });
 
   if (server) {
