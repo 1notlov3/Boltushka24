@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Server Image URL Validation Bypass (XSS/SSRF)
+**Vulnerability:** The `ImageUrlSchema` in server creation and update APIs (`app/api/servers/route.ts`, `app/api/servers/[serverId]/route.ts`) allowed bypassing URL validation using weak regex (`/^https?:\/\//.test(v)` without structure validation). This allowed invalid URLs or potentially dangerous payloads that bypassed standard `z.string().url()` checks when accommodating `data:image/` formats.
+**Learning:** When accommodating multiple formats (like `data:` URIs and HTTP URLs) using `.refine()`, simply checking for a prefix string is not enough, as it bypasses full URL structure validation.
+**Prevention:** Always combine explicit protocol allowlist regex (e.g., `/^https?:\/\//i.test(v)`) with a strict structural check (`z.string().url().safeParse(v).success`) when validating user-provided URLs inside a `.refine()` block to prevent SSRF and XSS bypasses.
