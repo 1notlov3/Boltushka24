@@ -5,6 +5,7 @@ import Image from "next/image";
 import { CldUploadButton } from "next-cloudinary";
 
 import { Button } from "@/components/ui/button";
+import { ActionTooltip } from "@/components/action-tooltip";
 
 interface FileUploadProps {
   onChange: (url?: string) => void;
@@ -30,14 +31,16 @@ export const FileUpload = ({
           alt="Upload"
           className="rounded-full"
         />
-        <button
-          onClick={() => onChange("")}
-          className="bg-rose-500 text-white p-1 rounded-full absolute top-0 right-0 shadow-sm"
-          type="button"
-          aria-label="Удалить файл"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <ActionTooltip label="Удалить файл">
+          <button
+            onClick={() => onChange("")}
+            className="bg-rose-500 text-white p-1 rounded-full absolute top-0 right-0 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 transition-all"
+            type="button"
+            aria-label="Удалить файл"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </ActionTooltip>
       </div>
     )
   }
@@ -54,14 +57,16 @@ export const FileUpload = ({
         >
           {value}
         </a>
-        <button
-          onClick={() => onChange("")}
-          className="bg-rose-500 text-white p-1 rounded-full absolute -top-2 -right-2 shadow-sm"
-          type="button"
-          aria-label="Удалить файл"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <ActionTooltip label="Удалить файл">
+          <button
+            onClick={() => onChange("")}
+            className="bg-rose-500 text-white p-1 rounded-full absolute -top-2 -right-2 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 transition-all"
+            type="button"
+            aria-label="Удалить файл"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </ActionTooltip>
       </div>
     )
   }
