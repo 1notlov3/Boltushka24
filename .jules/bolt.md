@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-21 - [Extracting Static Arrays and Regex]
+**Learning:** Functions that parse URLs or apply regular expressions (like `extractYoutubeId`) can be called frequently (e.g. on every keystroke or repeatedly inside loops). Defining regular expressions and static arrays inside these functions causes redundant memory allocation and recompilation overhead on every call.
+**Action:** Extract regular expressions and static arrays that do not depend on dynamic scope into module-level constants to avoid re-allocation and recompilation. Applied to YouTube URL matching logic.
