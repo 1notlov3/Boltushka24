@@ -29,21 +29,22 @@ declare global {
   }
 }
 
+const YT_DIRECT_ID_REGEX = /^[a-zA-Z0-9_-]{11}$/;
+const YT_PATTERNS = [
+  /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+  /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+  /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+  /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+];
+
 const extractYoutubeId = (url: string): string | null => {
   const trimmed = url.trim();
 
-  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+  if (YT_DIRECT_ID_REGEX.test(trimmed)) {
     return trimmed;
   }
 
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
-    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-  ];
-
-  for (const pattern of patterns) {
+  for (const pattern of YT_PATTERNS) {
     const match = trimmed.match(pattern);
     if (match?.[1]) return match[1];
   }

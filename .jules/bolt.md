@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-25 - [Constant Reallocation Overhead]
+**Learning:** Defining static regular expressions and array configurations inside frequently called functions (like `extractYoutubeId`) causes redundant object allocation, initialization, and recompilation on every invocation, adding unnecessary garbage collection pressure and execution time.
+**Action:** Extract static regular expressions (`/pattern/`) and array configurations to module-level constants so they are initialized once per module load instead of once per function call.
