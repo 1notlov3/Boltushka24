@@ -27,13 +27,19 @@ const ServerIdPage = async ({
         }
       }
     },
-    include: {
+    // ⚡ Bolt Optimization: Use `select` at top level to minimize the payload
+    // Only fetch the channel ID and name for the redirect check, saving memory and bandwidth
+    select: {
       channels: {
         where: {
           name: "основной"
         },
         orderBy: {
           createdAt: "asc"
+        },
+        select: {
+          id: true,
+          name: true,
         }
       }
     }
