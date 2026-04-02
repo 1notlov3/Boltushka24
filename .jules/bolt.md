@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-25 - [Prisma Select in Redirects]
+**Learning:** When using Prisma queries to check for existence and then redirecting using an `id` or other single field (e.g., in `ServerIdPage` or `SetupPage`), fetching the whole object or including full relations creates unnecessary payload and memory serialization overhead.
+**Action:** Always use `select` to fetch only the minimum required fields (like `{ id: true }`) when performing queries used primarily for redirection. Applied this to `app/(main)/(routes)/servers/[serverId]/page.tsx` and `app/setup/page.tsx` to optimize `id` lookup.

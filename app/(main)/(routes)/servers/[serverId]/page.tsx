@@ -27,8 +27,12 @@ const ServerIdPage = async ({
         }
       }
     },
-    include: {
+    select: {
       channels: {
+        select: {
+          id: true,
+          name: true,
+        },
         where: {
           name: "основной"
         },
