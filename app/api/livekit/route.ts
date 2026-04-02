@@ -38,6 +38,10 @@ export async function GET(req: NextRequest) {
           }
         }
       }
+    },
+    // ⚡ Bolt Optimization: Select only id for existence check
+    select: {
+      id: true,
     }
   });
 
@@ -50,6 +54,10 @@ export async function GET(req: NextRequest) {
           { memberOne: { profileId: profile.id } },
           { memberTwo: { profileId: profile.id } }
         ]
+      },
+      // ⚡ Bolt Optimization: Select only id for existence check
+      select: {
+        id: true,
       }
     });
 
