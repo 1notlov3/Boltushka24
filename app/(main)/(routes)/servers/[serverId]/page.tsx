@@ -18,6 +18,8 @@ const ServerIdPage = async ({
     return redirect("/sign-in");
   }
 
+  // ⚡ Bolt Optimization: Use select instead of include to fetch only required fields (channels)
+  // and exclude unnecessary server scalar fields for redirect route
   const server = await db.server.findUnique({
     where: {
       id: params.serverId,
@@ -27,13 +29,17 @@ const ServerIdPage = async ({
         }
       }
     },
-    include: {
+    select: {
       channels: {
         where: {
           name: "основной"
         },
         orderBy: {
           createdAt: "asc"
+        },
+        select: {
+          id: true,
+          name: true,
         }
       }
     }

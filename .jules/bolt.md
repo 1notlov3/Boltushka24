@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-07-28 - [Prisma Include to Select on Redirects]
+**Learning:** In routes that perform an automatic redirect based on a related model (like navigating to a server's initial channel), using `include` fetches unneeded scalar fields of the parent model and related model.
+**Action:** Use `select` instead of `include` to fetch only the required IDs (e.g., channel ID and name) to minimize payload, reducing memory serialization overhead.
