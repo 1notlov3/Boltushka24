@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Unvalidated Route Parameters in Ratings API
+**Vulnerability:** The Ratings API (`app/api/ratings/route.ts`) was using `searchParams.get("serverId")` directly in Prisma queries without validating that it was a valid UUID, causing unhandled 500 errors when passing invalid data.
+**Learning:** Next.js Route Handlers accessing query parameters do not automatically get typed or validated. Malformed strings passed to Prisma UUID fields can cause unhandled server crashes instead of returning graceful 400 errors.
+**Prevention:** Always parse and validate query parameters (`searchParams.get()`) using Zod (`z.string().uuid()`) before passing them to the database layer, matching the existing pattern for dynamic route parameters.
