@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2025-04-03 - Radix UI Dropdown Triggers
+**Learning:** `DropdownMenuTrigger` components from Radix UI wrapping non-interactive elements like `Avatar` lack proper focus styles and semantic structure for keyboard navigation.
+**Action:** When a Radix UI `DropdownMenuTrigger` wraps non-interactive content, use the `asChild` prop and wrap the content in a native `<button>` element with `focus-visible` utility classes and an appropriate `aria-label`.
