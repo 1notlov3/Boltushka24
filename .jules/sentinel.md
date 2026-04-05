@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Unhandled Prisma Exceptions via Missing Zod Validation
+**Vulnerability:** Several Socket APIs (`pages/api/socket/*`) and the `app/api/ratings` route extracted values from `req.query` or `searchParams` and directly passed them into Prisma queries without validation. If a user provided a malformed UUID, this bypassed Prisma's expected format, resulting in an unhandled 500 Server Error and potential DoS.
+**Learning:** Extracting variables directly from `req.query` or `searchParams` and feeding them to database queries without strict format verification (like UUID) allows malformed requests to trigger internal server errors rather than clean 400 Client Errors.
+**Prevention:** Always validate URL parameters (`req.query`, `searchParams`) using Zod schemas (`z.string().uuid()`) before passing them to the database layer to enforce defense-in-depth and ensure robust error handling.
