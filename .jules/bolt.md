@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-25 - [Single-Pass Array Iteration]
+**Learning:** Performing multiple `.filter()` passes over the same dataset (e.g., `server.channels.filter(...)` for text, audio, and video) results in O(K * N) iterations, increasing CPU overhead for large lists.
+**Action:** Consolidate multiple array passes into a single O(N) iteration using a `for...of` loop. Initialize empty typed arrays explicitly (e.g., `const list: (typeof data.items) = []`) to preserve Prisma type safety while maintaining code readability compared to complex `.reduce()` accumulators.
