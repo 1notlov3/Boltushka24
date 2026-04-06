@@ -18,10 +18,15 @@ export const UserMenu = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Avatar className="h-[48px] w-[48px]">
-          <AvatarImage src={user.imageUrl} />
-        </Avatar>
+      <DropdownMenuTrigger asChild>
+        <button
+          aria-label="User menu"
+          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
+        >
+          <Avatar className="h-[48px] w-[48px]">
+            <AvatarImage src={user.imageUrl} />
+          </Avatar>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => signOut({ redirectUrl: "/sign-in" })} className="cursor-pointer text-red-600">
