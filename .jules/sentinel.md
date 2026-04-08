@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Unvalidated Route Parameters in Socket API Routes
+**Vulnerability:** Next.js Socket API routes (e.g., `pages/api/socket/messages/[messageId].ts` and `pages/api/socket/direct-messages/[directMessageId].ts`) were passing `req.query` parameters directly to Prisma queries without validating them as proper UUIDs, which could result in Unhandled 500 Server Errors when bad strings are provided instead of 400 Bad Request.
+**Learning:** Just like standard app API routes, explicit validation is critical for defense-in-depth and graceful error handling on socket-related API routes to avoid unhandled 500 errors and ensuring proper HTTP response statuses are returned on invalid inputs.
+**Prevention:** Always define Zod schemas or use inline `.safeParse()` for route query parameters (`req.query`) in Socket API routes using `.uuid()` before performing any DB operations.

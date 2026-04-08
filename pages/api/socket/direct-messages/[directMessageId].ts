@@ -30,6 +30,20 @@ export default async function handler(
       return res.status(400).json({ error: "Conversation ID missing" });
     }
 
+    if (!directMessageId) {
+      return res.status(400).json({ error: "Message ID missing" });
+    }
+
+    const conversationIdValidation = z.string().uuid().safeParse(conversationId);
+    if (!conversationIdValidation.success) {
+      return res.status(400).json({ error: "Invalid Conversation ID" });
+    }
+
+    const directMessageIdValidation = z.string().uuid().safeParse(directMessageId);
+    if (!directMessageIdValidation.success) {
+      return res.status(400).json({ error: "Invalid Message ID" });
+    }
+
     let [conversation, directMessage] = await Promise.all([
       db.conversation.findFirst({
         where: {
