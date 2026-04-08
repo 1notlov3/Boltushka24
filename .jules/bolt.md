@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2025-04-08 - O(N) Array Consolidation in UI Lists
+**Learning:** For small dataset UI lists (like sidebar channels), consolidating multiple `.filter()`/`.find()` passes into a `.reduce()` can harm readability without providing measurable performance gains. However, when an optimization is strictly required to satisfy boundaries, replacing multiple O(N) array passes (like 3 filters and a find on `server.channels` / `server.members`) with a single O(N) `for...of` iteration provides a good balance between reducing array traversals and maintaining type safety/readability compared to complex `.reduce()` accumulators. Always use explicit `typeof` typing for the arrays initialized to avoid Prisma type errors.
+**Action:** Consolidate multiple redundant array passes (e.g., `.filter()` or `.find()`) into a single O(N) iteration using a `for...of` loop with explicit `typeof` annotations for initialized empty arrays (e.g., `const list: (typeof data.items) = []`) when optimizing UI list filtering to maintain readability over complex `.reduce()` accumulators.
