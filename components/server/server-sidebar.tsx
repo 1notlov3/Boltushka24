@@ -44,12 +44,34 @@ export const ServerSidebar = async ({
     return redirect("/");
   }
 
-  const textChannels = server?.channels.filter((channel) => channel.type === ChannelType.TEXT)
-  const audioChannels = server?.channels.filter((channel) => channel.type === ChannelType.AUDIO)
-  const videoChannels = server?.channels.filter((channel) => channel.type === ChannelType.VIDEO)
-  const members = server?.members.filter((member) => member.profileId !== profile.id)
+  // ⚡ Bolt Optimization: Converted multiple .filter()/.find() passes to a single pass for channels
+  // Impact: Reduces array iterations from 3 to 1, preventing O(N*3) loops for large server channel lists
+  const textChannels: (typeof server.channels) = [];
+  const audioChannels: (typeof server.channels) = [];
+  const videoChannels: (typeof server.channels) = [];
 
-  const role = server.members.find((member) => member.profileId === profile.id)?.role;
+  if (server?.channels) {
+    for (const channel of server.channels) {
+      if (channel.type === ChannelType.TEXT) textChannels.push(channel);
+      else if (channel.type === ChannelType.AUDIO) audioChannels.push(channel);
+      else if (channel.type === ChannelType.VIDEO) videoChannels.push(channel);
+    }
+  }
+
+  // ⚡ Bolt Optimization: Converted multiple .filter()/.find() passes to a single pass for members
+  // Impact: Reduces array iterations from 2 to 1, preventing O(N*2) loops for large server member lists
+  const members: (typeof server.members) = [];
+  let role: MemberRole | undefined;
+
+  if (server?.members) {
+    for (const member of server.members) {
+      if (member.profileId === profile.id) {
+        role = member.role;
+      } else {
+        members.push(member);
+      }
+    }
+  }
 
   return (
     <div className="flex flex-col h-full text-primary w-full dark:bg-[#2B2D31] bg-[#F2F3F5]">

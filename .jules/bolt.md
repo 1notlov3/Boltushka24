@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2026-06-25 - [O(N) vs O(N*M) Array Iterations]
+**Learning:** Found multiple `.filter()` and `.find()` passes over Prisma relations (e.g., `server.channels` and `server.members`) in `ServerSidebar`. Processing an array multiple times degrades performance as datasets grow.
+**Action:** Consolidate multiple array operations into a single O(N) `for...of` loop to extract required categories simultaneously, reducing computational overhead without sacrificing type safety (using `typeof`).
