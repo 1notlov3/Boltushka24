@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+
+const querySchema = z.object({
+  serverId: z.string().uuid("Invalid Server ID"),
+});
 
 type CounterMap = Record<string, number>;
 type LastActiveMap = Record<string, Date | null>;
@@ -32,6 +37,11 @@ export async function GET(req: Request) {
 
     if (!serverId) {
       return new NextResponse("Server ID missing", { status: 400 });
+    }
+
+    const queryValidation = querySchema.safeParse({ serverId });
+    if (!queryValidation.success) {
+      return new NextResponse(queryValidation.error.errors[0].message, { status: 400 });
     }
 
     const membership = await db.member.findFirst({
