@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2024-10-28 - Distinguishable ARIA Labels for List Items
+**Learning:** Adding static `aria-label="View user profile"` to multiple profile buttons in a list (like chat items) results in indistinguishable announcements for screen reader users.
+**Action:** Always include a unique identifier (like the user's name) in the label string (e.g., `aria-label={"Посмотреть профиль пользователя ${member.profile.name}"}`) to ensure list items are identifiable.
