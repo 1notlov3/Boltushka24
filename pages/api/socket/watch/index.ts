@@ -62,15 +62,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
 
       const { serverId, channelId } = parsed.data;
 
-      const member = await db.member.findFirst({
-        where: {
-          serverId,
-          profileId: profile.id,
-        },
-        select: { id: true },
-      });
+      const [member, channel] = await Promise.all([
+        db.member.findFirst({
+          where: {
+            serverId,
+            profileId: profile.id,
+          },
+          select: { id: true },
+        }),
+        db.channel.findFirst({
+          where: {
+            id: channelId,
+            serverId,
+          },
+          select: { id: true },
+        }),
+      ]);
 
-      if (!member) {
+      if (!member || !channel) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
