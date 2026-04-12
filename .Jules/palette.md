@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2024-11-28 - ChatItem Profile Accessibility
+**Learning:** In list items that display interactive avatars and names representing the same logical user profile target, it is important to provide semantic buttons (`<button type="button">`) instead of non-semantic tags (`<div>`, `<p>`). Additionally, repeated roles acting as SVG tooltips must be explicitly keyboard focusable and correctly localized.
+**Action:** When implementing repeating lists of users (like in chat), wrap profile images and names in accessible buttons, ensure all icon triggers have `role="img"` and `tabIndex={0}`, and localize enums (like MemberRole) for screen readers.
