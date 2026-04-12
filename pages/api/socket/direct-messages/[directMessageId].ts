@@ -30,6 +30,20 @@ export default async function handler(
       return res.status(400).json({ error: "Conversation ID missing" });
     }
 
+    const querySchema = z.object({
+      conversationId: z.string().uuid("Invalid Conversation ID"),
+      directMessageId: z.string().uuid("Invalid Direct Message ID"),
+    });
+
+    const queryValidation = querySchema.safeParse({
+      conversationId: conversationId as string,
+      directMessageId: directMessageId as string,
+    });
+
+    if (!queryValidation.success) {
+      return res.status(400).json({ error: queryValidation.error.errors[0].message });
+    }
+
     let [conversation, directMessage] = await Promise.all([
       db.conversation.findFirst({
         where: {

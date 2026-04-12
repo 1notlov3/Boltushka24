@@ -30,6 +30,11 @@ export default async function handler(
       return res.status(400).json({ error: "Conversation ID missing" });
     }
 
+    const conversationIdValidation = z.string().uuid("Invalid Conversation ID").safeParse(conversationId);
+    if (!conversationIdValidation.success) {
+      return res.status(400).json({ error: conversationIdValidation.error.errors[0].message });
+    }
+
     const validation = messageSchema.safeParse(req.body);
 
     if (!validation.success) {

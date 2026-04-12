@@ -34,6 +34,22 @@ export default async function handler(
       return res.status(400).json({ error: "Channel ID missing" });
     }
 
+    const querySchema = z.object({
+      serverId: z.string().uuid("Invalid Server ID"),
+      channelId: z.string().uuid("Invalid Channel ID"),
+      messageId: z.string().uuid("Invalid Message ID"),
+    });
+
+    const queryValidation = querySchema.safeParse({
+      serverId: serverId as string,
+      channelId: channelId as string,
+      messageId: messageId as string,
+    });
+
+    if (!queryValidation.success) {
+      return res.status(400).json({ error: queryValidation.error.errors[0].message });
+    }
+
     let [member, channel, message] = await Promise.all([
       db.member.findFirst({
         where: {
