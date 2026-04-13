@@ -45,6 +45,12 @@ const roleIconMap = {
   "ADMIN": <ShieldAlert className="h-4 w-4 ml-2 text-rose-500" />,
 }
 
+const roleTranslationMap = {
+  "GUEST": "Гость",
+  "MODERATOR": "Модератор",
+  "ADMIN": "Администратор",
+};
+
 const formSchema = z.object({
   content: z.string().min(1),
 });
@@ -138,18 +144,20 @@ export const ChatItem = memo(({
   return (
     <div className="relative group flex items-center hover:bg-black/5 p-4 transition w-full">
       <div className="group flex gap-x-2 items-start w-full">
-      <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition">
+      <button type="button" onClick={onMemberClick} aria-label={`Посмотреть профиль пользователя ${member.profile.name}`} className="cursor-pointer hover:drop-shadow-md transition focus-visible:ring-2">
           <UserAvatar src={member.profile.imageUrl} />
-        </div>
+        </button>
         <div className="flex flex-col w-full">
           <div className="flex items-center gap-x-2">
             <div className="flex items-center">
-            <p onClick={onMemberClick} className="font-semibold text-sm hover:underline cursor-pointer">
+            <button type="button" onClick={onMemberClick} aria-label={`Посмотреть профиль пользователя ${member.profile.name}`} className="font-semibold text-sm hover:underline cursor-pointer focus-visible:ring-2">
                 {member.profile.name}
-              </p>
+              </button>
               {roleIconMap[member.role] && (
-                <ActionTooltip label={member.role}>
-                  {roleIconMap[member.role]}
+                <ActionTooltip label={roleTranslationMap[member.role]}>
+                  <span tabIndex={0} role="img" aria-label={roleTranslationMap[member.role]} className="focus-visible:ring-2">
+                    {roleIconMap[member.role]}
+                  </span>
                 </ActionTooltip>
               )}
             </div>

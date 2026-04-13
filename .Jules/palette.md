@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2024-05-24 - Semantic Profile Triggers
+**Learning:** Chat items were using non-semantic `div` and `p` tags with `onClick` handlers for user profile navigation, making them invisible to keyboard and screen reader users. Additionally, user roles inside tooltips lacked structural meaning for screen readers.
+**Action:** When implementing profile triggers, always use semantic `<button type="button">` with descriptive `aria-label` (e.g., 'Посмотреть профиль пользователя') and focus visible styles. Wrap standalone interactive icons in semantic elements (like `<span role="img">`) to ensure they can receive focus and accessible names.
