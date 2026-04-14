@@ -138,15 +138,15 @@ export const ChatItem = memo(({
   return (
     <div className="relative group flex items-center hover:bg-black/5 p-4 transition w-full">
       <div className="group flex gap-x-2 items-start w-full">
-      <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition">
+      <button type="button" onClick={onMemberClick} aria-label={`Посмотреть профиль пользователя ${member.profile.name}`} className="cursor-pointer hover:drop-shadow-md transition focus-visible:ring-2 focus:outline-none">
           <UserAvatar src={member.profile.imageUrl} />
-        </div>
+        </button>
         <div className="flex flex-col w-full">
           <div className="flex items-center gap-x-2">
             <div className="flex items-center">
-            <p onClick={onMemberClick} className="font-semibold text-sm hover:underline cursor-pointer">
+            <button type="button" onClick={onMemberClick} aria-label={`Посмотреть профиль пользователя ${member.profile.name}`} className="font-semibold text-sm hover:underline cursor-pointer focus-visible:ring-2 focus:outline-none">
                 {member.profile.name}
-              </p>
+              </button>
               {roleIconMap[member.role] && (
                 <ActionTooltip label={member.role}>
                   {roleIconMap[member.role]}
