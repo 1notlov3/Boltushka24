@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
@@ -33,6 +34,12 @@ export async function GET(req: Request) {
     if (!serverId) {
       return new NextResponse("Server ID missing", { status: 400 });
     }
+
+    const serverIdValidation = z.string().uuid().safeParse(serverId);
+    if (!serverIdValidation.success) {
+      return new NextResponse("Invalid Server ID", { status: 400 });
+    }
+
 
     const membership = await db.member.findFirst({
       where: {
