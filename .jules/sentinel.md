@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Unvalidated Socket Route Parameters
+**Vulnerability:** Socket API routes (`pages/api/socket/direct-messages/...` and `pages/api/socket/messages/[messageId].ts`) were passing unvalidated `req.query` strings to Prisma `where` clauses. Malformed strings (non-UUIDs) would throw unhandled 500 errors.
+**Learning:** Prisma's UUID fields strictly require valid UUID strings. Without parameter validation, bad input bypasses application logic and throws Prisma client validation errors.
+**Prevention:** Always define `z.string().uuid()` schemas for route and query parameters and `.safeParse` them before passing them to the database.
