@@ -24,3 +24,8 @@
 **Vulnerability:** The `fileUrl` field in message creation APIs (`pages/api/socket/messages/index.ts` and `pages/api/socket/direct-messages/index.ts`) accepted any URL, including `javascript:` protocol. This allowed attackers to store malicious scripts that execute when other users interact with the message (e.g., clicking a link or broken image).
 **Learning:** `z.string().url()` validation in Zod accepts the `javascript:` protocol because it relies on the native `URL` constructor. Standard URL validation is insufficient for preventing XSS; strict protocol allowlisting (http/https) is required.
 **Prevention:** Always validate URLs against an allowlist of safe protocols (e.g., `.regex(/^(http|https):\/\//i)`) when accepting user input that will be rendered as links or images.
+
+## 2024-05-27 - Parent-Child Resource IDOR in Watch State
+**Vulnerability:** The GET handler in `pages/api/socket/watch/index.ts` verified that the user was a member of the provided `serverId`, but did not verify that the requested `channelId` actually belonged to that `serverId`. This could allow a user in one server to access the watch state of a channel in a different server if they knew its ID.
+**Learning:** IDOR prevention requires verifying the relationship between *all* provided resources, not just the user's membership to the parent resource.
+**Prevention:** Always verify that child resources (like channels) specifically belong to the parent resource (like servers) before returning state.
