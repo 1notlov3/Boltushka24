@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2024-05-24 - Semantic Buttons for Navigation
+**Learning:** Using non-semantic elements (`div` or `p`) with `onClick` handlers for user profile navigation in chat items creates accessibility barriers, as they lack semantic meaning, keyboard focusability, and explicit labels for screen readers.
+**Action:** When refactoring interactive elements representing user profiles or avatars into semantic buttons, use the standardized Russian `aria-label` "Посмотреть профиль пользователя [name]" to ensure consistent localization and accessibility, and include explicit `type="button"` and `focus-visible` utility classes for keyboard navigation.
