@@ -17,3 +17,7 @@
 ## 2024-10-27 - Semantic Variant Usage
 **Learning:** Critical destructive actions (Delete Server, Leave Server, etc.) were using `variant="primary"`, making them visually indistinguishable from positive actions. This increases the risk of accidental data loss.
 **Action:** Always use `variant="destructive"` (red) for confirmation buttons in modals that perform irreversible or negative actions to provide clear visual cues.
+
+## 2024-05-24 - Semantic Buttons for Profile Links
+**Learning:** The application was using non-semantic `div` and `p` tags with `onClick` handlers for user profile interactions. This makes the elements inaccessible to keyboard navigation and screen readers.
+**Action:** When refactoring interactive user profiles, use semantic `<button type="button">` elements with the standardized `aria-label` "Посмотреть профиль пользователя {name}" and explicit focus styles (`focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2`).
