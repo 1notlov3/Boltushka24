@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2024-05-24 - [Consolidating Array Iterations]
+**Learning:** Multiple `.filter()` and `.find()` calls on the same array (like `server.channels` or `server.members`) create redundant O(N) passes, which can impact rendering performance for large datasets.
+**Action:** When extracting multiple distinct subsets or values from a single array, consolidate the iterations into a single O(N) `for...of` loop. Initialize explicitly typed empty arrays (e.g., `const list: (typeof data.items) = []`) to preserve Prisma type safety.
