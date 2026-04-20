@@ -15,3 +15,15 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2024-05-23 - [Consolidating Authorization Queries]
+**Learning:** Performing a separate findFirst query just to check authorization before a broader findMany query that fetches the same parent dataset introduces an unnecessary database roundtrip and latency.
+**Action:** Replace the separate findFirst query with an in-memory .some() check on the results of the findMany query to save a database roundtrip when the same dataset must be fetched anyway.
+
+## 2024-05-23 - [Authorization Check Anti-pattern]
+**Learning:** Consolidating an early authorization `findFirst` check into an in-memory check after a heavier `findMany` query is a critical anti-pattern. It introduces a DoS vulnerability because unauthorized requests will now trigger heavy database queries and memory allocations before being rejected. Authorization must always fail fast and early before performing any heavy operations.
+**Action:** Never optimize away an early authorization check if it means delaying the rejection of unauthorized requests until after heavier database queries. Restore the original `findFirst` check for authorization.
+
+## 2024-05-24 - [Consolidating Redundant Iterations]
+**Learning:** Performing multiple independent .filter() and .find() calls on the same arrays (like server.channels and server.members) inside Server Components introduces redundant O(N) iterations, which can impact performance as datasets grow.
+**Action:** Replace multiple separate array traversals with a single for...of loop that accumulates the necessary partitioned arrays and extracted values in one pass.
