@@ -138,25 +138,15 @@ export const ChatItem = memo(({
   return (
     <div className="relative group flex items-center hover:bg-black/5 p-4 transition w-full">
       <div className="group flex gap-x-2 items-start w-full">
-      <button
-        type="button"
-        onClick={onMemberClick}
-        className="cursor-pointer hover:drop-shadow-md transition focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 rounded-full"
-        aria-label={`Посмотреть профиль пользователя ${member.profile.name}`}
-      >
+      <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition">
           <UserAvatar src={member.profile.imageUrl} />
-        </button>
+        </div>
         <div className="flex flex-col w-full">
           <div className="flex items-center gap-x-2">
             <div className="flex items-center">
-            <button
-              type="button"
-              onClick={onMemberClick}
-              className="font-semibold text-sm hover:underline cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 rounded-sm"
-              aria-label={`Посмотреть профиль пользователя ${member.profile.name}`}
-            >
+            <p onClick={onMemberClick} className="font-semibold text-sm hover:underline cursor-pointer">
                 {member.profile.name}
-              </button>
+              </p>
               {roleIconMap[member.role] && (
                 <ActionTooltip label={member.role}>
                   {roleIconMap[member.role]}
@@ -168,7 +158,7 @@ export const ChatItem = memo(({
             </span>
           </div>
           {isImage && (
-            <a 
+            <a
               href={fileUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -185,7 +175,7 @@ export const ChatItem = memo(({
           {isPDF && (
             <div className="relative flex items-center p-2 mt-2 rounded-md bg-background/10">
               <FileIcon className="h-10 w-10 fill-indigo-200 stroke-indigo-400" />
-              <a 
+              <a
                 href={fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -210,7 +200,7 @@ export const ChatItem = memo(({
           )}
           {!fileUrl && isEditing && (
             <Form {...form}>
-              <form 
+              <form
                 className="flex items-center w-full gap-x-2 pt-2"
                 onSubmit={form.handleSubmit(onSubmit)}>
                   <FormField
