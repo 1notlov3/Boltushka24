@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2024-05-24 - [Array Iteration Optimization]
+**Learning:** Multiple array methods (`.filter`, `.find`) on the same dataset create redundant passes and unnecessary overhead.
+**Action:** Replaced multiple `.filter()`/`.find()` passes over `server.channels` and `server.members` with single `for...of` loops in `ServerSidebar`, saving multiple redundant O(N) iterations.
