@@ -15,3 +15,7 @@
 ## 2026-06-20 - [Tooltip Provider Overhead]
 **Learning:** `ActionTooltip` was wrapping every tooltip in its own `TooltipProvider`, creating hundreds of context providers and preventing shared state (like `skipDelayDuration`).
 **Action:** Moved `TooltipProvider` to `app/layout.tsx` to wrap the entire app once. Removed it from `ActionTooltip`. This improves performance and UX.
+
+## 2024-05-24 - [Consolidated Array Iterations]
+**Learning:** Multiple array passes via `.filter()` and `.find()` on `server.channels` and `server.members` in `ServerSidebar` can be optimized into a single `for...of` loop pass.
+**Action:** When categorizing arrays by type or condition, use a single iteration with typed empty arrays (`typeof data.items`) to avoid unnecessary O(N) passes and maintain Prisma type safety.
