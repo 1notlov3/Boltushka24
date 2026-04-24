@@ -10,6 +10,10 @@ const messageSchema = z.object({
   fileUrl: z.string().url("Invalid file URL").regex(/^(http|https):\/\//i, "Invalid file URL protocol").optional().nullable(),
 });
 
+const querySchema = z.object({
+  conversationId: z.string().uuid("Invalid Conversation ID"),
+});
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponseServerIo,
@@ -28,6 +32,11 @@ export default async function handler(
 
     if (!conversationId) {
       return res.status(400).json({ error: "Conversation ID missing" });
+    }
+
+    const queryValidation = querySchema.safeParse({ conversationId: conversationId as string });
+    if (!queryValidation.success) {
+      return res.status(400).json({ error: queryValidation.error.errors[0].message });
     }
 
     const validation = messageSchema.safeParse(req.body);
