@@ -45,6 +45,12 @@ const roleIconMap = {
   "ADMIN": <ShieldAlert className="h-4 w-4 ml-2 text-rose-500" />,
 }
 
+const roleTranslationMap = {
+  "GUEST": "Гость",
+  "MODERATOR": "Модератор",
+  "ADMIN": "Администратор",
+} as const;
+
 const formSchema = z.object({
   content: z.string().min(1),
 });
@@ -148,8 +154,15 @@ export const ChatItem = memo(({
                 {member.profile.name}
               </p>
               {roleIconMap[member.role] && (
-                <ActionTooltip label={member.role}>
-                  {roleIconMap[member.role]}
+                <ActionTooltip label={roleTranslationMap[member.role as keyof typeof roleTranslationMap] || member.role}>
+                  <span
+                    tabIndex={0}
+                    role="img"
+                    aria-label={`Роль ${roleTranslationMap[member.role as keyof typeof roleTranslationMap] || member.role} пользователя ${member.profile.name}`}
+                    className="focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 rounded-sm"
+                  >
+                    {roleIconMap[member.role]}
+                  </span>
                 </ActionTooltip>
               )}
             </div>
