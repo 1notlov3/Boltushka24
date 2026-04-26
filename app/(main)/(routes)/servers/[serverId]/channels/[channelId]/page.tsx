@@ -89,6 +89,7 @@ const ChannelIdPage = async ({
               channelId: channel.id,
               serverId: channel.serverId,
             }}
+            queryKey={`chat:${channel.id}`}
           />
         </>
       )}

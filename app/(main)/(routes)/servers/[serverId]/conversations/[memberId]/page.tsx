@@ -103,6 +103,7 @@ const MemberIdPage = async ({
             query={{
               conversationId: conversation.id,
             }}
+            queryKey={`chat:${conversation.id}`}
           />
         </>
       )}
