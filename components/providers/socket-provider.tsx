@@ -77,8 +77,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       emit(topic, payload) {
         if (!supabase) return;
         const entry = channelsRef.current.get(topic);
-        const channel = entry?.channel ?? supabase.channel(topic);
-        channel.send({ type: "broadcast", event: REALTIME_BROADCAST_EVENT, payload });
+        if (!entry) {
+          console.warn(`[socket] emit on unsubscribed topic: ${topic}`);
+          return;
+        }
+        entry.channel.send({ type: "broadcast", event: REALTIME_BROADCAST_EVENT, payload });
       },
     };
   }, []);

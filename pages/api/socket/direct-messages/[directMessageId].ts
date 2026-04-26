@@ -180,7 +180,7 @@ export default async function handler(
 
     const updateKey = `chat:${conversation.id}:messages:update`;
 
-    await broadcast(updateKey, directMessage);
+    await broadcast(updateKey, { id: directMessage.id, type: "update" });
 
     return res.status(200).json(directMessage);
   } catch (error) {
