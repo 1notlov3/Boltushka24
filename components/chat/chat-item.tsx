@@ -136,15 +136,15 @@ export const ChatItem = memo(({
   const isImage = !isPDF && fileUrl;
 
   return (
-    <div className="relative group flex items-center hover:bg-black/5 p-4 transition w-full">
-      <div className="group flex gap-x-2 items-start w-full">
-      <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition">
+    <div className="relative group flex items-center hover:bg-black/5 px-4 py-2.5 sm:py-2 transition w-full">
+      <div className="group flex gap-x-3 sm:gap-x-2 items-start w-full">
+      <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition shrink-0">
           <UserAvatar src={member.profile.imageUrl} />
         </div>
-        <div className="flex flex-col w-full">
-          <div className="flex items-center gap-x-2">
+        <div className="flex flex-col w-full min-w-0">
+          <div className="flex items-center gap-x-2 flex-wrap">
             <div className="flex items-center">
-            <p onClick={onMemberClick} className="font-semibold text-sm hover:underline cursor-pointer">
+            <p onClick={onMemberClick} className="font-semibold text-sm sm:text-sm hover:underline cursor-pointer">
                 {member.profile.name}
               </p>
               {roleIconMap[member.role] && (
@@ -187,7 +187,7 @@ export const ChatItem = memo(({
           )}
           {!fileUrl && !isEditing && (
             <p className={cn(
-              "text-sm text-zinc-600 dark:text-zinc-300",
+              "text-base sm:text-sm text-zinc-700 dark:text-zinc-200 leading-snug break-words whitespace-pre-wrap",
               deleted && "italic text-zinc-500 dark:text-zinc-400 text-xs mt-1"
             )}>
               {content}

@@ -4,6 +4,8 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { NavigationSidebar } from "@/components/navigation/navigation-sidebar";
@@ -17,12 +19,17 @@ export const MobileToggle = ({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden" aria-label="Открыть меню">
-          <Menu />
+        <Button variant="ghost" size="icon" className="md:hidden h-11 w-11" aria-label="Открыть меню">
+          <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 flex gap-0">
-        <div className="w-[72px]">
+      <SheetContent
+        side="left"
+        className="p-0 flex gap-0 w-[88%] sm:max-w-md"
+      >
+        <SheetTitle className="sr-only">Меню навигации</SheetTitle>
+        <SheetDescription className="sr-only">Список серверов и каналов</SheetDescription>
+        <div className="w-[72px] shrink-0">
           <NavigationSidebar />
         </div>
         <ServerSidebar serverId={serverId} />

@@ -56,14 +56,14 @@ export const ServerChannel = ({
       <button
         onClick={onClick}
         className={cn(
-          "flex-1 text-left flex items-center gap-x-2 px-2 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:focus-visible:ring-zinc-400 focus-visible:ring-offset-2 rounded-md transition",
+          "flex-1 text-left flex items-center gap-x-2 px-3 py-2.5 sm:py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:focus-visible:ring-zinc-400 focus-visible:ring-offset-2 rounded-md transition",
           params?.channelId === channel.id && "text-primary dark:text-zinc-200 dark:group-hover:text-white"
         )}
         aria-label={`Открыть канал ${channel.name}`}
       >
         <Icon className="flex-shrink-0 w-5 h-5 text-zinc-500 dark:text-zinc-400" />
         <p className={cn(
-          "line-clamp-1 font-semibold text-sm text-zinc-500 group-hover:text-zinc-600 dark:text-zinc-400 dark:group-hover:text-zinc-300 transition",
+          "line-clamp-1 font-semibold text-base sm:text-sm text-zinc-500 group-hover:text-zinc-600 dark:text-zinc-400 dark:group-hover:text-zinc-300 transition",
           params?.channelId === channel.id && "text-primary dark:text-zinc-200 dark:group-hover:text-white"
         )}>
           {channel.name}

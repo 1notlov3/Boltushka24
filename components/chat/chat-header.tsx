@@ -22,18 +22,18 @@ export const ChatHeader = ({
   channelId,
 }: ChatHeaderProps) => {
   return (
-    <div className="text-md font-semibold px-3 flex items-center h-12 border-neutral-200 dark:border-neutral-800 border-b-2">
+    <div className="text-md font-semibold px-2 sm:px-3 flex items-center h-14 md:h-12 border-neutral-200 dark:border-neutral-800 border-b-2 bg-white dark:bg-[#313338] sticky top-0 z-10">
       <MobileToggle serverId={serverId} />
 
       {type === "channel" && (
-        <Hash className="w-5 h-5 text-zinc-500 dark:text-zinc-400 mr-2" />
+        <Hash className="w-5 h-5 text-zinc-500 dark:text-zinc-400 mr-2 ml-1" />
       )}
 
       {type === "conversation" && (
-        <UserAvatar src={imageUrl} className="h-8 w-8 md:h-8 md:w-8 mr-2" />
+        <UserAvatar src={imageUrl} className="h-9 w-9 md:h-8 md:w-8 mr-2" />
       )}
 
-      <p className="font-semibold text-md text-black dark:text-white">{name}</p>
+      <p className="font-semibold text-base md:text-md text-black dark:text-white truncate">{name}</p>
 
       <div className="ml-auto flex items-center gap-1">
         {type === "channel" && channelId && (
