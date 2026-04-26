@@ -1,9 +1,9 @@
-import { NextApiRequest } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 
-import { NextApiResponseServerIo } from "@/types";
 import { currentProfilePages } from "@/lib/current-profile-pages";
 import { db } from "@/lib/db";
+import { broadcast } from "@/lib/realtime";
 
 const messageSchema = z.object({
   content: z.string().min(1, "Content is required").max(4000, "Content too long"),
@@ -17,7 +17,7 @@ const querySchema = z.object({
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponseServerIo,
+  res: NextApiResponse,
 ) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -100,7 +100,7 @@ export default async function handler(
 
     const channelKey = `chat:${channelId}:messages`;
 
-    res?.socket?.server?.io?.emit(channelKey, message);
+    await broadcast(channelKey, message);
 
     return res.status(200).json(message);
   } catch (error) {

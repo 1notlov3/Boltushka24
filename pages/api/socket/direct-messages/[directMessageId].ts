@@ -1,10 +1,10 @@
-import { NextApiRequest } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import { MemberRole } from "@prisma/client";
 import { z } from "zod";
 
-import { NextApiResponseServerIo } from "@/types";
 import { currentProfilePages } from "@/lib/current-profile-pages";
 import { db } from "@/lib/db";
+import { broadcast } from "@/lib/realtime";
 
 const messageSchema = z.object({
   content: z.string().min(1, "Content is required").max(4000, "Content too long"),
@@ -12,7 +12,7 @@ const messageSchema = z.object({
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponseServerIo,
+  res: NextApiResponse,
 ) {
   if (req.method !== "DELETE" && req.method !== "PATCH") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -180,7 +180,7 @@ export default async function handler(
 
     const updateKey = `chat:${conversation.id}:messages:update`;
 
-    res?.socket?.server?.io?.emit(updateKey, directMessage);
+    await broadcast(updateKey, directMessage);
 
     return res.status(200).json(directMessage);
   } catch (error) {
