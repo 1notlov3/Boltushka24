@@ -49,7 +49,10 @@ const ChannelIdPage = async ({
       where: {
         serverId: params.serverId,
         profileId: profile.id,
-      }
+      },
+      include: {
+        profile: true,
+      },
     })
   ]);
 
@@ -58,7 +61,7 @@ const ChannelIdPage = async ({
   }
 
   return ( 
-    <div className="bg-white dark:bg-[#313338] flex flex-col h-screen">
+    <div className="bg-white dark:bg-[#313338] flex flex-col h-[100dvh] overflow-hidden">
       <ChatHeader
         name={channel.name}
         serverId={channel.serverId}
@@ -90,6 +93,7 @@ const ChannelIdPage = async ({
               serverId: channel.serverId,
             }}
             queryKey={`chat:${channel.id}`}
+            currentMember={member}
           />
         </>
       )}

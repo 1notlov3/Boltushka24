@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, SendHorizontal } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import type { Member, Profile } from "@prisma/client";
 
 import {
   Form,
@@ -25,6 +26,7 @@ interface ChatInputProps {
   name: string;
   type: "conversation" | "channel";
   queryKey?: string;
+  currentMember?: Member & { profile: Profile };
 }
 
 const formSchema = z.object({
@@ -39,6 +41,7 @@ export const ChatInput = ({
   name,
   type,
   queryKey,
+  currentMember,
 }: ChatInputProps) => {
   const { onOpen } = useModal();
   const queryClient = useQueryClient();
@@ -50,38 +53,96 @@ export const ChatInput = ({
     }
   });
 
-  const isLoading = form.formState.isSubmitting;
+  const insertMessage = (message: AnyMessage) => {
+    if (!queryKey) return;
+    queryClient.setQueryData([queryKey], (old: any) => {
+      if (!old?.pages?.length) return old;
+      const exists = old.pages.some((p: any) =>
+        p?.items?.some((m: AnyMessage) => m?.id === message.id)
+      );
+      if (exists) return old;
+      const [first, ...rest] = old.pages;
+      return {
+        ...old,
+        pages: [
+          { ...first, items: [message, ...((first?.items as AnyMessage[]) ?? [])] },
+          ...rest,
+        ],
+      };
+    });
+  };
+
+  const replaceMessage = (tempId: string, real: AnyMessage) => {
+    if (!queryKey) return;
+    queryClient.setQueryData([queryKey], (old: any) => {
+      if (!old?.pages?.length) return old;
+      const realExists = old.pages.some((p: any) =>
+        p?.items?.some((m: AnyMessage) => m?.id === real.id)
+      );
+      return {
+        ...old,
+        pages: old.pages.map((p: any) => ({
+          ...p,
+          items: (p?.items ?? [])
+            .filter((m: AnyMessage) => m?.id !== tempId)
+            .reduce((acc: AnyMessage[], m: AnyMessage) => {
+              if (!realExists && acc.length === 0 && p === old.pages[0]) {
+                acc.push(real);
+              }
+              acc.push(m);
+              return acc;
+            }, [] as AnyMessage[]),
+        })),
+      };
+    });
+  };
+
+  const removeMessage = (tempId: string) => {
+    if (!queryKey) return;
+    queryClient.setQueryData([queryKey], (old: any) => {
+      if (!old?.pages?.length) return old;
+      return {
+        ...old,
+        pages: old.pages.map((p: any) => ({
+          ...p,
+          items: (p?.items ?? []).filter((m: AnyMessage) => m?.id !== tempId),
+        })),
+      };
+    });
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const now = new Date().toISOString();
+    const optimistic = currentMember
+      ? {
+          id: tempId,
+          content: values.content,
+          fileUrl: null,
+          deleted: false,
+          createdAt: now,
+          updatedAt: now,
+          memberId: currentMember.id,
+          channelId: query.channelId ?? null,
+          conversationId: query.conversationId ?? null,
+          member: currentMember,
+        }
+      : null;
+
+    if (optimistic) insertMessage(optimistic);
+    form.reset();
+
     try {
-      const url = qs.stringifyUrl({
-        url: apiUrl,
-        query,
-      });
-
+      const url = qs.stringifyUrl({ url: apiUrl, query });
       const { data } = await axios.post<AnyMessage>(url, values);
-
-      form.reset();
-
-      if (queryKey && data?.id) {
-        queryClient.setQueryData([queryKey], (old: any) => {
-          if (!old?.pages?.length) return old;
-          const exists = old.pages.some((p: any) =>
-            p?.items?.some((m: AnyMessage) => m?.id === data.id)
-          );
-          if (exists) return old;
-          const [first, ...rest] = old.pages;
-          return {
-            ...old,
-            pages: [
-              { ...first, items: [data, ...((first?.items as AnyMessage[]) ?? [])] },
-              ...rest,
-            ],
-          };
-        });
+      if (optimistic && data?.id) {
+        replaceMessage(tempId, data);
+      } else if (data?.id) {
+        insertMessage(data);
       }
     } catch (error) {
       console.log(error);
+      if (optimistic) removeMessage(tempId);
     }
   }
 
@@ -111,7 +172,7 @@ export const ChatInput = ({
                     </button>
                   </ActionTooltip>
                   <Input
-                    disabled={isLoading}
+                    disabled={false}
                     className="pl-14 pr-20 sm:pr-16 py-6 bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200 text-base rounded-xl"
                     placeholder={`Сообщение для ${type === "conversation" ? name : "#" + name}`}
                     aria-label="Введите сообщение"
@@ -124,7 +185,7 @@ export const ChatInput = ({
                   </div>
                   <button
                     type="submit"
-                    disabled={isLoading || !hasContent}
+                    disabled={!hasContent}
                     aria-label="Отправить сообщение"
                     className="absolute top-1/2 -translate-y-1/2 right-5 sm:right-1.5 h-9 w-9 sm:h-7 sm:w-7 rounded-full flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm sm:bg-transparent sm:hover:bg-zinc-300/60 sm:dark:hover:bg-zinc-600/60 sm:text-zinc-600 sm:dark:text-zinc-300 sm:shadow-none"
                   >

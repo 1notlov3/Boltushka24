@@ -67,7 +67,7 @@ const MemberIdPage = async ({
   const otherMember = memberOne.profileId === profile.id ? memberTwo : memberOne;
 
   return ( 
-    <div className="bg-white dark:bg-[#313338] flex flex-col h-screen">
+    <div className="bg-white dark:bg-[#313338] flex flex-col h-[100dvh] overflow-hidden">
       <ChatHeader
         imageUrl={otherMember.profile.imageUrl}
         name={otherMember.profile.name}
@@ -104,6 +104,7 @@ const MemberIdPage = async ({
               conversationId: conversation.id,
             }}
             queryKey={`chat:${conversation.id}`}
+            currentMember={currentMember}
           />
         </>
       )}
