@@ -1,15 +1,28 @@
 "use client";
 
-import { 
+import {
   createContext,
   useContext,
   useEffect,
-  useState
+  useMemo,
+  useRef,
+  useState,
 } from "react";
-import { io as ClientIO } from "socket.io-client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+
+import { getSupabaseBrowser } from "@/lib/supabase";
+import { REALTIME_BROADCAST_EVENT } from "@/lib/realtime";
+
+type Listener = (payload: any) => void;
+
+type RealtimeSocket = {
+  on: (topic: string, listener: Listener) => void;
+  off: (topic: string, listener?: Listener) => void;
+  emit: (topic: string, payload: any) => void;
+};
 
 type SocketContextType = {
-  socket: any | null;
+  socket: RealtimeSocket | null;
   isConnected: boolean;
 };
 
@@ -18,42 +31,73 @@ const SocketContext = createContext<SocketContextType>({
   isConnected: false,
 });
 
-export const useSocket = () => {
-  return useContext(SocketContext);
-};
+export const useSocket = () => useContext(SocketContext);
 
-export const SocketProvider = ({ 
-  children 
-}: { 
-  children: React.ReactNode 
-}) => {
-  const [socket, setSocket] = useState(null);
+export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
+  const channelsRef = useRef<Map<string, { channel: RealtimeChannel; listener: Listener }>>(new Map());
+  const aliveRef = useRef(0);
+
+  const socket: RealtimeSocket = useMemo(() => {
+    const supabase = typeof window !== "undefined" ? getSupabaseBrowser() : null;
+
+    return {
+      on(topic, listener) {
+        if (!supabase) return;
+        const existing = channelsRef.current.get(topic);
+        if (existing) {
+          supabase.removeChannel(existing.channel);
+          channelsRef.current.delete(topic);
+        }
+        const channel = supabase.channel(topic, { config: { broadcast: { self: true } } });
+        channel.on("broadcast", { event: REALTIME_BROADCAST_EVENT }, (msg: { payload: unknown }) => {
+          (listener as Listener)(msg.payload);
+        });
+        channel.subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            aliveRef.current += 1;
+            setIsConnected(true);
+          } else if (status === "CLOSED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            aliveRef.current = Math.max(0, aliveRef.current - 1);
+            if (aliveRef.current === 0) setIsConnected(false);
+          }
+        });
+        channelsRef.current.set(topic, { channel, listener });
+      },
+      off(topic, _listener) {
+        if (!supabase) return;
+        const entry = channelsRef.current.get(topic);
+        if (entry) {
+          supabase.removeChannel(entry.channel);
+          channelsRef.current.delete(topic);
+          aliveRef.current = Math.max(0, aliveRef.current - 1);
+          if (aliveRef.current === 0) setIsConnected(false);
+        }
+      },
+      emit(topic, payload) {
+        if (!supabase) return;
+        const entry = channelsRef.current.get(topic);
+        const channel = entry?.channel ?? supabase.channel(topic);
+        channel.send({ type: "broadcast", event: REALTIME_BROADCAST_EVENT, payload });
+      },
+    };
+  }, []);
 
   useEffect(() => {
-    const socketInstance = new (ClientIO as any)(process.env.NEXT_PUBLIC_SITE_URL!, {
-      path: "/api/socket/io",
-      addTrailingSlash: false,
-    });
-
-    socketInstance.on("connect", () => {
-      setIsConnected(true);
-    });
-
-    socketInstance.on("disconnect", () => {
-      setIsConnected(false);
-    });
-
-    setSocket(socketInstance);
-
+    const supabase = typeof window !== "undefined" ? getSupabaseBrowser() : null;
+    const channels = channelsRef.current;
     return () => {
-      socketInstance.disconnect();
-    }
+      if (!supabase) return;
+      channels.forEach(({ channel }) => {
+        supabase.removeChannel(channel);
+      });
+      channels.clear();
+    };
   }, []);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>
       {children}
     </SocketContext.Provider>
-  )
-}
+  );
+};

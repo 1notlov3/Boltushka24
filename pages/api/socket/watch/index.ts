@@ -1,9 +1,9 @@
-import { NextApiRequest } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 
-import { NextApiResponseServerIo } from "@/types";
 import { currentProfilePages } from "@/lib/current-profile-pages";
 import { db } from "@/lib/db";
+import { broadcast } from "@/lib/realtime";
 
 type WatchState = {
   channelId: string;
@@ -42,7 +42,7 @@ const getSchema = z.object({
   channelId: z.string().uuid("Invalid channel ID"),
 });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponseServerIo) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const profile = await currentProfilePages(req);
 
@@ -134,7 +134,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponseS
       store.set(channelId, nextState);
 
       const eventKey = `watch:${channelId}:state`;
-      res?.socket?.server?.io?.emit(eventKey, {
+      await broadcast(eventKey, {
         ...nextState,
         action,
       });
