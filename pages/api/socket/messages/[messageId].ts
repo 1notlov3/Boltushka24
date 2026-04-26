@@ -153,7 +153,7 @@ export default async function handler(
 
     const updateKey = `chat:${channelId}:messages:update`;
 
-    await broadcast(updateKey, message);
+    await broadcast(updateKey, { id: message.id, type: "update" });
 
     return res.status(200).json(message);
   } catch (error) {

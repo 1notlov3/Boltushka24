@@ -104,7 +104,7 @@ export default async function handler(
 
     const channelKey = `chat:${conversationId}:messages`;
 
-    await broadcast(channelKey, message);
+    await broadcast(channelKey, { id: message.id, type: "add" });
 
     return res.status(200).json(message);
   } catch (error) {
