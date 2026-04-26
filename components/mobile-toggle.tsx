@@ -19,13 +19,20 @@ export const MobileToggle = ({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden h-11 w-11" aria-label="Открыть меню">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden h-11 w-11 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          aria-label="Открыть меню"
+        >
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
       <SheetContent
         side="left"
         className="p-0 flex gap-0 w-[88%] sm:max-w-md"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <SheetTitle className="sr-only">Меню навигации</SheetTitle>
         <SheetDescription className="sr-only">Список серверов и каналов</SheetDescription>

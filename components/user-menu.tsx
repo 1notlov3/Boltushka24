@@ -5,14 +5,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { useClerk, useUser } from "@clerk/nextjs";
 
 export const UserMenu = () => {
   const { user } = useUser();
-  const { signOut } = useClerk();
+  const { signOut, openUserProfile } = useClerk();
 
   if (!user) return null;
 
@@ -23,10 +24,21 @@ export const UserMenu = () => {
           <AvatarImage src={user.imageUrl} />
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => signOut({ redirectUrl: "/sign-in" })} className="cursor-pointer text-red-600">
+      <DropdownMenuContent align="end" sideOffset={8}>
+        <DropdownMenuItem
+          onClick={() => openUserProfile()}
+          className="cursor-pointer"
+        >
+          <Settings className="h-4 w-4 mr-2" />
+          Настройки аккаунта
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => signOut({ redirectUrl: "/sign-in" })}
+          className="cursor-pointer text-red-600"
+        >
           <LogOut className="h-4 w-4 mr-2" />
-          Log out
+          Выйти
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
