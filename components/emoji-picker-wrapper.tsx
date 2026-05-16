@@ -1,22 +1,33 @@
 "use client";
 
-import { useTheme } from "next-themes";
-import Picker from "@emoji-mart/react";
-import data from "@emoji-mart/data";
+import { Button } from "@/components/ui/button";
 
 interface EmojiPickerWrapperProps {
   onChange: (value: string) => void;
 }
 
-const EmojiPickerWrapper = ({ onChange }: EmojiPickerWrapperProps) => {
-  const { resolvedTheme } = useTheme();
+const EMOJIS = [
+  "😀", "😁", "😂", "🤣", "😊", "😍", "😎", "😢",
+  "😡", "👍", "👎", "👏", "🙏", "🔥", "🎉", "❤️",
+  "💯", "✅", "❌", "👀", "🤔", "😴", "🚀", "⭐",
+];
 
+const EmojiPickerWrapper = ({ onChange }: EmojiPickerWrapperProps) => {
   return (
-    <Picker
-      theme={resolvedTheme}
-      data={data}
-      onEmojiSelect={(emoji: any) => onChange(emoji.native)}
-    />
+    <div className="grid w-64 grid-cols-6 gap-1 rounded-md border bg-white p-2 shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+      {EMOJIS.map((emoji) => (
+        <Button
+          key={emoji}
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-lg"
+          onClick={() => onChange(emoji)}
+        >
+          {emoji}
+        </Button>
+      ))}
+    </div>
   );
 };
 

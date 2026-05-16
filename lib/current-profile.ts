@@ -4,7 +4,7 @@ import { cache } from "react";
 import { db } from "@/lib/db";
 
 export const currentProfile = cache(async () => {
-  const { userId } = auth();
+  const { userId } = await auth();
 
   if (!userId) {
     return null;

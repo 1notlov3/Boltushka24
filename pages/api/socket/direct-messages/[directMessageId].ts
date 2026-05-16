@@ -1,14 +1,17 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { MemberRole } from "@prisma/client";
 import { z } from "zod";
 
+import { directMessageInclude } from "@/lib/chat-includes";
 import { currentProfilePages } from "@/lib/current-profile-pages";
 import { db } from "@/lib/db";
+import { canDeleteMessage, canEditMessage } from "@/lib/permissions";
 import { broadcast } from "@/lib/realtime";
 
 const messageSchema = z.object({
   content: z.string().min(1, "Content is required").max(4000, "Content too long"),
 });
+
+const idSchema = z.string().uuid("Invalid message ID");
 
 export default async function handler(
   req: NextApiRequest,
@@ -28,6 +31,11 @@ export default async function handler(
 
     if (!conversationId) {
       return res.status(400).json({ error: "Conversation ID missing" });
+    }
+
+    const directMessageIdValidation = idSchema.safeParse(directMessageId);
+    if (!directMessageIdValidation.success) {
+      return res.status(400).json({ error: directMessageIdValidation.error.errors[0].message });
     }
 
     let [conversation, directMessage] = await Promise.all([
@@ -77,19 +85,7 @@ export default async function handler(
           id: directMessageId as string,
           conversationId: conversationId as string,
         },
-        include: {
-          member: {
-            include: {
-              profile: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                }
-              }
-            }
-          }
-        }
+        include: directMessageInclude(""),
       })
     ]);
 
@@ -107,12 +103,7 @@ export default async function handler(
       return res.status(404).json({ error: "Message not found" });
     }
 
-    const isMessageOwner = directMessage.memberId === member.id;
-    const isAdmin = member.role === MemberRole.ADMIN;
-    const isModerator = member.role === MemberRole.MODERATOR;
-    const canModify = isMessageOwner || isAdmin || isModerator;
-
-    if (!canModify) {
+    if (!canDeleteMessage(member, directMessage.memberId)) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -126,24 +117,12 @@ export default async function handler(
           content: "This message has been deleted.",
           deleted: true,
         },
-        include: {
-          member: {
-            include: {
-              profile: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                }
-              }
-            }
-          }
-        }
+        include: directMessageInclude(member.id),
       })
     }
 
     if (req.method === "PATCH") {
-      if (!isMessageOwner) {
+      if (!canEditMessage(member, directMessage.memberId)) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
@@ -162,19 +141,7 @@ export default async function handler(
         data: {
           content,
         },
-        include: {
-          member: {
-            include: {
-              profile: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                }
-              }
-            }
-          }
-        }
+        include: directMessageInclude(member.id),
       })
     }
 

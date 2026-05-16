@@ -8,6 +8,7 @@ import { Loader2, ServerCrash } from "lucide-react";
 import { useChatQuery } from "@/hooks/use-chat-query";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
+import type { ReplyTarget } from "@/components/chat/chat-shell";
 
 import { ChatWelcome } from "./chat-welcome";
 import { ChatItem } from "./chat-item";
@@ -17,7 +18,21 @@ const DATE_FORMAT = "d MMM yyyy, HH:mm";
 type MessageWithMemberWithProfile = Message & {
   member: Member & {
     profile: Profile
-  }
+  };
+  reactions?: { id: string; emoji: string; memberId: string }[];
+  savedBy?: { id: string }[];
+  parentMessage?: {
+    id: string;
+    content: string;
+    deleted: boolean;
+    member: Member & { profile: Profile };
+  } | null;
+  parentDirectMessage?: {
+    id: string;
+    content: string;
+    deleted: boolean;
+    member: Member & { profile: Profile };
+  } | null;
 }
 
 interface ChatMessagesProps {
@@ -30,6 +45,8 @@ interface ChatMessagesProps {
   paramKey: "channelId" | "conversationId";
   paramValue: string;
   type: "channel" | "conversation";
+  onReply: (target: ReplyTarget) => void;
+  typingUsers: string[];
 }
 
 export const ChatMessages = ({
@@ -42,6 +59,8 @@ export const ChatMessages = ({
   paramKey,
   paramValue,
   type,
+  onReply,
+  typingUsers,
 }: ChatMessagesProps) => {
   const queryKey = `chat:${chatId}`;
   const addKey = `chat:${chatId}:messages`;
@@ -132,11 +151,23 @@ export const ChatMessages = ({
                 isUpdated={message.updatedAt !== message.createdAt}
                 socketUrl={socketUrl}
                 socketQuery={socketQuery}
+                queryKey={queryKey}
+                chatType={type}
+                reactions={message.reactions ?? []}
+                savedByCurrentMember={!!message.savedBy?.length}
+                pinned={message.pinned}
+                parent={message.parentMessage ?? message.parentDirectMessage ?? null}
+                onReply={onReply}
               />
             ))}
           </Fragment>
         ))}
       </div>
+      {!!typingUsers.length && (
+        <p className="px-4 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
+          {typingUsers.slice(0, 3).join(", ")} печатает...
+        </p>
+      )}
       <div ref={bottomRef} />
     </div>
   )

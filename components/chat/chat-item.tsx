@@ -6,9 +6,10 @@ import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
-import { Edit, FileIcon, ShieldAlert, ShieldCheck, Trash } from "lucide-react";
+import { Bookmark, Edit, FileIcon, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, memo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { ActionTooltip } from "@/components/action-tooltip";
@@ -23,6 +24,37 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal-store";
 import { useRouter, useParams } from "next/navigation";
+import type { ReplyTarget } from "@/components/chat/chat-shell";
+import { MessageContent } from "@/components/chat/message-content";
+
+type Reaction = {
+  id: string;
+  emoji: string;
+  memberId: string;
+};
+
+type ParentPreview = {
+  id: string;
+  content: string;
+  deleted: boolean;
+  member: Member & { profile: Profile };
+};
+
+type ChatCacheMessage = {
+  id: string;
+  reactions?: Reaction[];
+  savedBy?: { id: string }[];
+  pinned?: boolean;
+};
+
+type ChatCachePage = {
+  items: ChatCacheMessage[];
+};
+
+type ChatCacheData = {
+  pages: ChatCachePage[];
+  pageParams?: unknown[];
+};
 
 interface ChatItemProps {
   id: string;
@@ -37,6 +69,13 @@ interface ChatItemProps {
   isUpdated: boolean;
   socketUrl: string;
   socketQuery: Record<string, string>;
+  queryKey: string;
+  chatType: "channel" | "conversation";
+  reactions: Reaction[];
+  savedByCurrentMember: boolean;
+  pinned: boolean;
+  parent: ParentPreview | null;
+  onReply: (target: ReplyTarget) => void;
 };
 
 const roleIconMap = {
@@ -59,12 +98,20 @@ export const ChatItem = memo(({
   currentMember,
   isUpdated,
   socketUrl,
-  socketQuery
+  socketQuery,
+  queryKey,
+  chatType,
+  reactions,
+  savedByCurrentMember,
+  pinned,
+  parent,
+  onReply,
 }: ChatItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const { onOpen } = useModal();
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const onMemberClick = () => {
     if (member.id === currentMember.id) {
@@ -79,7 +126,7 @@ export const ChatItem = memo(({
     // This prevents O(N) event listeners for N messages, reducing memory usage and event overhead.
     if (!isEditing) return;
 
-    const handleKeyDown = (event: any) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" || event.keyCode === 27) {
         setIsEditing(false);
       }
@@ -132,11 +179,91 @@ export const ChatItem = memo(({
   const isOwner = currentMember.id === member.id;
   const canDeleteMessage = !deleted && (isAdmin || isModerator || isOwner);
   const canEditMessage = !deleted && isOwner && !fileUrl;
+  const canPinMessage = !deleted && (isAdmin || isModerator || isOwner);
   const isPDF = fileType === "pdf" && fileUrl;
   const isImage = !isPDF && fileUrl;
+  const actionBase = chatType === "conversation"
+    ? `/api/direct-messages/${id}`
+    : `/api/messages/${id}`;
+
+  const updateCachedMessage = (updater: (message: ChatCacheMessage) => ChatCacheMessage) => {
+    queryClient.setQueryData<ChatCacheData>([queryKey], (old) => {
+      if (!old?.pages?.length) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page) => ({
+          ...page,
+          items: page.items.map((item) => item.id === id ? updater(item) : item),
+        })),
+      };
+    });
+  };
+
+  const invalidateMessage = () => {
+    queryClient.invalidateQueries({ queryKey: [queryKey] });
+  };
+
+  const onReaction = async (emoji: string) => {
+    const existing = reactions.find((reaction) => reaction.emoji === emoji && reaction.memberId === currentMember.id);
+
+    updateCachedMessage((message) => ({
+      ...message,
+      reactions: existing
+        ? (message.reactions ?? []).filter((reaction) => reaction.id !== existing.id)
+        : [
+            ...(message.reactions ?? []),
+            { id: `optimistic-${emoji}-${Date.now()}`, emoji, memberId: currentMember.id },
+          ],
+    }));
+
+    try {
+      await axios.post(`${actionBase}/reactions`, { emoji });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      invalidateMessage();
+    }
+  };
+
+  const onPin = async () => {
+    updateCachedMessage((message) => ({ ...message, pinned: !pinned }));
+
+    try {
+      await axios.patch(`${actionBase}/pin`, { pinned: !pinned });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      invalidateMessage();
+    }
+  };
+
+  const onSave = async () => {
+    updateCachedMessage((message) => ({
+      ...message,
+      savedBy: savedByCurrentMember ? [] : [{ id: `optimistic-save-${Date.now()}` }],
+    }));
+
+    try {
+      await axios.post(`${actionBase}/save`);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      invalidateMessage();
+    }
+  };
+
+  const reactionGroups = reactions.reduce<Record<string, Reaction[]>>((acc, reaction) => {
+    acc[reaction.emoji] = [...(acc[reaction.emoji] ?? []), reaction];
+    return acc;
+  }, {});
+
+  const scrollToParent = () => {
+    if (!parent) return;
+    document.getElementById(`message-${parent.id}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+  };
 
   return (
-    <div className="relative group flex items-center hover:bg-black/5 px-4 py-2.5 sm:py-2 transition w-full">
+    <div id={`message-${id}`} className="relative group flex items-center hover:bg-black/5 px-4 py-2.5 sm:py-2 transition w-full">
       <div className="group flex gap-x-3 sm:gap-x-2 items-start w-full">
       <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition shrink-0">
           <UserAvatar src={member.profile.imageUrl} />
@@ -156,7 +283,23 @@ export const ChatItem = memo(({
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
               {timestamp}
             </span>
+            {pinned && !deleted && (
+              <span className="inline-flex items-center gap-1 rounded-sm bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-300">
+                <Pin className="h-3 w-3" />
+                закреплено
+              </span>
+            )}
           </div>
+          {parent && !deleted && (
+            <button
+              type="button"
+              onClick={scrollToParent}
+              className="mt-1 mb-1 max-w-full rounded-sm border-l-2 border-indigo-400 bg-zinc-100 px-2 py-1 text-left text-xs text-zinc-600 transition hover:bg-zinc-200 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              <span className="block font-semibold">{parent.member.profile.name}</span>
+              <span className="line-clamp-1">{parent.deleted ? "Сообщение удалено" : parent.content}</span>
+            </button>
+          )}
           {isImage && (
             <a 
               href={fileUrl}
@@ -186,17 +329,7 @@ export const ChatItem = memo(({
             </div>
           )}
           {!fileUrl && !isEditing && (
-            <p className={cn(
-              "text-base sm:text-sm text-zinc-700 dark:text-zinc-200 leading-snug break-words whitespace-pre-wrap",
-              deleted && "italic text-zinc-500 dark:text-zinc-400 text-xs mt-1"
-            )}>
-              {content}
-              {isUpdated && !deleted && (
-                <span className="text-[10px] mx-2 text-zinc-500 dark:text-zinc-400">
-                  (изменено)
-                </span>
-              )}
-            </p>
+            <MessageContent content={content} deleted={deleted} isUpdated={isUpdated} />
           )}
           {!fileUrl && isEditing && (
             <Form {...form}>
@@ -239,10 +372,98 @@ export const ChatItem = memo(({
               </span>
             </Form>
           )}
+          {!deleted && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {Object.entries(reactionGroups).map(([emoji, list]) => {
+                const active = list.some((reaction) => reaction.memberId === currentMember.id);
+                return (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => onReaction(emoji)}
+                    className={cn(
+                      "inline-flex h-7 items-center gap-1 rounded-full border px-2 text-xs transition",
+                      active
+                        ? "border-indigo-400 bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"
+                        : "border-zinc-200 bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                    )}
+                  >
+                    <span>{emoji}</span>
+                    <span>{list.length}</span>
+                  </button>
+                );
+              })}
+              {["👍", "❤️", "😂", "🔥"].map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => onReaction(emoji)}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-zinc-300 text-xs opacity-80 transition hover:bg-zinc-100 hover:opacity-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  aria-label={`Реакция ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      {canDeleteMessage && (
+      {!deleted && (
         <div className="group-hover:opacity-100 focus-within:opacity-100 group-hover:pointer-events-auto focus-within:pointer-events-auto opacity-0 pointer-events-none flex items-center gap-x-2 absolute p-1 -top-2 right-5 bg-white dark:bg-zinc-800 border rounded-sm transition-opacity">
+          {!deleted && (
+            <ActionTooltip label="Ответить">
+              <button
+                onClick={() => onReply({ id, content, authorName: member.profile.name })}
+                className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+                aria-label="Ответить"
+                type="button"
+              >
+                <Reply className="w-4 h-4" />
+              </button>
+            </ActionTooltip>
+          )}
+          {!deleted && (
+            <ActionTooltip label="Реакция">
+              <button
+                onClick={() => onReaction("👍")}
+                className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+                aria-label="Быстрая реакция"
+                type="button"
+              >
+                <SmilePlus className="w-4 h-4" />
+              </button>
+            </ActionTooltip>
+          )}
+          {canPinMessage && (
+            <ActionTooltip label={pinned ? "Открепить" : "Закрепить"}>
+              <button
+                onClick={onPin}
+                className={cn(
+                  "cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2",
+                  pinned && "text-amber-500"
+                )}
+                aria-label={pinned ? "Открепить" : "Закрепить"}
+                type="button"
+              >
+                <Pin className="w-4 h-4" />
+              </button>
+            </ActionTooltip>
+          )}
+          {!deleted && (
+            <ActionTooltip label={savedByCurrentMember ? "Убрать из избранного" : "Сохранить"}>
+              <button
+                onClick={onSave}
+                className={cn(
+                  "cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2",
+                  savedByCurrentMember && "text-indigo-500"
+                )}
+                aria-label={savedByCurrentMember ? "Убрать из избранного" : "Сохранить"}
+                type="button"
+              >
+                <Bookmark className={cn("w-4 h-4", savedByCurrentMember && "fill-current")} />
+              </button>
+            </ActionTooltip>
+          )}
           {canEditMessage && (
             <ActionTooltip label="Редактировать">
               <button
@@ -255,19 +476,21 @@ export const ChatItem = memo(({
               </button>
             </ActionTooltip>
           )}
-          <ActionTooltip label="Удалить">
-            <button
-              onClick={() => onOpen("deleteMessage", {
-                apiUrl: `${socketUrl}/${id}`,
-                query: socketQuery,
-              })}
-              className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
-              aria-label="Удалить"
-              type="button"
-            >
-              <Trash className="w-4 h-4" />
-            </button>
-          </ActionTooltip>
+          {canDeleteMessage && (
+            <ActionTooltip label="Удалить">
+              <button
+                onClick={() => onOpen("deleteMessage", {
+                  apiUrl: `${socketUrl}/${id}`,
+                  query: socketQuery,
+                })}
+                className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+                aria-label="Удалить"
+                type="button"
+              >
+                <Trash className="w-4 h-4" />
+              </button>
+            </ActionTooltip>
+          )}
         </div>
       )}
     </div>

@@ -7,9 +7,7 @@ const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY!;
 export const UPLOAD_BUCKET = "uploads";
 
 declare global {
-  // eslint-disable-next-line no-var
   var supabaseBrowser: SupabaseClient | undefined;
-  // eslint-disable-next-line no-var
   var supabaseAdmin: SupabaseClient | undefined;
 }
 

@@ -5,6 +5,7 @@ import { MemberRole } from "@prisma/client";
 import { 
   BarChart,
   ChevronDown, 
+  FolderPlus,
   LogOut, 
   PlusCircle, 
   Settings, 
@@ -83,6 +84,14 @@ export const ServerHeader = ({
           >
             Создать канал
             <PlusCircle className="h-4 w-4 ml-auto" />
+          </DropdownMenuItem>
+        )}
+        {isModerator && (
+          <DropdownMenuItem onClick={() => onOpen("createCategory", { server })}
+            className="px-3 py-2 text-sm cursor-pointer"
+          >
+            Создать категорию
+            <FolderPlus className="h-4 w-4 ml-auto" />
           </DropdownMenuItem>
         )}
         {isModerator && (

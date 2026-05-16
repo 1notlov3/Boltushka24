@@ -4,13 +4,12 @@ import { db } from "@/lib/db";
 import { currentProfile } from "@/lib/current-profile";
 import { ServerSidebar } from "@/components/server/server-sidebar";
 
-const ServerIdLayout = async ({
-  children,
-  params,
-}: {
+const ServerIdLayout = async (props: {
   children: React.ReactNode;
-  params: { serverId: string };
+  params: Promise<{ serverId: string }>;
 }) => {
+  const { children } = props;
+  const params = await props.params;
   const profile = await currentProfile();
 
   if (!profile) {

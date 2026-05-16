@@ -5,6 +5,8 @@ import { z } from "zod";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   const room = req.nextUrl.searchParams.get("room");
   const username = req.nextUrl.searchParams.get("username");

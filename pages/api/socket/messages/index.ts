@@ -1,13 +1,19 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import { NotificationType } from "@prisma/client";
 import { z } from "zod";
 
+import { channelMessageInclude } from "@/lib/chat-includes";
 import { currentProfilePages } from "@/lib/current-profile-pages";
 import { db } from "@/lib/db";
+import { extractMentionNames } from "@/lib/message-formatting";
+import { canCreateMessage } from "@/lib/permissions";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
 
 const messageSchema = z.object({
   content: z.string().min(1, "Content is required").max(4000, "Content too long"),
   fileUrl: z.string().url("Invalid file URL").regex(/^(http|https):\/\//i, "Invalid file URL protocol").optional().nullable(),
+  parentMessageId: z.string().uuid("Invalid parent message ID").optional().nullable(),
 });
 
 const querySchema = z.object({
@@ -47,7 +53,7 @@ export default async function handler(
       return res.status(400).json({ error: validation.error.errors[0].message });
     }
 
-    const { content, fileUrl } = validation.data;
+    const { content, fileUrl, parentMessageId } = validation.data;
 
     // Optimized: Reduced from 3 queries to 2.
     // `db.member.findFirst` implicitly confirms server existence and membership, making `db.server.findFirst` redundant.
@@ -64,7 +70,7 @@ export default async function handler(
           serverId: serverId as string,
           profileId: profile.id,
         },
-        select: { id: true }
+        select: { id: true, role: true }
       })
     ]);
 
@@ -76,27 +82,100 @@ export default async function handler(
       return res.status(404).json({ message: "Member not found" });
     }
 
+    if (!canCreateMessage(member)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const limit = checkRateLimit({
+      key: rateLimitKey("message:create", profile.id, channelId as string),
+      limit: 20,
+      windowMs: 60_000,
+    });
+
+    if (!limit.ok) {
+      return res.status(429).json({ error: `Too many messages. Retry in ${limit.retryAfterSeconds}s` });
+    }
+
+    const parentMessage = parentMessageId
+      ? await db.message.findFirst({
+          where: {
+            id: parentMessageId,
+            channelId: channelId as string,
+            deleted: false,
+          },
+          select: {
+            id: true,
+            memberId: true,
+            member: {
+              select: {
+                profileId: true,
+              },
+            },
+          },
+        })
+      : null;
+
+    if (parentMessageId && !parentMessage) {
+      return res.status(404).json({ error: "Parent message not found" });
+    }
+
     const message = await db.message.create({
       data: {
         content,
         fileUrl,
+        parentMessageId: parentMessage?.id,
         channelId: channelId as string,
         memberId: member.id,
       },
-      include: {
-        member: {
-          include: {
-            profile: {
-              select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-              }
-            }
-          }
-        }
-      }
+      include: channelMessageInclude(member.id),
     });
+
+    const mentionedNames = extractMentionNames(content);
+    const mentionedMembers = mentionedNames.length
+      ? await db.member.findMany({
+          where: {
+            serverId: serverId as string,
+            profile: {
+              name: {
+                in: mentionedNames,
+              },
+            },
+            id: {
+              not: member.id,
+            },
+          },
+          select: {
+            profileId: true,
+          },
+        })
+      : [];
+
+    const notifications = [
+      ...(parentMessage && parentMessage.member.profileId !== profile.id
+        ? [{
+            type: NotificationType.REPLY,
+            actorId: profile.id,
+            targetId: parentMessage.member.profileId,
+            serverId: serverId as string,
+            channelId: channelId as string,
+            messageId: message.id,
+            metadata: { preview: content.slice(0, 160) },
+          }]
+        : []),
+      ...mentionedMembers.map((target) => ({
+        type: NotificationType.MENTION,
+        actorId: profile.id,
+        targetId: target.profileId,
+        serverId: serverId as string,
+        channelId: channelId as string,
+        messageId: message.id,
+        metadata: { preview: content.slice(0, 160) },
+      })),
+    ];
+
+    if (notifications.length) {
+      await db.notification.createMany({ data: notifications });
+    }
 
     const channelKey = `chat:${channelId}:messages`;
 

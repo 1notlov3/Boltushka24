@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
-import { Message } from "@prisma/client";
 import { z } from "zod";
 
+import { apiError, unauthorized } from "@/lib/api-response";
+import { channelMessageInclude } from "@/lib/chat-includes";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
 
 const MESSAGES_BATCH = 10;
 
@@ -17,23 +19,18 @@ export async function GET(
     const cursor = searchParams.get("cursor");
     const channelId = searchParams.get("channelId");
 
-    if (!profile) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    if (!channelId) {
-      return new NextResponse("Channel ID missing", { status: 400 });
-    }
+    if (!profile) return unauthorized();
+    if (!channelId) return apiError("Channel ID missing", 400);
 
     const channelIdValidation = z.string().uuid().safeParse(channelId);
     if (!channelIdValidation.success) {
-      return new NextResponse("Invalid Channel ID", { status: 400 });
+      return apiError("Invalid Channel ID", 400);
     }
 
     if (cursor) {
       const cursorValidation = z.string().uuid().safeParse(cursor);
       if (!cursorValidation.success) {
-        return new NextResponse("Invalid Cursor ID", { status: 400 });
+        return apiError("Invalid Cursor ID", 400);
       }
     }
 
@@ -50,72 +47,39 @@ export async function GET(
       },
       select: {
         id: true,
+        serverId: true,
       }
     });
 
     if (!channel) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return unauthorized();
     }
 
-    let messages: Message[] = [];
+    const member = await db.member.findFirst({
+      where: {
+        serverId: channel.serverId,
+        profileId: profile.id,
+      },
+      select: {
+        id: true,
+      },
+    });
 
-    if (cursor) {
-      messages = await db.message.findMany({
-        take: MESSAGES_BATCH,
-        skip: 1,
-        cursor: {
-          id: cursor,
-        },
-        where: {
-          channelId,
-        },
-        include: {
-          member: {
-            // ⚡ Bolt Optimization: Select only necessary fields for member and profile
-            select: {
-              id: true,
-              role: true,
-              profile: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                }
-              }
-            }
-          }
-        },
-        orderBy: {
-          createdAt: "desc",
-        }
-      })
-    } else {
-      messages = await db.message.findMany({
-        take: MESSAGES_BATCH,
-        where: {
-          channelId,
-        },
-        include: {
-          member: {
-            // ⚡ Bolt Optimization: Select only necessary fields for member and profile
-            select: {
-              id: true,
-              role: true,
-              profile: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                }
-              }
-            }
-          }
-        },
-        orderBy: {
-          createdAt: "desc",
-        }
-      });
+    if (!member) {
+      return unauthorized();
     }
+
+    const messages = await db.message.findMany({
+      take: MESSAGES_BATCH,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      where: {
+        channelId,
+      },
+      include: channelMessageInclude(member.id),
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
     let nextCursor = null;
 
@@ -123,12 +87,12 @@ export async function GET(
       nextCursor = messages[MESSAGES_BATCH - 1].id;
     }
 
-    return NextResponse.json({
+    return Response.json({
       items: messages,
       nextCursor
     });
   } catch (error) {
     console.log("[MESSAGES_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return apiError("Internal Error", 500);
   }
 }

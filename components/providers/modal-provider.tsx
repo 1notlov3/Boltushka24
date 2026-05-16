@@ -9,12 +9,18 @@ const InviteModal = dynamic(() => import("@/components/modals/invite-modal").the
 const EditServerModal = dynamic(() => import("@/components/modals/edit-server-modal").then(mod => mod.EditServerModal), { ssr: false });
 const MembersModal = dynamic(() => import("@/components/modals/members-modal").then(mod => mod.MembersModal), { ssr: false });
 const CreateChannelModal = dynamic(() => import("@/components/modals/create-channel-modal").then(mod => mod.CreateChannelModal), { ssr: false });
+const CreateCategoryModal = dynamic(() => import("@/components/modals/create-category-modal").then(mod => mod.CreateCategoryModal), { ssr: false });
 const LeaveServerModal = dynamic(() => import("@/components/modals/leave-server-modal").then(mod => mod.LeaveServerModal), { ssr: false });
 const DeleteServerModal = dynamic(() => import("@/components/modals/delete-server-modal").then(mod => mod.DeleteServerModal), { ssr: false });
 const DeleteChannelModal = dynamic(() => import("@/components/modals/delete-channel-modal").then(mod => mod.DeleteChannelModal), { ssr: false });
 const EditChannelModal = dynamic(() => import("@/components/modals/edit-channel-modal").then(mod => mod.EditChannelModal), { ssr: false });
 const MessageFileModal = dynamic(() => import("@/components/modals/message-file-modal").then(mod => mod.MessageFileModal), { ssr: false });
 const DeleteMessageModal = dynamic(() => import("@/components/modals/delete-message-modal").then(mod => mod.DeleteMessageModal), { ssr: false });
+const MessageSearchModal = dynamic(() => import("@/components/modals/message-search-modal").then(mod => mod.MessageSearchModal), { ssr: false });
+const PinnedMessagesModal = dynamic(() => import("@/components/modals/pinned-messages-modal").then(mod => mod.PinnedMessagesModal), { ssr: false });
+const SavedMessagesModal = dynamic(() => import("@/components/modals/saved-messages-modal").then(mod => mod.SavedMessagesModal), { ssr: false });
+const NotificationCenterModal = dynamic(() => import("@/components/modals/notification-center-modal").then(mod => mod.NotificationCenterModal), { ssr: false });
+const UserSettingsModal = dynamic(() => import("@/components/modals/user-settings-modal").then(mod => mod.UserSettingsModal), { ssr: false });
 const WatchTogetherModal = dynamic(() => import("@/components/modals/watch-together-modal").then(mod => mod.WatchTogetherModal), { ssr: false });
 const UserRatingModal = dynamic(() => import("@/components/modals/user-rating-modal").then(mod => mod.UserRatingModal), { ssr: false });
 
@@ -42,12 +48,18 @@ export const ModalProvider = () => {
     {mountedModals.editServer && <EditServerModal />}
     {mountedModals.members && <MembersModal/>}
     {mountedModals.createChannel && <CreateChannelModal/>}
+    {mountedModals.createCategory && <CreateCategoryModal/>}
     {mountedModals.leaveServer && <LeaveServerModal />}
     {mountedModals.deleteServer && <DeleteServerModal />}
     {mountedModals.deleteChannel && <DeleteChannelModal/>}
     {mountedModals.editChannel && <EditChannelModal/>}
     {mountedModals.messageFile && <MessageFileModal/>}
     {mountedModals.deleteMessage && <DeleteMessageModal/>}
+    {mountedModals.messageSearch && <MessageSearchModal/>}
+    {mountedModals.pinnedMessages && <PinnedMessagesModal/>}
+    {mountedModals.savedMessages && <SavedMessagesModal/>}
+    {mountedModals.notificationCenter && <NotificationCenterModal/>}
+    {mountedModals.userSettings && <UserSettingsModal/>}
     {mountedModals.watchTogether && <WatchTogetherModal/>}
     {mountedModals.userRating && <UserRatingModal/>}
   </>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSocket } from "@/components/providers/socket-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { extractYoutubeId } from "@/lib/youtube";
 
 interface YouTubeWatchRoomProps {
   serverId: string;
@@ -28,28 +29,6 @@ declare global {
     onYouTubeIframeAPIReady?: () => void;
   }
 }
-
-const extractYoutubeId = (url: string): string | null => {
-  const trimmed = url.trim();
-
-  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
-    return trimmed;
-  }
-
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
-    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = trimmed.match(pattern);
-    if (match?.[1]) return match[1];
-  }
-
-  return null;
-};
 
 export const YouTubeWatchRoom = ({
   serverId,

@@ -12,6 +12,7 @@ interface ServerSectionProps {
   role?: MemberRole;
   sectionType: "channels" | "members";
   channelType?: ChannelType;
+  categoryId?: string | null;
   server?: ServerWithMembersWithProfiles;
 };
 
@@ -20,6 +21,7 @@ export const ServerSection = ({
   role,
   sectionType,
   channelType,
+  categoryId,
   server,
 }: ServerSectionProps) => {
   const { onOpen } = useModal();
@@ -32,7 +34,7 @@ export const ServerSection = ({
       {role !== MemberRole.GUEST && sectionType === "channels" && (
         <ActionTooltip label="Создать канал" side="top">
           <button
-            onClick={() => onOpen("createChannel", { channelType })}
+            onClick={() => onOpen("createChannel", { channelType, categoryId })}
             className="text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300 transition"
             aria-label="Создать канал"
           >

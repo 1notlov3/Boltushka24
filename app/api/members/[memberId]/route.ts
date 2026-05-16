@@ -5,6 +5,8 @@ import { z } from "zod";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 const UpdateMemberSchema = z.object({
   role: z.nativeEnum(MemberRole),
 });
@@ -19,9 +21,10 @@ const QuerySchema = z.object({
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { memberId: string } }
+  context: { params: Promise<{ memberId: string }> }
 ) {
   try {
+    const params = await context.params;
     const profile = await currentProfile();
     const { searchParams } = new URL(req.url);
 
@@ -86,9 +89,10 @@ export async function DELETE(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { memberId: string } }
+  context: { params: Promise<{ memberId: string }> }
 ) {
   try {
+    const params = await context.params;
     const profile = await currentProfile();
     const { searchParams } = new URL(req.url);
     const body = await req.json();

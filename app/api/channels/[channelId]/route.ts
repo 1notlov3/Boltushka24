@@ -1,14 +1,21 @@
 import { currentProfile } from "@/lib/current-profile";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { MemberRole, ChannelType } from "@prisma/client";
+import { ChannelType } from "@prisma/client";
 import { z } from "zod";
+import { canManageChannels } from "@/lib/permissions";
+
+export const dynamic = "force-dynamic";
 
 const UpdateChannelSchema = z.object({
   name: z.string().min(1).max(100).refine((name) => name !== "основной", {
     message: "Название канала не может быть \"основной\""
   }).optional(),
-  type: z.nativeEnum(ChannelType).optional()
+  type: z.nativeEnum(ChannelType).optional(),
+  topic: z.string().trim().max(300).optional().nullable(),
+  icon: z.string().trim().max(32).optional().nullable(),
+  categoryId: z.string().uuid("Invalid category ID").optional().nullable(),
+  position: z.number().int().min(0).optional(),
 });
 
 const ParamsSchema = z.object({
@@ -21,9 +28,10 @@ const QuerySchema = z.object({
 
 export async function DELETE(
   req: Request,
-  {params}: {params:{channelId:string}}
+  context: { params: Promise<{ channelId: string }> }
 ) {
   try{
+    const params = await context.params;
     const {searchParams} = new URL(req.url);
     const serverId = searchParams.get('serverId');
     const profile= await currentProfile();
@@ -51,17 +59,25 @@ export async function DELETE(
       return new NextResponse(queryValidation.error.errors[0].message, { status: 400 });
     }
 
+    const member = await db.member.findFirst({
+      where: {
+        serverId,
+        profileId: profile.id,
+      },
+      select: { id: true, role: true },
+    });
+
+    if (!member) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    if (!canManageChannels(member)) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
     const server = await db.server.update({
       where:{
         id:serverId,
-        members: {
-          some: {
-            profileId: profile.id,
-            role:{
-              in: [MemberRole.ADMIN, MemberRole.MODERATOR ],
-            }
-          }
-        }
       },
       data:{
         channels:{
@@ -84,9 +100,10 @@ export async function DELETE(
 }
 export async function PATCH(
   req: Request,
-  {params}: {params:{channelId:string}}
+  context: { params: Promise<{ channelId: string }> }
 ) {
   try{
+    const params = await context.params;
     const {searchParams} = new URL(req.url);
     const body = await req.json();
     const serverId = searchParams.get('serverId');
@@ -119,19 +136,38 @@ export async function PATCH(
       return new NextResponse(result.error.errors[0].message, { status: 400 });
     }
 
-    const { name, type } = result.data;
+    const { name, type, topic, icon, categoryId, position } = result.data;
+
+    const member = await db.member.findFirst({
+      where: {
+        serverId,
+        profileId: profile.id,
+      },
+      select: { id: true, role: true },
+    });
+
+    if (!member) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    if (!canManageChannels(member)) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    if (categoryId) {
+      const category = await db.channelCategory.findFirst({
+        where: { id: categoryId, serverId },
+        select: { id: true },
+      });
+
+      if (!category) {
+        return new NextResponse("Category not found", { status: 404 });
+      }
+    }
 
     const server = await db.server.update({
       where:{
         id:serverId,
-        members: {
-          some: {
-            profileId: profile.id,
-            role:{
-              in: [MemberRole.ADMIN, MemberRole.MODERATOR ],
-            }
-          }
-        }
       },
       data:{
         channels:{
@@ -145,8 +181,20 @@ export async function PATCH(
             data:{
               name,
               type,
+              topic: topic === undefined ? undefined : topic || null,
+              icon: icon === undefined ? undefined : icon || null,
+              categoryId: categoryId === undefined ? undefined : categoryId || null,
+              position,
             }
           }
+        },
+        auditLogs: {
+          create: {
+            action: "channel.update",
+            actorId: profile.id,
+            targetId: params.channelId,
+            metadata: { name, type, topic, icon, categoryId, position },
+          },
         }
       }
     });

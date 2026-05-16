@@ -19,7 +19,7 @@ export const currentProfilePages = async (req: NextApiRequest) => {
     return existingProfile;
   }
 
-  const user = await clerkClient.users.getUser(userId);
+  const user = await (await clerkClient()).users.getUser(userId);
 
   if (!user) {
     return null;

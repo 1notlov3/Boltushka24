@@ -4,14 +4,13 @@ import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 
 interface ServerIdPageProps {
-  params: {
+  params: Promise<{
     serverId: string;
-  }
+  }>
 };
 
-const ServerIdPage = async ({
-  params
-}: ServerIdPageProps) => {
+const ServerIdPage = async ({ params }: ServerIdPageProps) => {
+  const resolvedParams = await params;
   const profile = await currentProfile();
 
   if (!profile) {
@@ -20,7 +19,7 @@ const ServerIdPage = async ({
 
   const server = await db.server.findUnique({
     where: {
-      id: params.serverId,
+      id: resolvedParams.serverId,
       members: {
         some: {
           profileId: profile.id,
@@ -45,7 +44,7 @@ const ServerIdPage = async ({
     return null;
   }
 
-  return redirect(`/servers/${params.serverId}/channels/${initialChannel?.id}`)
+  return redirect(`/servers/${resolvedParams.serverId}/channels/${initialChannel?.id}`)
 }
  
 export default ServerIdPage;

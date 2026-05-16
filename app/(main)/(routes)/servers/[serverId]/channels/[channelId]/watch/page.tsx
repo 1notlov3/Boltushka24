@@ -5,16 +5,18 @@ import { db } from "@/lib/db";
 import { YouTubeWatchRoom } from "@/components/watch/youtube-watch-room";
 
 interface WatchPageProps {
-  params: {
+  params: Promise<{
     serverId: string;
     channelId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     v?: string;
-  };
+  }>;
 }
 
 const WatchPage = async ({ params, searchParams }: WatchPageProps) => {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
   const profile = await currentProfile();
 
   if (!profile) {
@@ -24,8 +26,8 @@ const WatchPage = async ({ params, searchParams }: WatchPageProps) => {
   const [channel, member] = await Promise.all([
     db.channel.findFirst({
       where: {
-        id: params.channelId,
-        serverId: params.serverId,
+        id: resolvedParams.channelId,
+        serverId: resolvedParams.serverId,
       },
       select: {
         id: true,
@@ -35,7 +37,7 @@ const WatchPage = async ({ params, searchParams }: WatchPageProps) => {
     }),
     db.member.findFirst({
       where: {
-        serverId: params.serverId,
+        serverId: resolvedParams.serverId,
         profileId: profile.id,
       },
       select: { id: true },
@@ -51,7 +53,7 @@ const WatchPage = async ({ params, searchParams }: WatchPageProps) => {
       serverId={channel.serverId}
       channelId={channel.id}
       channelName={channel.name}
-      initialVideoId={searchParams.v}
+      initialVideoId={resolvedSearchParams.v}
     />
   );
 };

@@ -33,7 +33,12 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
+type CategoryOption = {
+  id: string;
+  name: string;
+};
 
 const formSchema = z.object({
   name: z.string().min(1, {
@@ -44,7 +49,9 @@ const formSchema = z.object({
       message: "Имя канала не может быть 'основной'"
     }
   ),
-  type: z.nativeEnum(ChannelType)
+  type: z.nativeEnum(ChannelType),
+  topic: z.string().trim().max(300).optional(),
+  categoryId: z.string().optional(),
 });
 
 export const CreateChannelModal = () => {
@@ -53,12 +60,15 @@ export const CreateChannelModal = () => {
   const params = useParams();
 
   const isModalOpen = isOpen && type === "createChannel";
-  const { channelType } = data;
+  const { channelType, categoryId } = data;
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       type: channelType || ChannelType.TEXT,
+      topic: "",
+      categoryId: categoryId || "none",
     }
   });
   useEffect(() => {
@@ -67,7 +77,22 @@ export const CreateChannelModal = () => {
     } else {
       form.setValue("type", ChannelType.TEXT);
     }
-  }, [channelType, form]);
+    form.setValue("categoryId", categoryId || "none");
+  }, [categoryId, channelType, form]);
+
+  useEffect(() => {
+    if (!isModalOpen || !params?.serverId) return;
+
+    const load = async () => {
+      const response = await fetch(`/api/channel-categories?serverId=${params.serverId}`);
+      if (response.ok) {
+        const payload = await response.json() as { items: CategoryOption[] };
+        setCategories(payload.items);
+      }
+    };
+
+    load();
+  }, [isModalOpen, params?.serverId]);
 
 
   const isLoading = form.formState.isSubmitting;
@@ -80,7 +105,11 @@ export const CreateChannelModal = () => {
           serverId: params?.serverId
         }
       });
-      await axios.post(url, values);
+      await axios.post(url, {
+        ...values,
+        categoryId: values.categoryId === "none" ? null : values.categoryId,
+        topic: values.topic || null,
+      });
 
       form.reset();
       router.refresh();
@@ -158,6 +187,51 @@ export const CreateChannelModal = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Категория</FormLabel>
+                    <Select disabled={isLoading} onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-zinc-300/50 border-0 focus:ring-0 text-black ring-offset-0 focus:ring-offset-0 outline-none">
+                          <SelectValue placeholder="Без категории" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Без категории</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="topic"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-secondary/70">
+                      Описание канала
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={isLoading}
+                        className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black focus-visible:ring-offset-0"
+                        placeholder="Короткий topic канала"
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
