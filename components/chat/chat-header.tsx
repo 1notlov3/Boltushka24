@@ -5,6 +5,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { SocketIndicator } from "@/components/socket-indicator";
 import { ChatVideoButton } from "./chat-video-button";
 import { WatchTogetherTrigger } from "./watch-together-trigger";
+import { ChatHeaderActions } from "./chat-header-actions";
 
 interface ChatHeaderProps {
   serverId: string;
@@ -12,6 +13,7 @@ interface ChatHeaderProps {
   type: "channel" | "conversation";
   imageUrl?: string;
   channelId?: string;
+  conversationId?: string;
 }
 
 export const ChatHeader = ({
@@ -20,7 +22,10 @@ export const ChatHeader = ({
   type,
   imageUrl,
   channelId,
+  conversationId,
 }: ChatHeaderProps) => {
+  const chatId = type === "channel" ? channelId : conversationId;
+
   return (
     <div className="text-md font-semibold px-2 sm:px-3 flex items-center h-14 md:h-12 border-neutral-200 dark:border-neutral-800 border-b-2 bg-white dark:bg-[#313338] sticky top-0 z-10">
       <MobileToggle serverId={serverId} />
@@ -36,6 +41,15 @@ export const ChatHeader = ({
       <p className="font-semibold text-base md:text-md text-black dark:text-white truncate">{name}</p>
 
       <div className="ml-auto flex items-center gap-1">
+        {chatId && (
+          <ChatHeaderActions
+            serverId={serverId}
+            type={type}
+            chatId={chatId}
+            channelId={channelId}
+            conversationId={conversationId}
+          />
+        )}
         {type === "channel" && channelId && (
           <WatchTogetherTrigger serverId={serverId} channelId={channelId} />
         )}

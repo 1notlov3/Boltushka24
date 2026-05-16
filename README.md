@@ -35,6 +35,9 @@
 - **Прямые сообщения** (1-на-1 Conversations) между участниками одного сервера
 - **Мгновенная оптимистичная отправка** — сообщение появляется в UI до ответа сервера
 - **Редактирование и удаление** сообщений с визуальными индикаторами
+- **Reactions, replies, pinned и saved messages** — быстрые реакции, цитирование, закрепления и личное избранное
+- **Поиск по сообщениям** внутри каналов и личных диалогов
+- **Черновики, typing indicators, Markdown-lite и slash commands** — draft per chat, безопасный markdown-render и команды `/shrug`, `/me`, `/poll`, `/gif`, `/help`
 - **Realtime** на базе Supabase Realtime (signal-only broadcast + authenticated refetch)
 
 ### 🎙️ Голос и видео
@@ -45,6 +48,8 @@
 ### 🏆 Рейтинг и активность
 - **Лидерборд сервера** с прозрачной формулой расчёта рейтинга
 - Учёт сообщений в каналах (1.0x) + DM (1.2x) + бонус за активность последних 30 дней (0.6x / 0.9x)
+- **Настройки пользователя и статусы** — тема, compact mode, уведомления, звуки, online/idle/dnd/invisible и custom status
+- **Центр уведомлений** — replies, mentions, reactions, pins и новые DM
 
 ### 📱 Мобильный UX
 - **Адаптивный дизайн** с viewport-units `100dvh` (корректно работает с iOS Safari)
@@ -57,6 +62,8 @@
 - **Supabase RLS** — изоляция данных между пользователями на уровне БД
 - **Signal-only Realtime** — через публичный канал транслируется только `{id, action}`, контент фетчится через аутентифицированный API
 - **Prisma** — типобезопасный ORM с композитными индексами для чата
+- **Централизованные permissions** — единый слой `lib/permissions.ts` поверх ADMIN/MODERATOR/GUEST
+- **Rate limiting** — in-memory защита для dev/single runtime с production note про Redis/Upstash
 
 ---
 
@@ -190,6 +197,8 @@ pnpm prisma db push
 pnpm dev           # http://localhost:3000
 pnpm build         # production-сборка
 pnpm lint          # eslint проверка
+pnpm typecheck     # TypeScript проверка
+pnpm test          # unit checks чистых helpers
 ```
 
 ---
@@ -221,10 +230,14 @@ Boltushka24/
 │   ├── db.ts                  # Prisma singleton
 │   ├── supabase.ts            # Supabase клиенты (browser + admin)
 │   ├── realtime.ts            # Realtime каналы + signal-only broadcast
+│   ├── permissions.ts         # Централизованные роли и permissions
+│   ├── message-formatting.ts  # Markdown-lite + slash commands
+│   ├── youtube.ts             # YouTube URL parser
 │   ├── current-profile.ts     # Получение профиля из Clerk в RSC
 │   └── initial-profile.ts     # Создание Profile при первом логине
 ├── prisma/
 │   └── schema.prisma          # Модели: Profile, Server, Member, Channel, Message, Conversation, DirectMessage
+├── docs/                      # Architecture, API, deployment, features
 └── pages/api/socket/          # Legacy Pages API (сообщения, DM, watch)
 ```
 
@@ -236,14 +249,19 @@ Boltushka24/
 Profile 1:N Server     (владелец серверов)
 Profile 1:N Member     (участник множества серверов)
 Server 1:N Channel     (каналы внутри сервера: TEXT / AUDIO / VIDEO)
+Server 1:N ChannelCategory
 Server 1:N Member      (участники сервера с ролями)
 Channel 1:N Message    (сообщения в канале)
 Member 1:N Message     (автор сообщения)
 Member M:N Conversation (DM между двумя участниками)
 Conversation 1:N DirectMessage
+Message 1:N MessageReaction / SavedMessage / Notification
+DirectMessage 1:N DirectMessageReaction / SavedDirectMessage / Notification
 ```
 
 Композитные индексы: `Message(channelId, createdAt)`, `DirectMessage(conversationId, createdAt)` для быстрой пагинации чата.
+
+Полное описание новых моделей и API: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/API.md`](docs/API.md), [`docs/FEATURES.md`](docs/FEATURES.md).
 
 ---
 
@@ -286,6 +304,10 @@ Conversation 1:N DirectMessage
 pnpm dev              # dev-сервер
 pnpm build            # production build
 pnpm lint             # ESLint
+pnpm typecheck        # TypeScript
+pnpm test             # helper unit checks
+pnpm prisma:generate  # Prisma client
+pnpm prisma:push      # db push для текущей схемы
 pnpm prisma studio    # GUI для БД
 pnpm prisma migrate dev --name <name>  # новая миграция
 ```

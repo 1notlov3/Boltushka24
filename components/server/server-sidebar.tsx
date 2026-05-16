@@ -44,9 +44,17 @@ export const ServerSidebar = async ({
     return redirect("/");
   }
 
-  const textChannels = server?.channels.filter((channel) => channel.type === ChannelType.TEXT)
-  const audioChannels = server?.channels.filter((channel) => channel.type === ChannelType.AUDIO)
-  const videoChannels = server?.channels.filter((channel) => channel.type === ChannelType.VIDEO)
+  const categories = server.channelCategories ?? [];
+  const categorizedChannels = categories
+    .map((category) => ({
+      ...category,
+      channels: server.channels.filter((channel) => channel.categoryId === category.id),
+    }))
+    .filter((category) => category.channels.length > 0);
+  const uncategorizedChannels = server.channels.filter((channel) => !channel.categoryId);
+  const textChannels = uncategorizedChannels.filter((channel) => channel.type === ChannelType.TEXT)
+  const audioChannels = uncategorizedChannels.filter((channel) => channel.type === ChannelType.AUDIO)
+  const videoChannels = uncategorizedChannels.filter((channel) => channel.type === ChannelType.VIDEO)
   const members = server?.members.filter((member) => member.profileId !== profile.id)
 
   const role = server.members.find((member) => member.profileId === profile.id)?.role;
@@ -88,6 +96,15 @@ export const ServerSidebar = async ({
                   icon: iconMap[channel.type],
                 }))
               },
+              ...categorizedChannels.map((category) => ({
+                label: category.name,
+                type: "channel" as const,
+                data: category.channels.map((channel) => ({
+                  id: channel.id,
+                  name: channel.name,
+                  icon: iconMap[channel.type],
+                })),
+              })),
               {
                 label: "Участники",
                 type: "member",
@@ -101,6 +118,32 @@ export const ServerSidebar = async ({
           />
         </div>
         <Separator className="bg-zinc-200 dark:bg-zinc-700 rounded-md my-2" />
+        {!!categorizedChannels.length && (
+          <div className="mb-2">
+            {categorizedChannels.map((category) => (
+              <div key={category.id} className="mb-2">
+                <ServerSection
+                  sectionType="channels"
+                  role={role}
+                  label={category.name}
+                  categoryId={category.id}
+                />
+                <div className="space-y-[2px]">
+                  {category.channels.map((channel) => (
+                    <ServerChannel
+                      key={channel.id}
+                      channel={channel}
+                      role={role}
+                      server={server}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+            <Separator className="bg-zinc-200 dark:bg-zinc-700 rounded-md my-2" />
+          </div>
+        )}
+        {!!categorizedChannels.length && <Separator className="bg-zinc-200 dark:bg-zinc-700 rounded-md my-2" />}
         {!!textChannels?.length && (
           <div className="mb-2">
             <ServerSection

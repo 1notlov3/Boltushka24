@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
-import { DirectMessage } from "@prisma/client";
 import { z } from "zod";
 
+import { apiError, unauthorized } from "@/lib/api-response";
+import { directMessageInclude } from "@/lib/chat-includes";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
 
 const MESSAGES_BATCH = 10;
 
@@ -17,23 +19,18 @@ export async function GET(
     const cursor = searchParams.get("cursor");
     const conversationId = searchParams.get("conversationId");
 
-    if (!profile) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    if (!conversationId) {
-      return new NextResponse("Conversation ID missing", { status: 400 });
-    }
+    if (!profile) return unauthorized();
+    if (!conversationId) return apiError("Conversation ID missing", 400);
 
     const conversationIdValidation = z.string().uuid().safeParse(conversationId);
     if (!conversationIdValidation.success) {
-      return new NextResponse("Invalid Conversation ID", { status: 400 });
+      return apiError("Invalid Conversation ID", 400);
     }
 
     if (cursor) {
       const cursorValidation = z.string().uuid().safeParse(cursor);
       if (!cursorValidation.success) {
-        return new NextResponse("Invalid Cursor ID", { status: 400 });
+        return apiError("Invalid Cursor ID", 400);
       }
     }
 
@@ -55,72 +52,40 @@ export async function GET(
       },
       select: {
         id: true,
+        memberOne: {
+          select: {
+            id: true,
+            profileId: true,
+          },
+        },
+        memberTwo: {
+          select: {
+            id: true,
+            profileId: true,
+          },
+        },
       }
     });
 
     if (!conversation) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return unauthorized();
     }
 
-    let messages: DirectMessage[] = [];
+    const member = conversation.memberOne.profileId === profile.id
+      ? conversation.memberOne
+      : conversation.memberTwo;
 
-    if (cursor) {
-      messages = await db.directMessage.findMany({
-        take: MESSAGES_BATCH,
-        skip: 1,
-        cursor: {
-          id: cursor,
-        },
-        where: {
-          conversationId,
-        },
-        include: {
-          member: {
-            // ⚡ Bolt Optimization: Select only necessary fields for member and profile
-            select: {
-              id: true,
-              role: true,
-              profile: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                }
-              }
-            }
-          }
-        },
-        orderBy: {
-          createdAt: "desc",
-        }
-      })
-    } else {
-      messages = await db.directMessage.findMany({
-        take: MESSAGES_BATCH,
-        where: {
-          conversationId,
-        },
-        include: {
-          member: {
-            // ⚡ Bolt Optimization: Select only necessary fields for member and profile
-            select: {
-              id: true,
-              role: true,
-              profile: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                }
-              }
-            }
-          }
-        },
-        orderBy: {
-          createdAt: "desc",
-        }
-      });
-    }
+    const messages = await db.directMessage.findMany({
+      take: MESSAGES_BATCH,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      where: {
+        conversationId,
+      },
+      include: directMessageInclude(member.id),
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
     let nextCursor = null;
 
@@ -128,12 +93,12 @@ export async function GET(
       nextCursor = messages[MESSAGES_BATCH - 1].id;
     }
 
-    return NextResponse.json({
+    return Response.json({
       items: messages,
       nextCursor
     });
   } catch (error) {
     console.log("[DIRECT_MESSAGES_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return apiError("Internal Error", 500);
   }
 }

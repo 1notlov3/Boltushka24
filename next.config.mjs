@@ -1,3 +1,5 @@
+import path from "node:path";
+
 /** @type {import('next').NextConfig} */
 const supabaseHost = (() => {
   try {
@@ -8,6 +10,9 @@ const supabaseHost = (() => {
 })();
 
 const nextConfig = {
+  turbopack: {
+    root: path.resolve(process.cwd()),
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },

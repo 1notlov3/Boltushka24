@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
-import { MemberRole, ChannelType } from "@prisma/client";
+import { ChannelType } from "@prisma/client";
 import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { canManageChannels } from "@/lib/permissions";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+
+export const dynamic = "force-dynamic";
 
 const CreateChannelSchema = z.object({
   name: z.string().min(1, {
@@ -14,6 +18,10 @@ const CreateChannelSchema = z.object({
     message: "Name cannot be 'основной'",
   }),
   type: z.nativeEnum(ChannelType),
+  topic: z.string().trim().max(300).optional().nullable(),
+  icon: z.string().trim().max(32).optional().nullable(),
+  categoryId: z.string().uuid("Invalid category ID").optional().nullable(),
+  position: z.number().int().min(0).optional(),
 });
 
 export async function POST(
@@ -21,7 +29,7 @@ export async function POST(
 ) {
   try {
     const profile = await currentProfile();
-    const { name, type } = await req.json();
+    const body = await req.json();
     const { searchParams } = new URL(req.url);
 
     const serverId = searchParams.get("serverId");
@@ -39,33 +47,76 @@ export async function POST(
       return new NextResponse("Invalid Server ID", { status: 400 });
     }
 
-    const validationResult = CreateChannelSchema.safeParse({ name, type });
+    const validationResult = CreateChannelSchema.safeParse(body);
 
     if (!validationResult.success) {
       return new NextResponse(validationResult.error.errors[0].message, { status: 400 });
     }
 
-    const server = await db.server.update({
+    const member = await db.member.findFirst({
       where: {
-        id: serverId,
-        members: {
-          some: {
-            profileId: profile.id,
-            role: {
-              in: [MemberRole.ADMIN, MemberRole.MODERATOR]
-            }
-          }
-        }
+        serverId,
+        profileId: profile.id,
       },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    if (!member) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    if (!canManageChannels(member)) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    const limit = checkRateLimit({
+      key: rateLimitKey("channel:create", profile.id, serverId),
+      limit: 20,
+      windowMs: 60_000,
+    });
+
+    if (!limit.ok) {
+      return new NextResponse(`Too many channels. Retry in ${limit.retryAfterSeconds}s`, { status: 429 });
+    }
+
+    const { name, type, topic, icon, categoryId, position } = validationResult.data;
+
+    if (categoryId) {
+      const category = await db.channelCategory.findFirst({
+        where: { id: categoryId, serverId },
+        select: { id: true },
+      });
+
+      if (!category) {
+        return new NextResponse("Category not found", { status: 404 });
+      }
+    }
+
+    const server = await db.server.update({
+      where: { id: serverId },
       data: {
         channels: {
           create: {
             profileId: profile.id,
             name,
             type,
+            topic: topic || null,
+            icon: icon || null,
+            categoryId: categoryId || null,
+            position: position ?? 0,
           }
-        }
-      }
+        },
+        auditLogs: {
+          create: {
+            action: "channel.create",
+            actorId: profile.id,
+            metadata: { name, type, categoryId },
+          },
+        },
+      },
     });
 
     return NextResponse.json(server);

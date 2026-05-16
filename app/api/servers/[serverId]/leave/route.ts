@@ -4,15 +4,18 @@ import { z } from "zod";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 const ParamsSchema = z.object({
   serverId: z.string().uuid(),
 });
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { serverId: string } }
+  context: { params: Promise<{ serverId: string }> }
 ) {
   try {
+    const params = await context.params;
     const profile = await currentProfile();
 
     if (!profile) {

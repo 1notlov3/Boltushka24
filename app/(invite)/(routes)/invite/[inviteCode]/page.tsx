@@ -4,27 +4,28 @@ import { db } from "@/lib/db";
 import { currentProfile } from "@/lib/current-profile";
 
 interface InviteCodePageProps {
-  params: {
+  params: Promise<{
     inviteCode: string;
-  };
+  }>;
 };
 
 const InviteCodePage = async ({
   params
 }: InviteCodePageProps) => {
+  const resolvedParams = await params;
   const profile = await currentProfile();
 
   if (!profile) {
     return redirect("/sign-in");
   }
 
-  if (!params.inviteCode) {
+  if (!resolvedParams.inviteCode) {
     return redirect("/");
   }
 
   const existingServer = await db.server.findFirst({
     where: {
-      inviteCode: params.inviteCode,
+      inviteCode: resolvedParams.inviteCode,
       members: {
         some: {
           profileId: profile.id
@@ -43,7 +44,7 @@ const InviteCodePage = async ({
 
   const server = await db.server.update({
     where: {
-      inviteCode: params.inviteCode,
+      inviteCode: resolvedParams.inviteCode,
     },
     data: {
       members: {

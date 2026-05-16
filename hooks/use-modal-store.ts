@@ -2,12 +2,37 @@ import {Channel, ChannelType, Server } from "@prisma/client";
 import { create } from "zustand";
 
 
-export type ModalType = "createServer" | "invite"| "editServer" | "members" | "createChannel" | "leaveServer" | "deleteServer" |"deleteChannel" |"editChannel" | "messageFile" | "deleteMessage" |"watchTogether" | "userRating";
+export type ModalType =
+  | "createServer"
+  | "invite"
+  | "editServer"
+  | "members"
+  | "createChannel"
+  | "createCategory"
+  | "leaveServer"
+  | "deleteServer"
+  | "deleteChannel"
+  | "editChannel"
+  | "messageFile"
+  | "deleteMessage"
+  | "messageSearch"
+  | "pinnedMessages"
+  | "savedMessages"
+  | "notificationCenter"
+  | "userSettings"
+  | "watchTogether"
+  | "userRating";
 
 interface ModalData {
   server?: Server;
   channel?: Channel;
   channelType?: ChannelType;
+  categoryId?: string | null;
+  chatId?: string;
+  chatType?: "channel" | "conversation";
+  serverId?: string;
+  channelId?: string;
+  conversationId?: string;
   apiUrl?: string;
   query?: Record<string, any>;
 }

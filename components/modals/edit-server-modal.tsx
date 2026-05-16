@@ -99,7 +99,7 @@ export const EditServerModal = () => {
                       <FormControl>
                         <FileUpload
                           endpoint="serverImage"
-                          value={field.value}
+                          value={field.value ?? ""}
                           onChange={field.onChange}
                         />
                       </FormControl>

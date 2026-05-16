@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 type CounterMap = Record<string, number>;
 type LastActiveMap = Record<string, Date | null>;
 

@@ -7,6 +7,8 @@ import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { serverIconDataUri } from "@/lib/server-icon";
 
+export const dynamic = "force-dynamic";
+
 const ImageUrlSchema = z
   .string()
   .min(1)

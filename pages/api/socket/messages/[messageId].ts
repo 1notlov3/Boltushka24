@@ -1,14 +1,17 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { MemberRole } from "@prisma/client";
 import { z } from "zod";
 
+import { channelMessageInclude } from "@/lib/chat-includes";
 import { currentProfilePages } from "@/lib/current-profile-pages";
 import { db } from "@/lib/db";
+import { canDeleteMessage, canEditMessage } from "@/lib/permissions";
 import { broadcast } from "@/lib/realtime";
 
 const messageSchema = z.object({
   content: z.string().min(1, "Content is required").max(4000, "Content too long"),
 });
+
+const idSchema = z.string().uuid("Invalid message ID");
 
 export default async function handler(
   req: NextApiRequest,
@@ -34,12 +37,21 @@ export default async function handler(
       return res.status(400).json({ error: "Channel ID missing" });
     }
 
+    const messageIdValidation = idSchema.safeParse(messageId);
+    if (!messageIdValidation.success) {
+      return res.status(400).json({ error: messageIdValidation.error.errors[0].message });
+    }
+
     let [member, channel, message] = await Promise.all([
       db.member.findFirst({
         where: {
           serverId: serverId as string,
           profileId: profile.id,
-        }
+        },
+        select: {
+          id: true,
+          role: true,
+        },
       }),
       db.channel.findFirst({
         where: {
@@ -52,19 +64,7 @@ export default async function handler(
           id: messageId as string,
           channelId: channelId as string,
         },
-        include: {
-          member: {
-            include: {
-              profile: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                }
-              }
-            }
-          }
-        }
+        include: channelMessageInclude(""),
       })
     ]);
 
@@ -80,12 +80,7 @@ export default async function handler(
       return res.status(404).json({ error: "Message not found" });
     }
 
-    const isMessageOwner = message.memberId === member.id;
-    const isAdmin = member.role === MemberRole.ADMIN;
-    const isModerator = member.role === MemberRole.MODERATOR;
-    const canModify = isMessageOwner || isAdmin || isModerator;
-
-    if (!canModify) {
+    if (!canDeleteMessage(member, message.memberId)) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -99,24 +94,12 @@ export default async function handler(
           content: "Это сообщение удалено",
           deleted: true,
         },
-        include: {
-          member: {
-            include: {
-              profile: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                }
-              }
-            }
-          }
-        }
+        include: channelMessageInclude(member.id),
       })
     }
 
     if (req.method === "PATCH") {
-      if (!isMessageOwner) {
+      if (!canEditMessage(member, message.memberId)) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
@@ -135,19 +118,7 @@ export default async function handler(
         data: {
           content,
         },
-        include: {
-          member: {
-            include: {
-              profile: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                }
-              }
-            }
-          }
-        }
+        include: channelMessageInclude(member.id),
       })
     }
 

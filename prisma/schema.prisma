@@ -8,34 +8,65 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
 model Profile {
-  id String @id @default(uuid())
-  userId String @unique
-  name String
-  imageUrl String @db.Text
-  email String @db.Text
+  id       String  @id @default(uuid())
+  userId   String  @unique
+  name     String
+  imageUrl String  @db.Text
+  email    String  @db.Text
   password String?
 
-  servers Server[]
-  members Member[]
+  status       UserStatus @default(OFFLINE)
+  customStatus String?    @db.VarChar(80)
+  lastSeenAt   DateTime?
+
+  servers  Server[]
+  members  Member[]
   channels Channel[]
+  settings UserSettings?
+
+  notificationsReceived Notification[] @relation("NotificationTarget")
+  notificationsCreated  Notification[] @relation("NotificationActor")
+  auditLogs             AuditLog[]     @relation("AuditLogActor")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model UserSettings {
+  id String @id @default(uuid())
+
+  profileId String  @unique
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  theme                String  @default("system")
+  language             String  @default("ru")
+  compactMode          Boolean @default(false)
+  notificationsEnabled Boolean @default(true)
+  soundEnabled         Boolean @default(true)
+  showOnlineStatus     Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Server {
-  id String @id @default(uuid())
-  name String
-  imageUrl String @db.Text
+  id         String @id @default(uuid())
+  name       String
+  imageUrl   String @db.Text
   inviteCode String @unique
 
   profileId String
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  members Member[]
-  channels Channel[]
+  members           Member[]
+  channels          Channel[]
+  channelCategories ChannelCategory[]
+  serverRoles       ServerRole[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -49,25 +80,44 @@ enum MemberRole {
   GUEST
 }
 
+enum UserStatus {
+  ONLINE
+  IDLE
+  DND
+  INVISIBLE
+  OFFLINE
+}
+
 model Member {
-  id String @id @default(uuid())
+  id   String     @id @default(uuid())
   role MemberRole @default(GUEST)
 
   profileId String
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   serverId String
-  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
 
-  messages Message[]
-  directMessages DirectMessage[]
+  messages       Message[]       @relation("MemberMessages")
+  directMessages DirectMessage[] @relation("MemberDirectMessages")
+
+  pinnedMessages       Message[]       @relation("MessagePinnedBy")
+  pinnedDirectMessages DirectMessage[] @relation("DirectMessagePinnedBy")
+
+  messageReactions       MessageReaction[]
+  directMessageReactions DirectMessageReaction[]
+  savedMessages          SavedMessage[]
+  savedDirectMessages    SavedDirectMessage[]
+  channelReadStates      ChannelReadState[]
+  conversationReadStates ConversationReadState[]
 
   conversationsInitiated Conversation[] @relation("MemberOne")
-  conversationsReceived Conversation[] @relation("MemberTwo")
+  conversationsReceived  Conversation[] @relation("MemberTwo")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([profileId, serverId])
   @@index([profileId])
   @@index([serverId])
 }
@@ -78,79 +128,319 @@ enum ChannelType {
   VIDEO
 }
 
-model Channel {
-  id String @id @default(uuid())
-  name String
-  type ChannelType @default(TEXT)
-
-  profileId String
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+model ChannelCategory {
+  id       String @id @default(uuid())
+  name     String
+  position Int    @default(0)
 
   serverId String
-  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
 
-  messages Message[]
+  channels Channel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serverId, name])
+  @@index([serverId, position])
+}
+
+model Channel {
+  id       String      @id @default(uuid())
+  name     String
+  type     ChannelType @default(TEXT)
+  topic    String?     @db.Text
+  icon     String?     @db.VarChar(32)
+  position Int         @default(0)
+
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  categoryId String?
+  category   ChannelCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  messages      Message[]
+  readStates    ChannelReadState[]
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([profileId])
   @@index([serverId])
+  @@index([serverId, position])
+  @@index([categoryId])
 }
 
 model Message {
-  id String @id @default(uuid())
-  content String @db.Text
-
+  id      String  @id @default(uuid())
+  content String  @db.Text
   fileUrl String? @db.Text
 
   memberId String
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member   Member @relation("MemberMessages", fields: [memberId], references: [id], onDelete: Cascade)
 
   channelId String
-  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  parentMessageId String?
+  parentMessage   Message?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: SetNull)
+  replies         Message[] @relation("MessageReplies")
+
+  pinned     Boolean   @default(false)
+  pinnedAt   DateTime?
+  pinnedById String?
+  pinnedBy   Member?   @relation("MessagePinnedBy", fields: [pinnedById], references: [id], onDelete: SetNull)
 
   deleted Boolean @default(false)
+
+  reactions     MessageReaction[]
+  savedBy       SavedMessage[]
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([channelId, createdAt])
   @@index([memberId])
+  @@index([parentMessageId])
+  @@index([pinned])
+}
+
+model MessageReaction {
+  id String @id @default(uuid())
+
+  emoji String @db.VarChar(32)
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([memberId, messageId, emoji])
+  @@index([messageId])
+  @@index([memberId])
+}
+
+model SavedMessage {
+  id String @id @default(uuid())
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([memberId, messageId])
+  @@index([memberId, createdAt])
+  @@index([messageId])
 }
 
 model Conversation {
   id String @id @default(uuid())
 
   memberOneId String
-  memberOne Member @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
+  memberOne   Member @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
 
   memberTwoId String
-  memberTwo Member @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
+  memberTwo   Member @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
 
   directMessages DirectMessage[]
-
-  @@index([memberTwoId])
+  readStates     ConversationReadState[]
+  notifications  Notification[]
 
   @@unique([memberOneId, memberTwoId])
+  @@index([memberOneId])
+  @@index([memberTwoId])
 }
 
 model DirectMessage {
-  id String @id @default(uuid())
-  content String @db.Text
+  id      String  @id @default(uuid())
+  content String  @db.Text
   fileUrl String? @db.Text
 
   memberId String
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member   Member @relation("MemberDirectMessages", fields: [memberId], references: [id], onDelete: Cascade)
 
   conversationId String
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  parentDirectMessageId String?
+  parentDirectMessage   DirectMessage?  @relation("DirectMessageReplies", fields: [parentDirectMessageId], references: [id], onDelete: SetNull)
+  replies               DirectMessage[] @relation("DirectMessageReplies")
+
+  pinned     Boolean   @default(false)
+  pinnedAt   DateTime?
+  pinnedById String?
+  pinnedBy   Member?   @relation("DirectMessagePinnedBy", fields: [pinnedById], references: [id], onDelete: SetNull)
 
   deleted Boolean @default(false)
+
+  reactions     DirectMessageReaction[]
+  savedBy       SavedDirectMessage[]
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([memberId])
   @@index([conversationId, createdAt])
+  @@index([parentDirectMessageId])
+  @@index([pinned])
+}
+
+model DirectMessageReaction {
+  id String @id @default(uuid())
+
+  emoji String @db.VarChar(32)
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  directMessageId String
+  directMessage   DirectMessage @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([memberId, directMessageId, emoji])
+  @@index([directMessageId])
+  @@index([memberId])
+}
+
+model SavedDirectMessage {
+  id String @id @default(uuid())
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  directMessageId String
+  directMessage   DirectMessage @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([memberId, directMessageId])
+  @@index([memberId, createdAt])
+  @@index([directMessageId])
+}
+
+enum NotificationType {
+  MENTION
+  REPLY
+  REACTION
+  PIN
+  DIRECT_MESSAGE
+  SERVER_INVITE
+  SYSTEM
+}
+
+model Notification {
+  id   String           @id @default(uuid())
+  type NotificationType
+  read Boolean          @default(false)
+
+  actorId String?
+  actor   Profile? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  targetId String
+  target   Profile @relation("NotificationTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  serverId String?
+  server   Server? @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  channelId String?
+  channel   Channel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  messageId String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  directMessageId String?
+  directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([targetId, read, createdAt])
+  @@index([actorId])
+  @@index([serverId])
+  @@index([channelId])
+  @@index([conversationId])
+  @@index([messageId])
+  @@index([directMessageId])
+}
+
+model ChannelReadState {
+  id String @id @default(uuid())
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  lastReadAt DateTime @default(now())
+
+  @@unique([memberId, channelId])
+  @@index([channelId])
+}
+
+model ConversationReadState {
+  id String @id @default(uuid())
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  lastReadAt DateTime @default(now())
+
+  @@unique([memberId, conversationId])
+  @@index([conversationId])
+}
+
+model ServerRole {
+  id          String @id @default(uuid())
+  name        String
+  color       String @default("#6366f1")
+  permissions Json
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serverId, name])
+  @@index([serverId])
+}
+
+model AuditLog {
+  id       String  @id @default(uuid())
+  action   String
+  targetId String?
+  metadata Json?
+
+  actorId String?
+  actor   Profile? @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([serverId, createdAt])
+  @@index([actorId])
+  @@index([targetId])
 }

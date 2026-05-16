@@ -1,37 +1,23 @@
 import { redirect } from "next/navigation";
-import dynamic from "next/dynamic";
-import { Loader2 } from "lucide-react";
 
 import { currentProfile } from "@/lib/current-profile";
 import { ChatHeader } from "@/components/chat/chat-header";
-import { ChatInput } from "@/components/chat/chat-input";
-import { ChatMessages } from "@/components/chat/chat-messages";
+import { ChatShell } from "@/components/chat/chat-shell";
 import { ChannelType } from "@prisma/client";
 import { db } from "@/lib/db";
-
-// Lazy load MediaRoom to reduce initial JS bundle size for text channels
-const MediaRoom = dynamic(() => import("@/components/media-room").then((mod) => mod.MediaRoom), {
-  loading: () => (
-    <div className="flex flex-col flex-1 justify-center items-center">
-      <Loader2 className="h-7 w-7 text-zinc-500 animate-spin my-4" />
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Loading...
-      </p>
-    </div>
-  ),
-  ssr: false,
-});
+import { MediaRoom } from "@/components/media-room";
 
 interface ChannelIdPageProps {
-  params: {
+  params: Promise<{
     serverId: string;
     channelId: string;
-  }
+  }>
 }
 
 const ChannelIdPage = async ({
   params
 }: ChannelIdPageProps) => {
+  const resolvedParams = await params;
   const profile = await currentProfile();
 
   if (!profile) {
@@ -42,12 +28,12 @@ const ChannelIdPage = async ({
   const [channel, member] = await Promise.all([
     db.channel.findUnique({
       where: {
-        id: params.channelId,
+        id: resolvedParams.channelId,
       },
     }),
     db.member.findFirst({
       where: {
-        serverId: params.serverId,
+        serverId: resolvedParams.serverId,
         profileId: profile.id,
       },
       include: {
@@ -69,8 +55,7 @@ const ChannelIdPage = async ({
         type="channel"
       />
       {channel.type === ChannelType.TEXT && (
-        <>
-          <ChatMessages
+        <ChatShell
             member={member}
             name={channel.name}
             chatId={channel.id}
@@ -84,18 +69,6 @@ const ChannelIdPage = async ({
             paramKey="channelId"
             paramValue={channel.id}
           />
-          <ChatInput
-            name={channel.name}
-            type="channel"
-            apiUrl="/api/socket/messages"
-            query={{
-              channelId: channel.id,
-              serverId: channel.serverId,
-            }}
-            queryKey={`chat:${channel.id}`}
-            currentMember={member}
-          />
-        </>
       )}
       {channel.type === ChannelType.AUDIO && (
         <MediaRoom

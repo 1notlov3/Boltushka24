@@ -44,12 +44,27 @@ export const getServerDetails = cache(async (serverId: string) => {
     include: {
       channels: {
         orderBy: {
-          createdAt: "asc",
+          position: "asc",
         },
         select: {
           id: true,
           name: true,
           type: true,
+          topic: true,
+          icon: true,
+          position: true,
+          categoryId: true,
+        },
+      },
+      channelCategories: {
+        orderBy: [
+          { position: "asc" },
+          { createdAt: "asc" },
+        ],
+        select: {
+          id: true,
+          name: true,
+          position: true,
         },
       },
       members: {
@@ -59,6 +74,9 @@ export const getServerDetails = cache(async (serverId: string) => {
               id: true,
               name: true,
               imageUrl: true,
+              status: true,
+              customStatus: true,
+              lastSeenAt: true,
             }
           },
         },

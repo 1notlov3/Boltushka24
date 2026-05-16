@@ -8,12 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings } from "lucide-react";
+import { Bell, Bookmark, LogOut, Settings, SlidersHorizontal } from "lucide-react";
 import { useClerk, useUser } from "@clerk/nextjs";
+import { useModal } from "@/hooks/use-modal-store";
 
 export const UserMenu = () => {
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
+  const { onOpen } = useModal();
 
   if (!user) return null;
 
@@ -31,6 +33,27 @@ export const UserMenu = () => {
         >
           <Settings className="h-4 w-4 mr-2" />
           Настройки аккаунта
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => onOpen("userSettings")}
+          className="cursor-pointer"
+        >
+          <SlidersHorizontal className="h-4 w-4 mr-2" />
+          Настройки приложения
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => onOpen("notificationCenter")}
+          className="cursor-pointer"
+        >
+          <Bell className="h-4 w-4 mr-2" />
+          Уведомления
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => onOpen("savedMessages")}
+          className="cursor-pointer"
+        >
+          <Bookmark className="h-4 w-4 mr-2" />
+          Избранное
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

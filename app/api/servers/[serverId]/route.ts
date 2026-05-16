@@ -5,6 +5,8 @@ import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { serverIconDataUri } from "@/lib/server-icon";
 
+export const dynamic = "force-dynamic";
+
 const ParamsSchema = z.object({
   serverId: z.string().uuid(),
 });
@@ -24,9 +26,10 @@ const UpdateServerSchema = z.object({
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { serverId: string } }
+  context: { params: Promise<{ serverId: string }> }
 ) {
   try {
+    const params = await context.params;
     const profile = await currentProfile();
 
     if (!profile) {
@@ -56,9 +59,10 @@ export async function DELETE(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { serverId: string } }
+  context: { params: Promise<{ serverId: string }> }
 ) {
   try {
+    const params = await context.params;
     const profile = await currentProfile();
     const body = await req.json();
 
