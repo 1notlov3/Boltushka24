@@ -16,6 +16,10 @@ export async function GET() {
     });
     const memberIds = members.map((member) => member.id);
 
+    if (memberIds.length === 0) {
+      return Response.json({ messages: [], directMessages: [] });
+    }
+
     const [messages, directMessages] = await Promise.all([
       db.savedMessage.findMany({
         take: 50,

@@ -165,7 +165,7 @@ export const ChatMessages = ({
       </div>
       {!!typingUsers.length && (
         <p className="px-4 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
-          {typingUsers.slice(0, 3).join(", ")} печатает...
+          {typingUsers.slice(0, 3).join(", ")} {typingUsers.length === 1 ? "печатает..." : "печатают..."}
         </p>
       )}
       <div ref={bottomRef} />

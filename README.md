@@ -4,7 +4,7 @@
 
 **Современный мессенджер-платформа с серверами, голосовыми каналами, прямыми сообщениями и совместным просмотром YouTube**
 
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%7C%20Realtime%20%7C%20Storage-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
@@ -100,7 +100,7 @@
 
 | Слой | Технологии |
 |------|-----------|
-| **Frontend** | Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, Radix UI, shadcn/ui |
+| **Frontend** | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Radix UI, shadcn/ui |
 | **Auth** | Clerk (русская локализация `@clerk/localizations/ruRU`) |
 | **База данных** | PostgreSQL (Supabase), Prisma 5 |
 | **Realtime** | Supabase Realtime (broadcast + presence) |
@@ -116,7 +116,7 @@
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                    Next.js 14 (Vercel)                   │
+│                    Next.js 16 (Vercel)                   │
 │  ┌────────────────┐  ┌─────────────────┐  ┌───────────┐  │
 │  │  App Router    │  │  API Routes     │  │ Pages API │  │
 │  │  (RSC + Client)│  │  (Server Comp.) │  │ (socket)  │  │
@@ -321,6 +321,7 @@ pnpm prisma migrate dev --name <name>  # новая миграция
 | [#296](https://github.com/1notlov3/Boltushka24/pull/296) | Optimistic chat + мобильный редизайн |
 | [#297](https://github.com/1notlov3/Boltushka24/pull/297) | iOS viewport, focus-ring, drawer auto-tooltip, settings, true optimistic |
 | [#298](https://github.com/1notlov3/Boltushka24/pull/298) | Исправление SSR-крэша (RSC-граница) |
+| [#300](https://github.com/1notlov3/Boltushka24/pull/300) | Reactions, replies, pinned/saved messages, search, typing indicators, notifications, user settings, channel categories, audit logs, rate limiting |
 
 ---
 
