@@ -68,6 +68,15 @@ export async function PATCH(req: Request) {
     const profile = await currentProfile();
     if (!profile) return unauthorized();
 
+    const limit = checkRateLimit({
+      key: rateLimitKey("notifications:patch", profile.id, profile.id),
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!limit.ok) {
+      return apiError(`Too many requests. Retry in ${limit.retryAfterSeconds}s`, 429);
+    }
+
     const parsed = PatchSchema.safeParse(await req.json());
     if (!parsed.success) return validationError(parsed.error);
 

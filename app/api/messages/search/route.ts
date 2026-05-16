@@ -4,6 +4,7 @@ import { apiError, unauthorized, validationError } from "@/lib/api-response";
 import { channelMessageInclude } from "@/lib/chat-includes";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,15 @@ export async function GET(req: Request) {
   try {
     const profile = await currentProfile();
     if (!profile) return unauthorized();
+
+    const limit = checkRateLimit({
+      key: rateLimitKey("messages:search", profile.id, profile.id),
+      limit: 20,
+      windowMs: 60_000,
+    });
+    if (!limit.ok) {
+      return apiError(`Too many requests. Retry in ${limit.retryAfterSeconds}s`, 429);
+    }
 
     const { searchParams } = new URL(req.url);
     const parsed = QuerySchema.safeParse({
