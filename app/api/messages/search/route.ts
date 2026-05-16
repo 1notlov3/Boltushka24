@@ -44,6 +44,14 @@ export async function GET(req: Request) {
 
     if (!member) return unauthorized();
 
+    if (parsed.data.authorId) {
+      const authorMember = await db.member.findFirst({
+        where: { id: parsed.data.authorId, serverId: channel.serverId },
+        select: { id: true },
+      });
+      if (!authorMember) return apiError("Invalid author ID", 400);
+    }
+
     const items = await db.message.findMany({
       take: 25,
       where: {

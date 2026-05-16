@@ -4,6 +4,7 @@ import { z } from "zod";
 import { apiError, unauthorized, validationError } from "@/lib/api-response";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,15 @@ export async function PATCH(req: Request) {
   try {
     const profile = await currentProfile();
     if (!profile) return unauthorized();
+
+    const limit = checkRateLimit({
+      key: rateLimitKey("settings:update", profile.id, profile.id),
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!limit.ok) {
+      return apiError(`Too many requests. Retry in ${limit.retryAfterSeconds}s`, 429);
+    }
 
     const parsed = SettingsSchema.safeParse(await req.json());
     if (!parsed.success) return validationError(parsed.error);
