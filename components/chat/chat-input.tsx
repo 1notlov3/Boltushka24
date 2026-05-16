@@ -9,6 +9,7 @@ import { Plus, SendHorizontal } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Member, Profile } from "@prisma/client";
 import { useEffect, useMemo, useRef } from "react";
+import { toast } from "sonner";
 
 import {
   Form,
@@ -189,6 +190,7 @@ export const ChatInput = ({
       }
     } catch (error) {
       console.log(error);
+      toast.error("Не удалось отправить сообщение");
       if (optimistic) removeMessage(tempId);
     }
   }
