@@ -224,7 +224,7 @@ export function useServerOnlineCount(serverId: string) {
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
-    const channel = supabase.channel(`presence:server:${serverId}`);
+    const channel = supabase.channel(`presence:server-online-watch:${serverId}`);
 
     channel
       .on("presence", { event: "sync" }, () => {
