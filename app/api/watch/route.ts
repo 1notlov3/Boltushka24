@@ -8,35 +8,11 @@ import { broadcast } from "@/lib/realtime";
 
 export const dynamic = "force-dynamic";
 
-type WatchState = {
-  channelId: string;
-  videoId: string;
-  time: number;
-  isPlaying: boolean;
-  updatedAt: number;
-  updatedByProfileId: string;
-  updatedByName: string;
-};
-
-type GlobalWithWatchState = typeof globalThis & {
-  __watchStateStore?: Map<string, WatchState>;
-};
-
-const getStore = () => {
-  const globalStore = globalThis as GlobalWithWatchState;
-
-  if (!globalStore.__watchStateStore) {
-    globalStore.__watchStateStore = new Map<string, WatchState>();
-  }
-
-  return globalStore.__watchStateStore;
-};
-
 const PostSchema = z.object({
   serverId: z.string().uuid("Invalid server ID"),
   channelId: z.string().uuid("Invalid channel ID"),
-  videoId: z.string().min(3, "Invalid video ID"),
-  action: z.enum(["load", "play", "pause", "seek", "sync"]),
+  videoId: z.string().min(3, "Invalid video ID").optional(),
+  action: z.enum(["load", "play", "pause", "seek", "sync", "ended"]),
   time: z.number().min(0).optional(),
 });
 
@@ -44,6 +20,28 @@ const QuerySchema = z.object({
   serverId: z.string().uuid("Invalid server ID"),
   channelId: z.string().uuid("Invalid channel ID"),
 });
+
+const ensureAccess = async (serverId: string, channelId: string, profileId: string) => {
+  const [member, channel] = await Promise.all([
+    db.member.findFirst({
+      where: { serverId, profileId },
+      select: { id: true },
+    }),
+    db.channel.findFirst({
+      where: { id: channelId, serverId },
+      select: { id: true },
+    }),
+  ]);
+
+  if (!member || !channel) return null;
+  return member;
+};
+
+const includeSession = {
+  queue: {
+    orderBy: { position: "asc" as const },
+  },
+};
 
 export async function GET(req: Request) {
   try {
@@ -55,20 +53,18 @@ export async function GET(req: Request) {
       serverId: searchParams.get("serverId"),
       channelId: searchParams.get("channelId"),
     });
-
     if (!parsedQuery.success) return validationError(parsedQuery.error);
 
-    const member = await db.member.findFirst({
-      where: {
-        serverId: parsedQuery.data.serverId,
-        profileId: profile.id,
-      },
-      select: { id: true },
-    });
-
+    const { serverId, channelId } = parsedQuery.data;
+    const member = await ensureAccess(serverId, channelId, profile.id);
     if (!member) return unauthorized();
 
-    return Response.json({ state: getStore().get(parsedQuery.data.channelId) ?? null });
+    const session = await db.watchSession.findUnique({
+      where: { channelId },
+      include: includeSession,
+    });
+
+    return Response.json({ session });
   } catch (error) {
     console.log("[WATCH_GET]", error);
     return apiError("Internal Error", 500);
@@ -84,19 +80,8 @@ export async function POST(req: Request) {
     if (!parsedBody.success) return validationError(parsedBody.error);
 
     const { serverId, channelId, videoId, action, time } = parsedBody.data;
-
-    const [member, channel] = await Promise.all([
-      db.member.findFirst({
-        where: { serverId, profileId: profile.id },
-        select: { id: true },
-      }),
-      db.channel.findFirst({
-        where: { id: channelId, serverId },
-        select: { id: true },
-      }),
-    ]);
-
-    if (!member || !channel) return unauthorized();
+    const member = await ensureAccess(serverId, channelId, profile.id);
+    if (!member) return unauthorized();
 
     const limit = await checkRateLimit({
       key: rateLimitKey("watch:update", profile.id, channelId),
@@ -108,37 +93,108 @@ export async function POST(req: Request) {
       return rateLimitError(limit.retryAfterSeconds, `Too many watch updates. Retry in ${limit.retryAfterSeconds}s`);
     }
 
-    const store = getStore();
-    const prevState = store.get(channelId);
-
-    const nextState: WatchState = {
-      channelId,
-      videoId,
-      time: typeof time === "number" ? time : prevState?.time ?? 0,
-      isPlaying:
-        action === "play"
-          ? true
-          : action === "pause"
-            ? false
-            : prevState?.isPlaying ?? false,
-      updatedAt: Date.now(),
-      updatedByProfileId: profile.id,
-      updatedByName: profile.name,
-    };
-
-    if (action === "load") {
-      nextState.time = 0;
-      nextState.isPlaying = false;
-    }
-
-    store.set(channelId, nextState);
-
-    await broadcast(`watch:${channelId}:state`, {
-      ...nextState,
-      action,
+    const existingSession = await db.watchSession.upsert({
+      where: { channelId },
+      create: {
+        channelId,
+        currentVideoId: videoId ?? null,
+        currentTime: time ?? 0,
+        isPlaying: action === "play",
+        updatedById: profile.id,
+        updatedByName: profile.name,
+      },
+      update: {},
+      include: includeSession,
     });
 
-    return Response.json({ state: nextState });
+    let nextVideoId = videoId ?? existingSession.currentVideoId;
+    let nextTime = typeof time === "number" ? time : existingSession.currentTime;
+    let nextIsPlaying = existingSession.isPlaying;
+
+    if (action === "play") nextIsPlaying = true;
+    if (action === "pause") nextIsPlaying = false;
+    if (action === "load") {
+      nextTime = 0;
+      nextIsPlaying = false;
+
+      if (videoId) {
+        const existingItem = existingSession.queue.find((item) => item.videoId === videoId);
+        if (!existingItem) {
+          await db.watchQueueItem.create({
+            data: {
+              sessionId: existingSession.id,
+              videoId,
+              title: null,
+              thumbnail: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
+              addedById: profile.id,
+              addedByName: profile.name,
+              position: 0,
+            },
+          });
+          await db.watchQueueItem.updateMany({
+            where: {
+              sessionId: existingSession.id,
+              videoId: { not: videoId },
+            },
+            data: {
+              position: { increment: 1 },
+            },
+          });
+        } else {
+          await db.watchQueueItem.update({
+            where: { id: existingItem.id },
+            data: { position: 0 },
+          });
+          await db.watchQueueItem.updateMany({
+            where: {
+              sessionId: existingSession.id,
+              id: { not: existingItem.id },
+              position: { lt: existingItem.position },
+            },
+            data: {
+              position: { increment: 1 },
+            },
+          });
+        }
+      }
+    }
+
+    if (action === "ended") {
+      const [nextItem] = existingSession.queue
+        .filter((item) => item.videoId !== existingSession.currentVideoId)
+        .sort((a, b) => a.position - b.position);
+
+      if (nextItem) {
+        nextVideoId = nextItem.videoId;
+        nextTime = 0;
+        nextIsPlaying = true;
+      } else {
+        nextIsPlaying = false;
+      }
+    }
+
+    const session = await db.watchSession.update({
+      where: { id: existingSession.id },
+      data: {
+        currentVideoId: nextVideoId,
+        currentTime: nextTime,
+        isPlaying: nextIsPlaying,
+        updatedById: profile.id,
+        updatedByName: profile.name,
+      },
+      include: includeSession,
+    });
+
+    await broadcast(`watch:${channelId}:state`, {
+      action,
+      videoId: session.currentVideoId,
+      time: session.currentTime,
+      isPlaying: session.isPlaying,
+      updatedByName: session.updatedByName,
+      queue: session.queue,
+    });
+
+    return Response.json({ session });
   } catch (error) {
     console.log("[WATCH_POST]", error);
     return apiError("Internal Error", 500);
