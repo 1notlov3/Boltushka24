@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { Member, Message, Profile } from "@prisma/client";
 import { Loader2, X } from "lucide-react";
@@ -12,6 +12,8 @@ import { ChatItem } from "@/components/chat/chat-item";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import type { ReplyTarget } from "@/components/chat/chat-shell";
 import type { PollData } from "@/components/chat/poll-block";
+import { ImageLightbox } from "@/components/chat/image-lightbox";
+import { isImageUrl } from "@/lib/upload";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -55,6 +57,7 @@ export const ThreadPanel = ({
   const queryKey = `thread:${messageId}`;
   const addKey = `thread:${messageId}:messages`;
   const updateKey = `chat:${socketQuery.channelId}:messages:update`;
+  const [activeImageUrl, setActiveImageUrl] = useState<string | null>(null);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteQuery({
     queryKey: [queryKey],
@@ -80,6 +83,11 @@ export const ThreadPanel = ({
     (data?.pages.flatMap((page) => page.items) ?? [])
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
   ), [data]);
+  const imageUrls = useMemo(() => (
+    Array.from(new Set([parent, ...replies].flatMap((message) => (
+      message?.fileUrl && isImageUrl(message.fileUrl) ? [message.fileUrl] : []
+    ))))
+  ), [parent, replies]);
 
   useChatSocket({
     queryKey,
@@ -120,6 +128,7 @@ export const ThreadPanel = ({
       poll={message.poll ?? null}
       repliesCount={repliesCount}
       onReply={() => undefined}
+      onOpenImage={setActiveImageUrl}
     />
   );
 
@@ -184,6 +193,12 @@ export const ThreadPanel = ({
           onClearReply={() => undefined}
         />
       )}
+      <ImageLightbox
+        images={imageUrls}
+        activeUrl={activeImageUrl}
+        onClose={() => setActiveImageUrl(null)}
+        onChange={setActiveImageUrl}
+      />
     </aside>
   );
 };

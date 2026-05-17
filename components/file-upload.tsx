@@ -4,7 +4,13 @@ import { FileIcon, Loader2, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 
-import { getSupabaseBrowser, UPLOAD_BUCKET } from "@/lib/supabase";
+import {
+  ALLOWED_IMAGE_TYPES,
+  ALLOWED_MESSAGE_FILE_TYPES,
+  fileExtensionFromUrl,
+  uploadToSupabase,
+  validateUploadFile,
+} from "@/lib/upload";
 
 interface FileUploadProps {
   onChange: (url?: string) => void;
@@ -12,17 +18,13 @@ interface FileUploadProps {
   endpoint: "messageFile" | "serverImage";
 }
 
-const ALLOWED_IMAGE = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"];
-const ALLOWED_MESSAGE_FILE = [...ALLOWED_IMAGE, "application/pdf"];
-const MAX_SIZE = 10 * 1024 * 1024;
-
 export const FileUpload = ({ onChange, value, endpoint }: FileUploadProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const accept = endpoint === "messageFile" ? ALLOWED_MESSAGE_FILE.join(",") : ALLOWED_IMAGE.join(",");
-  const fileType = value?.split(".").pop()?.toLowerCase();
+  const accept = endpoint === "messageFile" ? ALLOWED_MESSAGE_FILE_TYPES.join(",") : ALLOWED_IMAGE_TYPES.join(",");
+  const fileType = value ? fileExtensionFromUrl(value) : "";
 
   if (value && fileType !== "pdf") {
     return (
@@ -69,27 +71,17 @@ export const FileUpload = ({ onChange, value, endpoint }: FileUploadProps) => {
     if (!files || files.length === 0) return;
     const file = files[0];
 
-    const allowed = endpoint === "messageFile" ? ALLOWED_MESSAGE_FILE : ALLOWED_IMAGE;
-    if (!allowed.includes(file.type)) {
-      setError(`Недопустимый формат: ${file.type || "неизвестный"}`);
-      return;
-    }
-    if (file.size > MAX_SIZE) {
-      setError("Файл больше 10 МБ");
+    const allowed = endpoint === "messageFile" ? ALLOWED_MESSAGE_FILE_TYPES : ALLOWED_IMAGE_TYPES;
+    const validationError = validateUploadFile(file, allowed);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     setUploading(true);
     try {
-      const supabase = getSupabaseBrowser();
-      const ext = file.name.split(".").pop() || "bin";
-      const path = `${endpoint}/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from(UPLOAD_BUCKET)
-        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
-      if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from(UPLOAD_BUCKET).getPublicUrl(path);
-      onChange(data.publicUrl);
+      const publicUrl = await uploadToSupabase(file, endpoint, file.name);
+      onChange(publicUrl);
     } catch (e) {
       console.error("Upload error:", e);
       setError(e instanceof Error ? e.message : "Ошибка загрузки");
@@ -122,7 +114,7 @@ export const FileUpload = ({ onChange, value, endpoint }: FileUploadProps) => {
           {uploading ? "Загрузка..." : "Выбрать файл"}
         </div>
         <p className="text-xs text-zinc-500">
-          {endpoint === "messageFile" ? "PNG, JPG, WEBP, GIF или PDF · до 10 МБ" : "PNG, JPG, WEBP или GIF · до 10 МБ"}
+          {endpoint === "messageFile" ? "PNG, JPG, WEBP, GIF, аудио или PDF · до 10 МБ" : "PNG, JPG, WEBP или GIF · до 10 МБ"}
         </p>
       </button>
       {error && <p className="mt-2 text-xs text-rose-500 text-center">{error}</p>}

@@ -15,6 +15,8 @@ import { ChatWelcome } from "./chat-welcome";
 import { ChatItem } from "./chat-item";
 import { extractMentionMemberIds } from "@/lib/message-formatting";
 import type { PollData } from "@/components/chat/poll-block";
+import { ImageLightbox } from "@/components/chat/image-lightbox";
+import { isImageUrl } from "@/lib/upload";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -79,6 +81,7 @@ export const ChatMessages = ({
   const topRef = useRef<ElementRef<"div">>(null);
   const bottomRef = useRef<ElementRef<"div">>(null);
   const [mentionNames, setMentionNames] = useState<Record<string, string>>({});
+  const [activeImageUrl, setActiveImageUrl] = useState<string | null>(null);
 
   const {
     data,
@@ -106,6 +109,11 @@ export const ChatMessages = ({
   }, [data]);
 
   const shouldVirtualize = messages.length > 200;
+  const imageUrls = useMemo(() => (
+    Array.from(new Set(messages.flatMap((message) => (
+      message.fileUrl && isImageUrl(message.fileUrl) ? [message.fileUrl] : []
+    ))))
+  ), [messages]);
   const mentionIds = useMemo(() => (
     Array.from(new Set(messages.flatMap((message) => extractMentionMemberIds(message.content))))
   ), [messages]);
@@ -190,6 +198,7 @@ export const ChatMessages = ({
       mentionNames={mentionNames}
       onReply={onReply}
       onOpenThread={type === "channel" ? onOpenThread : undefined}
+      onOpenImage={setActiveImageUrl}
     />
   );
 
@@ -272,6 +281,12 @@ export const ChatMessages = ({
         </p>
       )}
       <div ref={bottomRef} />
+      <ImageLightbox
+        images={imageUrls}
+        activeUrl={activeImageUrl}
+        onClose={() => setActiveImageUrl(null)}
+        onChange={setActiveImageUrl}
+      />
     </div>
   )
 }

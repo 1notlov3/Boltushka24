@@ -27,6 +27,8 @@ import { useRouter, useParams } from "next/navigation";
 import type { ReplyTarget } from "@/components/chat/chat-shell";
 import { MessageContent } from "@/components/chat/message-content";
 import { PollBlock, type PollData } from "@/components/chat/poll-block";
+import { VoicePlayer } from "@/components/chat/voice-player";
+import { fileExtensionFromUrl, isAudioUrl, isImageUrl } from "@/lib/upload";
 
 type Reaction = {
   id: string;
@@ -83,6 +85,7 @@ interface ChatItemProps {
   mentionNames?: Record<string, string>;
   onReply: (target: ReplyTarget) => void;
   onOpenThread?: (messageId: string) => void;
+  onOpenImage?: (url: string) => void;
 };
 
 const roleIconMap = {
@@ -117,6 +120,7 @@ export const ChatItem = memo(({
   mentionNames,
   onReply,
   onOpenThread,
+  onOpenImage,
 }: ChatItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const { onOpen } = useModal();
@@ -160,7 +164,7 @@ export const ChatItem = memo(({
     }
   }
 
-  const fileType = fileUrl?.split(".").pop();
+  const fileType = fileUrl ? fileExtensionFromUrl(fileUrl) : "";
 
   const isAdmin = currentMember.role === MemberRole.ADMIN;
   const isModerator = currentMember.role === MemberRole.MODERATOR;
@@ -169,7 +173,8 @@ export const ChatItem = memo(({
   const canEditMessage = !deleted && isOwner && !fileUrl;
   const canPinMessage = !deleted && (isAdmin || isModerator || isOwner);
   const isPDF = fileType === "pdf" && fileUrl;
-  const isImage = !isPDF && fileUrl;
+  const isAudio = !!fileUrl && isAudioUrl(fileUrl);
+  const isImage = !!fileUrl && isImageUrl(fileUrl);
   const actionBase = chatType === "conversation"
     ? `/api/direct-messages/${id}`
     : `/api/messages/${id}`;
@@ -302,11 +307,10 @@ export const ChatItem = memo(({
               <span className="line-clamp-1">{parent.deleted ? "Сообщение удалено" : parent.content}</span>
             </button>
           )}
-          {isImage && (
-            <a 
-              href={fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+          {isImage && fileUrl && (
+            <button
+              type="button"
+              onClick={() => onOpenImage?.(fileUrl)}
               className="relative aspect-square rounded-md mt-2 overflow-hidden border flex items-center bg-secondary h-48 w-48"
             >
               <Image
@@ -315,7 +319,10 @@ export const ChatItem = memo(({
                 fill
                 className="object-cover"
               />
-            </a>
+            </button>
+          )}
+          {isAudio && fileUrl && (
+            <VoicePlayer src={fileUrl} />
           )}
           {isPDF && (
             <div className="relative flex items-center p-2 mt-2 rounded-md bg-background/10">
