@@ -183,9 +183,9 @@ NEXT_PUBLIC_LIVEKIT_URL="wss://xxx.livekit.cloud"
 ### 3. Миграции БД и Storage bucket
 
 ```bash
-# Сгенерировать Prisma клиент и залить схему
-pnpm prisma generate
-pnpm prisma db push
+# Сгенерировать Prisma клиент и применить миграции
+npm run prisma:generate
+npm run prisma:migrate
 
 # В Supabase Dashboard → Storage → New bucket:
 #   name: uploads, public: true
@@ -270,9 +270,10 @@ DirectMessage 1:N DirectMessageReaction / SavedDirectMessage / Notification
 1. Fork репозитория
 2. Создай проект в [Vercel](https://vercel.com/new), привяжи GitHub
 3. Добавь все env-переменные из раздела [Быстрый старт](#-быстрый-старт) во вкладке **Environment Variables**
-4. Deploy — Vercel автоматически запустит `pnpm build` и задеплоит
+4. Deploy — Vercel автоматически запустит `npm run build` и задеплоит
 
 После деплоя:
+- Выполни миграции через `npm run prisma:deploy` (`prisma migrate deploy`), не `prisma db push`
 - В **Clerk Dashboard** → Paths → добавь домен Vercel в `signInUrl`
 - В **Supabase Dashboard** → Authentication → URL Configuration → добавь домен как Site URL
 - В **LiveKit Cloud** → Project → Settings → добавь домен в CORS origins
@@ -306,10 +307,11 @@ pnpm build            # production build
 pnpm lint             # ESLint
 pnpm typecheck        # TypeScript
 pnpm test             # helper unit checks
-pnpm prisma:generate  # Prisma client
-pnpm prisma:push      # db push для текущей схемы
+npm run prisma:generate  # Prisma client
+npm run prisma:migrate   # локальная dev-миграция
+npm run prisma:deploy    # production migrate deploy
 pnpm prisma studio    # GUI для БД
-pnpm prisma migrate dev --name <name>  # новая миграция
+npm run prisma:migrate -- --name <name>  # новая миграция
 ```
 
 ### История ключевых релизов
