@@ -29,18 +29,21 @@ export function useServerUnread(serverId?: string) {
     staleTime: 60_000,
     queryFn: async (): Promise<UnreadData> => {
       const response = await fetch(`/api/servers/${serverId}/unread`, { cache: "no-store" });
+      if (response.status === 401) return emptyUnread;
       if (!response.ok) throw new Error("Failed to fetch unread");
       return response.json() as Promise<UnreadData>;
     },
   });
 }
 
-export function useGlobalUnread() {
+export function useGlobalUnread(enabled: boolean = true) {
   return useQuery({
     queryKey: globalUnreadQueryKey,
+    enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<GlobalUnreadData> => {
       const response = await fetch("/api/unread/global", { cache: "no-store" });
+      if (response.status === 401) return { total: 0 };
       if (!response.ok) throw new Error("Failed to fetch global unread");
       return response.json() as Promise<GlobalUnreadData>;
     },
