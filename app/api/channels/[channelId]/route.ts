@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { ChannelType } from "@prisma/client";
 import { z } from "zod";
 import { canManageChannels } from "@/lib/permissions";
+import { logAudit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,25 @@ export async function DELETE(
       return new NextResponse("Forbidden", { status: 403 });
     }
 
+    const channel = await db.channel.findFirst({
+      where: {
+        id: paramsValidation.data.channelId,
+        serverId,
+        name: {
+          not: "основной",
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+      },
+    });
+
+    if (!channel) {
+      return new NextResponse("Channel not found", { status: 404 });
+    }
+
     const server = await db.server.update({
       where:{
         id:serverId,
@@ -82,14 +102,23 @@ export async function DELETE(
       data:{
         channels:{
           delete:{
-            id:params.channelId,
-            name:{
-              not: "основной",
-            }
+            id: channel.id,
           }
         }
       }
     });
+
+    await logAudit({
+      action: "channel.delete",
+      actorId: profile.id,
+      serverId,
+      targetId: channel.id,
+      metadata: {
+        name: channel.name,
+        type: channel.type,
+      },
+    });
+
     return NextResponse.json(server);
   }
   catch(eror){

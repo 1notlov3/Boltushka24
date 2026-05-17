@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,13 @@ export async function DELETE(
           }
         },
       },
+    });
+
+    await logAudit({
+      action: "member.kick",
+      actorId: profile.id,
+      serverId,
+      targetId: paramsValidation.data.memberId,
     });
 
     return NextResponse.json(server);
@@ -160,6 +168,14 @@ export async function PATCH(
           }
         }
       }
+    });
+
+    await logAudit({
+      action: "member.role.update",
+      actorId: profile.id,
+      serverId,
+      targetId: paramsValidation.data.memberId,
+      metadata: { role },
     });
 
     return NextResponse.json(server);

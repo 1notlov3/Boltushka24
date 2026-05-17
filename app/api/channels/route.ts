@@ -72,7 +72,7 @@ export async function POST(
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    const limit = checkRateLimit({
+    const limit = await checkRateLimit({
       key: rateLimitKey("channel:create", profile.id, serverId),
       limit: 20,
       windowMs: 60_000,

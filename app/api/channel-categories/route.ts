@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     if (!member) return unauthorized();
     if (!canManageChannels(member)) return forbidden();
 
-    const limit = checkRateLimit({
+    const limit = await checkRateLimit({
       key: rateLimitKey("category:create", profile.id, parsedQuery.data.serverId),
       limit: 10,
       windowMs: 60_000,

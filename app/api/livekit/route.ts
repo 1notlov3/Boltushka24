@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,24 @@ export async function GET(req: NextRequest) {
 
   if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const limit = await checkRateLimit({
+    key: rateLimitKey("livekit:token", profile.id, "global"),
+    limit: 10,
+    windowMs: 60_000,
+  });
+
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: `Too many token requests. Retry in ${limit.retryAfterSeconds}s` },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(limit.retryAfterSeconds),
+        },
+      },
+    );
   }
 
   if (!room) {
