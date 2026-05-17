@@ -534,7 +534,7 @@ export const ChatInput = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="relative"
+        className="relative shrink-0"
         onDragEnter={(event) => {
           event.preventDefault();
           setDragDepth((value) => value + 1);

@@ -219,21 +219,54 @@ export function useServerTyping(chatId: string) {
   return typingByChatId[chatId] ?? [];
 }
 
+type OnlineWatchEntry = {
+  channel: ReturnType<ReturnType<typeof getSupabaseBrowser>["channel"]>;
+  count: number;
+  listeners: Set<(count: number) => void>;
+};
+
+const onlineWatchers = new Map<string, OnlineWatchEntry>();
+
 export function useServerOnlineCount(serverId: string) {
   const [onlineCount, setOnlineCount] = useState(0);
 
   useEffect(() => {
-    const supabase = getSupabaseBrowser();
-    const channel = supabase.channel(`presence:server-online-watch:${serverId}`);
+    let entry = onlineWatchers.get(serverId);
 
-    channel
-      .on("presence", { event: "sync" }, () => {
-        setOnlineCount(Object.keys(flattenPresenceState(channel.presenceState<PresencePayload>())).length);
-      })
-      .subscribe();
+    if (!entry) {
+      const supabase = getSupabaseBrowser();
+      const channel = supabase.channel(`presence:server-online-watch:${serverId}`);
+      const newEntry: OnlineWatchEntry = {
+        channel,
+        count: 0,
+        listeners: new Set(),
+      };
+      onlineWatchers.set(serverId, newEntry);
+      channel
+        .on("presence", { event: "sync" }, () => {
+          const next = Object.keys(
+            flattenPresenceState(channel.presenceState<PresencePayload>()),
+          ).length;
+          newEntry.count = next;
+          newEntry.listeners.forEach((listener) => listener(next));
+        })
+        .subscribe();
+      entry = newEntry;
+    }
+
+    const listener = (count: number) => setOnlineCount(count);
+    entry.listeners.add(listener);
+    setOnlineCount(entry.count);
 
     return () => {
-      supabase.removeChannel(channel);
+      const current = onlineWatchers.get(serverId);
+      if (!current) return;
+
+      current.listeners.delete(listener);
+      if (current.listeners.size === 0) {
+        getSupabaseBrowser().removeChannel(current.channel);
+        onlineWatchers.delete(serverId);
+      }
     };
   }, [serverId]);
 

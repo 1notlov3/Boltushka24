@@ -208,7 +208,7 @@ export const ChatMessages = ({
 
   if (status === "pending") {
     return (
-      <div className="flex flex-col flex-1 justify-center items-center">
+      <div className="flex flex-col flex-1 min-h-0 justify-center items-center">
         <Loader2 className="h-7 w-7 text-zinc-500 animate-spin my-4" />
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Загрузка сообщений
@@ -219,7 +219,7 @@ export const ChatMessages = ({
 
   if (status === "error") {
     return (
-      <div className="flex flex-col flex-1 justify-center items-center">
+      <div className="flex flex-col flex-1 min-h-0 justify-center items-center">
         <ServerCrash className="h-7 w-7 text-zinc-500 my-4" />
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Что-то пошло не так!
@@ -229,7 +229,7 @@ export const ChatMessages = ({
   }
 
   return (
-    <div ref={chatRef} className="flex-1 flex flex-col py-4 overflow-y-auto">
+    <div ref={chatRef} className="flex-1 flex flex-col min-h-0 py-4 overflow-y-auto">
       {!hasNextPage && <div className="flex-1" />}
       {!hasNextPage && (
         <ChatWelcome
