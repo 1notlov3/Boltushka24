@@ -68,6 +68,7 @@ export const getServerDetails = cache(async (serverId: string) => {
         },
       },
       members: {
+        take: 100,
         include: {
           profile: {
             select: {
@@ -80,8 +81,15 @@ export const getServerDetails = cache(async (serverId: string) => {
             }
           },
         },
-        orderBy: {
-          role: "asc",
+        orderBy: [
+          { role: "asc" },
+          { createdAt: "asc" },
+          { id: "asc" },
+        ],
+      },
+      _count: {
+        select: {
+          members: true,
         },
       },
     },
