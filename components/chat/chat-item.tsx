@@ -81,6 +81,7 @@ interface ChatItemProps {
   pinned: boolean;
   parent: ParentPreview | null;
   poll?: PollData | null;
+  outbox?: boolean;
   repliesCount?: number;
   mentionNames?: Record<string, string>;
   onReply: (target: ReplyTarget) => void;
@@ -116,6 +117,7 @@ export const ChatItem = memo(({
   pinned,
   parent,
   poll,
+  outbox,
   repliesCount = 0,
   mentionNames,
   onReply,
@@ -294,6 +296,11 @@ export const ChatItem = memo(({
               <span className="inline-flex items-center gap-1 rounded-sm bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-300">
                 <Pin className="h-3 w-3" />
                 закреплено
+              </span>
+            )}
+            {outbox && !deleted && (
+              <span className="inline-flex items-center rounded-sm bg-zinc-500/10 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-300">
+                В очереди
               </span>
             )}
           </div>

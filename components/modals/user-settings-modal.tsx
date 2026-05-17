@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -27,6 +28,7 @@ export const UserSettingsModal = () => {
   const { isOpen, type, onClose } = useModal();
   const [settings, setSettings] = useState<SettingsPayload | null>(null);
   const [profile, setProfile] = useState<ProfilePayload>({ status: "ONLINE", customStatus: "" });
+  const [isPushLoading, setIsPushLoading] = useState(false);
   const isModalOpen = isOpen && type === "userSettings";
 
   useEffect(() => {
@@ -55,6 +57,53 @@ export const UserSettingsModal = () => {
       body: JSON.stringify({ ...settings, ...profile }),
     });
     onClose();
+  };
+
+  const enablePush = async () => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      toast.error("Push-уведомления недоступны в этом браузере");
+      return;
+    }
+
+    setIsPushLoading(true);
+
+    try {
+      const configResponse = await fetch("/api/push/subscribe");
+      const config = await configResponse.json() as { enabled: boolean; publicKey: string | null };
+
+      if (!config.enabled || !config.publicKey) {
+        toast.error("Push-уведомления не настроены на сервере");
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        toast.error("Разрешение на уведомления не выдано");
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      const existing = await registration.pushManager.getSubscription();
+      const subscription = existing ?? await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(config.publicKey),
+      });
+
+      const response = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(subscription.toJSON()),
+      });
+
+      if (!response.ok) throw new Error("Push subscribe failed");
+
+      toast.success("Push-уведомления включены");
+    } catch (error) {
+      console.error("[PUSH_ENABLE]", error);
+      toast.error("Не удалось включить уведомления");
+    } finally {
+      setIsPushLoading(false);
+    }
   };
 
   return (
@@ -112,6 +161,15 @@ export const UserSettingsModal = () => {
                 />
               </label>
             ))}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={enablePush}
+              disabled={isPushLoading}
+              isLoading={isPushLoading}
+            >
+              Включить уведомления
+            </Button>
           </div>
         )}
         <div className="flex justify-end gap-2">
@@ -122,3 +180,16 @@ export const UserSettingsModal = () => {
     </Dialog>
   );
 };
+
+function urlBase64ToUint8Array(value: string) {
+  const padding = "=".repeat((4 - value.length % 4) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const output = new Uint8Array(rawData.length);
+
+  for (let index = 0; index < rawData.length; index += 1) {
+    output[index] = rawData.charCodeAt(index);
+  }
+
+  return output;
+}

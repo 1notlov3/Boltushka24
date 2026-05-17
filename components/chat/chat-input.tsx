@@ -2,6 +2,7 @@
 
 import * as z from "zod";
 import { http } from "@/lib/http";
+import { isAxiosError } from "axios";
 import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,6 +30,7 @@ import {
   uploadToSupabase,
   validateUploadFile,
 } from "@/lib/upload";
+import { enqueueOutboxMessage, type OutboxMessagePayload } from "@/lib/outbox";
 
 interface ChatInputProps {
   apiUrl: string;
@@ -47,6 +49,8 @@ const formSchema = z.object({
 });
 
 type AnyMessage = { id: string; [k: string]: unknown };
+type ChatCachePage = { items: AnyMessage[]; [key: string]: unknown };
+type ChatCacheData = { pages: ChatCachePage[]; pageParams?: unknown[]; [key: string]: unknown };
 type MentionSuggestion = {
   id: string;
   name: string;
@@ -251,6 +255,27 @@ export const ChatInput = ({
     });
   };
 
+  const markMessageOutbox = (tempId: string) => {
+    if (!queryKey) return;
+    queryClient.setQueryData<ChatCacheData>([queryKey], (old) => {
+      if (!old?.pages?.length) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page) => ({
+          ...page,
+          items: page.items.map((message) => (
+            message.id === tempId ? { ...message, outbox: true } : message
+          )),
+        })),
+      };
+    });
+  };
+
+  const isNetworkMessageError = (error: unknown) => (
+    (typeof navigator !== "undefined" && !navigator.onLine) ||
+    (isAxiosError(error) && !error.response)
+  );
+
   const createOptimisticMessage = (
     tempId: string,
     content: string,
@@ -454,6 +479,12 @@ export const ChatInput = ({
 
     if (optimistic) insertMessage(optimistic);
 
+    const messagePayload: OutboxMessagePayload = {
+      content,
+      fileUrl: gifFileUrl,
+      ...(type === "channel" ? { parentMessageId: replyTo?.id } : { parentDirectMessageId: replyTo?.id }),
+    };
+
     try {
       const { data } = pollCommand
         ? await http.post<AnyMessage>("/api/polls", {
@@ -463,12 +494,7 @@ export const ChatInput = ({
             options: pollCommand.options,
             multiple: pollCommand.multiple,
           })
-        : await http.post<AnyMessage>(qs.stringifyUrl({ url: apiUrl, query }), {
-            ...values,
-            content,
-            fileUrl: gifFileUrl,
-            ...(type === "channel" ? { parentMessageId: replyTo?.id } : { parentDirectMessageId: replyTo?.id }),
-          });
+        : await http.post<AnyMessage>(qs.stringifyUrl({ url: apiUrl, query }), messagePayload);
 
       if (optimistic && data?.id) {
         replaceMessage(tempId, data);
@@ -480,6 +506,23 @@ export const ChatInput = ({
       onClearReply?.();
     } catch (error) {
       console.log(error);
+      if (!pollCommand && optimistic && queryKey && isNetworkMessageError(error)) {
+        await enqueueOutboxMessage({
+          id: tempId,
+          queryKey,
+          apiUrl,
+          query,
+          payload: messagePayload,
+          createdAt: Date.now(),
+        });
+        markMessageOutbox(tempId);
+        form.reset();
+        clearDraft();
+        onClearReply?.();
+        toast.info("Нет соединения. Сообщение отправится позже.");
+        return;
+      }
+
       toast.error("Не удалось отправить сообщение");
       if (optimistic) removeMessage(tempId);
     }

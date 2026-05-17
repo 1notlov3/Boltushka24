@@ -44,6 +44,7 @@ type MessageWithMemberWithProfile = Message & {
     replies?: number;
   };
   poll?: PollData | null;
+  outbox?: boolean;
 }
 
 interface ChatMessagesProps {
@@ -196,6 +197,7 @@ export const ChatMessages = ({
       pinned={message.pinned}
       parent={message.parentMessage ?? message.parentDirectMessage ?? null}
       poll={message.poll ?? null}
+      outbox={!!message.outbox}
       repliesCount={message._count?.replies ?? 0}
       mentionNames={mentionNames}
       onReply={onReply}

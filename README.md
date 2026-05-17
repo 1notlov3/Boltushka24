@@ -55,6 +55,7 @@
 ### 📱 Мобильный UX
 - **Адаптивный дизайн** с viewport-units `100dvh` (корректно работает с iOS Safari)
 - **Drawer-навигация** — выезжающая панель серверов/каналов на мобильных
+- **PWA и offline outbox** — установка на устройство, service worker и очередь отправки сообщений при потере сети
 - **Крупные touch-таргеты** (≥44×44px), safe-area-inset-bottom, отсутствие page-level скролла
 - **True optimistic updates** — сообщения отображаются до ответа сервера даже на медленных соединениях
 
@@ -186,6 +187,9 @@ UPSTASH_REDIS_REST_TOKEN="upstash_token"
 SENTRY_DSN=""
 NEXT_PUBLIC_SENTRY_DSN=""
 TENOR_API_KEY=""
+VAPID_PUBLIC_KEY=""
+VAPID_PRIVATE_KEY=""
+VAPID_SUBJECT="mailto:admin@example.com"
 ```
 
 ### 3. Миграции БД и Storage bucket

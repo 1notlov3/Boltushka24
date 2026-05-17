@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { canCreateMessage } from "@/lib/permissions";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
+import { notificationPushPayload, sendPushNotification } from "@/lib/web-push";
 
 export const dynamic = "force-dynamic";
 
@@ -156,6 +157,7 @@ export async function POST(req: Request) {
             id: true,
             role: true,
             profileId: true,
+            serverId: true,
           },
         },
         memberTwo: {
@@ -163,6 +165,7 @@ export async function POST(req: Request) {
             id: true,
             role: true,
             profileId: true,
+            serverId: true,
           },
         },
       },
@@ -225,16 +228,21 @@ export async function POST(req: Request) {
     const notificationTargetId = parentDirectMessage?.member.profileId ?? otherMember.profileId;
 
     if (notificationTargetId !== profile.id) {
-      await db.notification.create({
-        data: {
-          type: parentDirectMessage ? NotificationType.REPLY : NotificationType.DIRECT_MESSAGE,
-          actorId: profile.id,
-          targetId: notificationTargetId,
-          conversationId,
-          directMessageId: message.id,
-          metadata: { preview: content.slice(0, 160) },
-        },
-      });
+      const notification = {
+        type: parentDirectMessage ? NotificationType.REPLY : NotificationType.DIRECT_MESSAGE,
+        actorId: profile.id,
+        targetId: notificationTargetId,
+        conversationId,
+        directMessageId: message.id,
+        metadata: { preview: content.slice(0, 160) },
+      };
+
+      await db.notification.create({ data: notification });
+      await sendPushNotification(notificationTargetId, notificationPushPayload({
+        title: parentDirectMessage ? `${profile.name} ответил(а) вам` : `${profile.name} написал(а) вам`,
+        preview: content,
+        url: `/servers/${member.serverId}/conversations/${member.id}`,
+      }));
     }
 
     await broadcast(`chat:${conversationId}:messages`, { id: message.id, action: "add" });

@@ -9,6 +9,7 @@ import { extractMentionMemberIds } from "@/lib/message-formatting";
 import { canCreateMessage } from "@/lib/permissions";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
+import { notificationPushPayload, sendPushNotification } from "@/lib/web-push";
 
 export const dynamic = "force-dynamic";
 
@@ -237,6 +238,15 @@ export async function POST(req: Request) {
 
     if (notifications.length) {
       await db.notification.createMany({ data: notifications });
+      await Promise.allSettled(notifications.map((notification) => (
+        sendPushNotification(notification.targetId, notificationPushPayload({
+          title: notification.type === NotificationType.MENTION
+            ? `${profile.name} упомянул(а) вас`
+            : `${profile.name} ответил(а) вам`,
+          preview: content,
+          url: `/servers/${serverId}/channels/${channelId}${parentMessage?.id ? `?thread=${parentMessage.id}` : ""}`,
+        }))
+      )));
     }
 
     await broadcast(`chat:${channelId}:messages`, { id: message.id, action: "add" });

@@ -28,6 +28,7 @@ model Profile {
   notificationsReceived Notification[] @relation("NotificationTarget")
   notificationsCreated  Notification[] @relation("NotificationActor")
   auditLogs             AuditLog[]     @relation("AuditLogActor")
+  pushSubscriptions     PushSubscription[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -382,6 +383,20 @@ model Notification {
   @@index([conversationId])
   @@index([messageId])
   @@index([directMessageId])
+}
+
+model PushSubscription {
+  id        String @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  endpoint   String @unique @db.Text
+  keysAuth   String @db.Text
+  keysP256dh String @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
 }
 
 model ChannelReadState {
