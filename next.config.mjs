@@ -44,6 +44,8 @@ const csp = [
     "https://res.cloudinary.com",
     "https://img.clerk.com",
     "https://*.clerk.com",
+    "https://media.tenor.com",
+    "https:",
     ...(supabaseHost ? [`https://${supabaseHost}`] : []),
   ].join(" "),
   "font-src 'self' data:",
@@ -80,6 +82,7 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "img.clerk.com" },
+      { protocol: "https", hostname: "media.tenor.com" },
       ...(supabaseHost ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }] : []),
     ],
   },

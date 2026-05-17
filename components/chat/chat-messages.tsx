@@ -14,6 +14,7 @@ import type { ReplyTarget } from "@/components/chat/chat-shell";
 import { ChatWelcome } from "./chat-welcome";
 import { ChatItem } from "./chat-item";
 import { extractMentionMemberIds } from "@/lib/message-formatting";
+import type { PollData } from "@/components/chat/poll-block";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -38,6 +39,7 @@ type MessageWithMemberWithProfile = Message & {
   _count?: {
     replies?: number;
   };
+  poll?: PollData | null;
 }
 
 interface ChatMessagesProps {
@@ -183,6 +185,7 @@ export const ChatMessages = ({
       savedByCurrentMember={!!message.savedBy?.length}
       pinned={message.pinned}
       parent={message.parentMessage ?? message.parentDirectMessage ?? null}
+      poll={message.poll ?? null}
       repliesCount={message._count?.replies ?? 0}
       mentionNames={mentionNames}
       onReply={onReply}

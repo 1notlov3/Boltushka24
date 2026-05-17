@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { useModal } from "@/hooks/use-modal-store";
 import { EmojiPicker } from "@/components/emoji-picker";
 import { ActionTooltip } from "@/components/action-tooltip";
-import { applySlashCommand } from "@/lib/message-formatting";
+import { applySlashCommand, parseGifCommand, parsePollCommand } from "@/lib/message-formatting";
 import type { ReplyTarget } from "@/components/chat/chat-shell";
 import { X } from "lucide-react";
 
@@ -46,6 +46,10 @@ type MentionSuggestion = {
   id: string;
   name: string;
   imageUrl: string;
+};
+type TenorSearchResponse = {
+  enabled: boolean;
+  items: { url: string }[];
 };
 
 export const ChatInput = ({
@@ -218,14 +222,44 @@ export const ChatInput = ({
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const content = applySlashCommand(values.content);
+    const pollCommand = type === "channel" ? parsePollCommand(values.content) : null;
+    const isPollAttempt = /^\/poll(?:\s|$)/.test(values.content.trim());
+
+    if (isPollAttempt && !pollCommand) {
+      toast.error('Формат опроса: /poll "Вопрос" "Вариант 1" "Вариант 2"');
+      return;
+    }
+
+    if (pollCommand && (!query.serverId || !query.channelId)) {
+      toast.error("Опросы доступны только в каналах сервера");
+      return;
+    }
+
+    const gifQuery = pollCommand ? null : parseGifCommand(values.content);
+    let gifFileUrl: string | null = null;
+
+    if (gifQuery) {
+      try {
+        const response = await http.get<TenorSearchResponse>("/api/tenor/search", {
+          params: {
+            q: gifQuery,
+            limit: 1,
+          },
+        });
+        gifFileUrl = response.data.items[0]?.url ?? null;
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    const content = pollCommand ? `Опрос: ${pollCommand.question}` : applySlashCommand(values.content);
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const now = new Date().toISOString();
     const optimistic = currentMember
       ? {
           id: tempId,
           content,
-          fileUrl: null,
+          fileUrl: gifFileUrl,
           deleted: false,
           createdAt: now,
           updatedAt: now,
@@ -254,18 +288,37 @@ export const ChatInput = ({
           savedBy: [],
           pinned: false,
           member: currentMember,
+          poll: pollCommand
+            ? {
+                id: `temp-poll-${tempId}`,
+                question: pollCommand.question,
+                options: pollCommand.options,
+                multiple: pollCommand.multiple,
+                closesAt: null,
+                votes: [],
+              }
+            : null,
         }
       : null;
 
     if (optimistic) insertMessage(optimistic);
 
     try {
-      const url = qs.stringifyUrl({ url: apiUrl, query });
-      const { data } = await http.post<AnyMessage>(url, {
-        ...values,
-        content,
-        ...(type === "channel" ? { parentMessageId: replyTo?.id } : { parentDirectMessageId: replyTo?.id }),
-      });
+      const { data } = pollCommand
+        ? await http.post<AnyMessage>("/api/polls", {
+            serverId: query.serverId,
+            channelId: query.channelId,
+            question: pollCommand.question,
+            options: pollCommand.options,
+            multiple: pollCommand.multiple,
+          })
+        : await http.post<AnyMessage>(qs.stringifyUrl({ url: apiUrl, query }), {
+            ...values,
+            content,
+            fileUrl: gifFileUrl,
+            ...(type === "channel" ? { parentMessageId: replyTo?.id } : { parentDirectMessageId: replyTo?.id }),
+          });
+
       if (optimistic && data?.id) {
         replaceMessage(tempId, data);
       } else if (data?.id) {

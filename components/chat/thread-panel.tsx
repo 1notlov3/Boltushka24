@@ -11,6 +11,7 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { ChatItem } from "@/components/chat/chat-item";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import type { ReplyTarget } from "@/components/chat/chat-shell";
+import type { PollData } from "@/components/chat/poll-block";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -27,6 +28,7 @@ type ThreadMessage = Message & {
   _count?: {
     replies?: number;
   };
+  poll?: PollData | null;
 };
 
 type ThreadPage = {
@@ -115,6 +117,7 @@ export const ThreadPanel = ({
       savedByCurrentMember={!!message.savedBy?.length}
       pinned={message.pinned}
       parent={message.parentMessage ?? null}
+      poll={message.poll ?? null}
       repliesCount={repliesCount}
       onReply={() => undefined}
     />

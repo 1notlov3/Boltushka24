@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { MemberRole } from "@prisma/client";
 
-import { applySlashCommand, parseMessageFormatting } from "../lib/message-formatting";
+import { applySlashCommand, parseMessageFormatting, parsePollCommand } from "../lib/message-formatting";
 import { canDeleteMessage, canEditMessage, hasPermission } from "../lib/permissions";
 import { extractYoutubeId } from "../lib/youtube";
 
@@ -13,8 +13,13 @@ assert.equal(extractYoutubeId(`https://youtu.be/${videoId}`), videoId);
 assert.equal(extractYoutubeId("https://example.com/nope"), null);
 
 assert.equal(applySlashCommand("/me тестирует"), "_тестирует_");
-assert.equal(applySlashCommand("/poll лучший канал?"), "**Опрос:** лучший канал?");
+assert.equal(applySlashCommand("/poll лучший канал?"), "/poll лучший канал?");
 assert.equal(applySlashCommand("/gif cats"), "[GIF: cats]");
+
+const poll = parsePollCommand('/poll "Лучший канал?" "общий" "музыка"');
+assert.equal(poll?.question, "Лучший канал?");
+assert.equal(poll?.options.length, 2);
+assert.equal(poll?.options[0]?.id, "option-1");
 
 const tokens = parseMessageFormatting("Привет **мир** `code` https://example.com");
 assert.equal(tokens.some((token) => token.type === "bold" && token.text === "мир"), true);

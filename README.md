@@ -38,6 +38,7 @@
 - **Reactions, replies, pinned и saved messages** — быстрые реакции, цитирование, закрепления и личное избранное
 - **Поиск по сообщениям** внутри каналов и личных диалогов
 - **Черновики, typing indicators, Markdown-lite и slash commands** — draft per chat, безопасный markdown-render и команды `/shrug`, `/me`, `/poll`, `/gif`, `/help`
+- **Опросы, GIF и превью ссылок** — `/poll "Вопрос" "Да" "Нет"`, Tenor proxy для GIF и серверный кэш Open Graph preview
 - **Realtime** на базе Supabase Realtime (signal-only broadcast + authenticated refetch)
 
 ### 🎙️ Голос и видео
@@ -153,7 +154,7 @@
 ```bash
 git clone https://github.com/1notlov3/Boltushka24.git
 cd Boltushka24
-pnpm install
+npm install
 ```
 
 ### 2. Переменные окружения
@@ -184,6 +185,7 @@ UPSTASH_REDIS_REST_URL="https://example.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="upstash_token"
 SENTRY_DSN=""
 NEXT_PUBLIC_SENTRY_DSN=""
+TENOR_API_KEY=""
 ```
 
 ### 3. Миграции БД и Storage bucket
@@ -293,7 +295,7 @@ DirectMessage 1:N DirectMessageReaction / SavedDirectMessage / Notification
 - [ ] **Threads** — ветки обсуждений внутри сообщений
 - [ ] **Бот API** — вебхуки для интеграций
 - [ ] **Screen sharing** в голосовых каналах (LiveKit уже поддерживает)
-- [ ] **Stickers и GIF-picker** через Giphy/Tenor
+- [x] **Stickers и GIF-picker** через локальный sticker manifest и Tenor proxy
 - [ ] **E2E-шифрование DM** (через libsodium)
 - [ ] **PWA** — установка как приложение, offline-first
 

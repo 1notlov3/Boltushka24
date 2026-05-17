@@ -45,6 +45,22 @@ export function channelMessageInclude(currentMemberId: string) {
         member: memberWithProfile,
       },
     },
+    poll: {
+      select: {
+        id: true,
+        question: true,
+        options: true,
+        multiple: true,
+        closesAt: true,
+        votes: {
+          select: {
+            id: true,
+            memberId: true,
+            optionId: true,
+          },
+        },
+      },
+    },
     _count: {
       select: {
         replies: true,
@@ -81,6 +97,22 @@ export function directMessageInclude(currentMemberId: string) {
         content: true,
         deleted: true,
         member: memberWithProfile,
+      },
+    },
+    poll: {
+      select: {
+        id: true,
+        question: true,
+        options: true,
+        multiple: true,
+        closesAt: true,
+        votes: {
+          select: {
+            id: true,
+            memberId: true,
+            optionId: true,
+          },
+        },
       },
     },
     _count: {

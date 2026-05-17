@@ -6,6 +6,12 @@ export type MessageToken =
   | { type: "codeBlock"; text: string }
   | { type: "link"; text: string; href: string };
 
+export type ParsedPollCommand = {
+  question: string;
+  options: { id: string; text: string }[];
+  multiple: boolean;
+};
+
 const tokenPattern =
   /```([\s\S]*?)```|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|(https?:\/\/[^\s<>"']+)/g;
 
@@ -55,10 +61,6 @@ export function applySlashCommand(raw: string) {
     return `_${value.slice(4).trim()}_`;
   }
 
-  if (value.startsWith("/poll ")) {
-    return `**Опрос:** ${value.slice(6).trim()}`;
-  }
-
   if (value.startsWith("/gif")) {
     const query = value.slice(4).trim();
     return query ? `[GIF: ${query}]` : "[GIF]";
@@ -69,6 +71,45 @@ export function applySlashCommand(raw: string) {
   }
 
   return raw;
+}
+
+export function parseGifCommand(raw: string) {
+  const value = raw.trim();
+  if (!value.startsWith("/gif")) return null;
+
+  return value.slice(4).trim() || null;
+}
+
+export function parsePollCommand(raw: string): ParsedPollCommand | null {
+  const value = raw.trim();
+  if (!value.startsWith("/poll ")) return null;
+
+  const body = value.slice(6).trim();
+  const multiple = body.startsWith("--multi ") || body.startsWith("--multiple ");
+  const normalizedBody = multiple ? body.replace(/^--multi(?:ple)?\s+/, "") : body;
+  const quoted = Array.from(normalizedBody.matchAll(/"([^"]+)"/g), (match) => match[1].trim())
+    .filter(Boolean);
+
+  if (quoted.length >= 3) {
+    const [question, ...choices] = quoted;
+    return {
+      question,
+      options: choices.slice(0, 8).map((text, index) => ({ id: `option-${index + 1}`, text })),
+      multiple,
+    };
+  }
+
+  const pipeParts = normalizedBody.split("|").map((part) => part.trim()).filter(Boolean);
+  if (pipeParts.length >= 3) {
+    const [question, ...choices] = pipeParts;
+    return {
+      question,
+      options: choices.slice(0, 8).map((text, index) => ({ id: `option-${index + 1}`, text })),
+      multiple,
+    };
+  }
+
+  return null;
 }
 
 export function extractMentionNames(content: string) {

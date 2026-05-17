@@ -106,6 +106,7 @@ model Member {
 
   messageReactions       MessageReaction[]
   directMessageReactions DirectMessageReaction[]
+  pollVotes              PollVote[]
   savedMessages          SavedMessage[]
   savedDirectMessages    SavedDirectMessage[]
   channelReadStates      ChannelReadState[]
@@ -201,6 +202,7 @@ model Message {
   reactions     MessageReaction[]
   savedBy       SavedMessage[]
   notifications Notification[]
+  poll          Poll?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -288,6 +290,7 @@ model DirectMessage {
   reactions     DirectMessageReaction[]
   savedBy       SavedDirectMessage[]
   notifications Notification[]
+  poll          Poll?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -475,4 +478,45 @@ model WatchQueueItem {
   createdAt   DateTime @default(now())
 
   @@index([sessionId, position])
+}
+
+model Poll {
+  id              String @id @default(uuid())
+  messageId       String? @unique
+  message         Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  directMessageId String? @unique
+  directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+  question        String
+  options         Json
+  multiple        Boolean @default(false)
+  closesAt        DateTime?
+  createdAt       DateTime @default(now())
+  votes           PollVote[]
+
+  @@index([messageId])
+  @@index([directMessageId])
+}
+
+model PollVote {
+  id        String @id @default(uuid())
+  pollId    String
+  poll      Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  optionId  String
+  createdAt DateTime @default(now())
+
+  @@unique([pollId, memberId, optionId])
+  @@index([memberId])
+}
+
+model LinkPreview {
+  id          String @id @default(uuid())
+  url         String @unique
+  title       String?
+  description String?
+  image       String?
+  fetchedAt   DateTime
+
+  @@index([fetchedAt])
 }

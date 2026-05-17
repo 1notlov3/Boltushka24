@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "packs": [
+    {
+      "id": "boltushka-basic",
+      "name": "Болтушка",
+      "stickers": [
+        { "id": "hello", "name": "Привет", "type": "emoji", "value": "👋" },
+        { "id": "yes", "name": "Да", "type": "emoji", "value": "✅" },
+        { "id": "no", "name": "Нет", "type": "emoji", "value": "⛔" },
+        { "id": "fire", "name": "Огонь", "type": "emoji", "value": "🔥" },
+        { "id": "heart", "name": "Сердце", "type": "emoji", "value": "💜" },
+        { "id": "party", "name": "Праздник", "type": "emoji", "value": "🎉" },
+        { "id": "eyes", "name": "Смотрю", "type": "emoji", "value": "👀" },
+        { "id": "star", "name": "Звезда", "type": "emoji", "value": "⭐" }
+      ]
+    }
+  ]
+}

@@ -26,6 +26,7 @@ import { useModal } from "@/hooks/use-modal-store";
 import { useRouter, useParams } from "next/navigation";
 import type { ReplyTarget } from "@/components/chat/chat-shell";
 import { MessageContent } from "@/components/chat/message-content";
+import { PollBlock, type PollData } from "@/components/chat/poll-block";
 
 type Reaction = {
   id: string;
@@ -77,6 +78,7 @@ interface ChatItemProps {
   savedByCurrentMember: boolean;
   pinned: boolean;
   parent: ParentPreview | null;
+  poll?: PollData | null;
   repliesCount?: number;
   mentionNames?: Record<string, string>;
   onReply: (target: ReplyTarget) => void;
@@ -110,6 +112,7 @@ export const ChatItem = memo(({
   savedByCurrentMember,
   pinned,
   parent,
+  poll,
   repliesCount = 0,
   mentionNames,
   onReply,
@@ -327,8 +330,11 @@ export const ChatItem = memo(({
               </a>
             </div>
           )}
-          {!fileUrl && !isEditing && (
+          {!fileUrl && !isEditing && (!poll || deleted) && (
             <MessageContent content={content} deleted={deleted} isUpdated={isUpdated} mentionNames={mentionNames} />
+          )}
+          {!fileUrl && !deleted && poll && (
+            <PollBlock poll={poll} currentMemberId={currentMember.id} />
           )}
           {!fileUrl && isEditing && (
             <Form {...form}>
