@@ -165,6 +165,7 @@ model Channel {
   messages      Message[]
   readStates    ChannelReadState[]
   notifications Notification[]
+  watchSession  WatchSession?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -443,4 +444,35 @@ model AuditLog {
   @@index([serverId, createdAt])
   @@index([actorId])
   @@index([targetId])
+}
+
+model WatchSession {
+  id             String @id @default(uuid())
+  channelId      String @unique
+  channel        Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  currentVideoId String?
+  currentTime    Float   @default(0)
+  isPlaying      Boolean @default(false)
+  updatedById    String?
+  updatedByName  String?
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  queue          WatchQueueItem[]
+
+  @@index([channelId])
+}
+
+model WatchQueueItem {
+  id          String @id @default(uuid())
+  sessionId   String
+  session     WatchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  videoId     String
+  title       String?
+  thumbnail   String?
+  addedById   String
+  addedByName String
+  position    Int
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId, position])
 }
