@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import { http } from "@/lib/http";
 import qs from "query-string";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -57,7 +57,7 @@ export const MessageFileModal = () => {
         query,
       });
 
-      await axios.post(url, {
+      await http.post(url, {
         ...values,
         content: values.fileUrl,
       });

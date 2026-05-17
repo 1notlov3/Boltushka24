@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import { http } from "@/lib/http";
 import qs from "query-string";
 import { 
   Check,
@@ -64,7 +64,7 @@ export const MembersModal = () => {
         },
       });
 
-      const response = await axios.delete(url);
+      const response = await http.delete(url);
 
       router.refresh();
       onOpen("members", { server: response.data });
@@ -85,7 +85,7 @@ export const MembersModal = () => {
         }
       });
 
-      const response = await axios.patch(url, { role });
+      const response = await http.patch(url, { role });
 
       router.refresh();
       onOpen("members", { server: response.data });

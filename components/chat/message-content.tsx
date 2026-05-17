@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import type { ReactNode } from "react";
 
 import { parseMessageFormatting } from "@/lib/message-formatting";
 import { cn } from "@/lib/utils";
@@ -9,14 +10,51 @@ interface MessageContentProps {
   content: string;
   deleted?: boolean;
   isUpdated?: boolean;
+  mentionNames?: Record<string, string>;
 }
+
+const mentionPatternSource = "<@([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})>";
 
 export const MessageContent = ({
   content,
   deleted,
   isUpdated,
+  mentionNames = {},
 }: MessageContentProps) => {
   const tokens = parseMessageFormatting(content);
+
+  const renderText = (text: string) => {
+    const parts: ReactNode[] = [];
+    let lastIndex = 0;
+    const mentionPattern = new RegExp(mentionPatternSource, "giu");
+
+    let match = mentionPattern.exec(text);
+
+    while (match) {
+      if (match.index > lastIndex) {
+        parts.push(<Fragment key={`${match.index}-text`}>{text.slice(lastIndex, match.index)}</Fragment>);
+      }
+
+      const memberId = match[1].toLowerCase();
+      parts.push(
+        <span
+          key={`${memberId}-${match.index}`}
+          className="rounded-sm bg-indigo-500/10 px-1 font-semibold text-indigo-600 dark:text-indigo-300"
+        >
+          @{mentionNames[memberId] ?? "участник"}
+        </span>,
+      );
+
+      lastIndex = match.index + match[0].length;
+      match = mentionPattern.exec(text);
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(<Fragment key="tail">{text.slice(lastIndex)}</Fragment>);
+    }
+
+    return parts.length ? parts : text;
+  };
 
   return (
     <p
@@ -64,7 +102,7 @@ export const MessageContent = ({
           );
         }
 
-        return <Fragment key={index}>{token.text}</Fragment>;
+        return <Fragment key={index}>{renderText(token.text)}</Fragment>;
       })}
       {isUpdated && !deleted && (
         <span className="text-[10px] mx-2 text-zinc-500 dark:text-zinc-400">

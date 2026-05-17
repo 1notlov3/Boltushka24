@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { ModalProvider } from "@/components/providers/modal-provider";
 import { SocketProvider } from "@/components/providers/socket-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { HttpProvider } from "@/components/providers/http-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 const font = Open_Sans({ subsets: ["latin", "cyrillic"] });
@@ -35,9 +36,11 @@ export default function RootLayout({
               <SocketProvider>
                 <TooltipProvider>
                   <ModalProvider />
-                  <QueryProvider>
-                    {children}
-                  </QueryProvider>
+                  <HttpProvider>
+                    <QueryProvider>
+                      {children}
+                    </QueryProvider>
+                  </HttpProvider>
                 </TooltipProvider>
               </SocketProvider>
             </ThemeProvider>

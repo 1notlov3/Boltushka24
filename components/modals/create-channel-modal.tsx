@@ -1,7 +1,7 @@
 "use client";
 
 import qs from "query-string";
-import axios from "axios";
+import { http } from "@/lib/http";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -105,7 +105,7 @@ export const CreateChannelModal = () => {
           serverId: params?.serverId
         }
       });
-      await axios.post(url, {
+      await http.post(url, {
         ...values,
         categoryId: values.categoryId === "none" ? null : values.categoryId,
         topic: values.topic || null,

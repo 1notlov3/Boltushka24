@@ -74,3 +74,12 @@ export function applySlashCommand(raw: string) {
 export function extractMentionNames(content: string) {
   return Array.from(new Set(content.match(/@[\p{L}\p{N}_.-]+/gu)?.map((item) => item.slice(1)) ?? []));
 }
+
+export function extractMentionMemberIds(content: string) {
+  return Array.from(
+    new Set(
+      content.match(/<@[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}>/giu)
+        ?.map((item) => item.slice(2, -1).toLowerCase()) ?? [],
+    ),
+  );
+}

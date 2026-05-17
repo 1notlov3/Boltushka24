@@ -1,7 +1,7 @@
 "use client";
 
 import qs from "query-string";
-import axios from "axios";
+import { http } from "@/lib/http";
 import { useState } from "react";
 
 import {
@@ -31,7 +31,7 @@ export const DeleteMessageModal = () => {
         query,
       });
 
-      await axios.delete(url);
+      await http.delete(url);
 
       onClose();
     } catch (error) {

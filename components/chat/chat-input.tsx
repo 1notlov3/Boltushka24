@@ -1,14 +1,14 @@
 "use client";
 
 import * as z from "zod";
-import axios from "axios";
+import { http } from "@/lib/http";
 import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, SendHorizontal } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Member, Profile } from "@prisma/client";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -42,6 +42,11 @@ const formSchema = z.object({
 });
 
 type AnyMessage = { id: string; [k: string]: unknown };
+type MentionSuggestion = {
+  id: string;
+  name: string;
+  imageUrl: string;
+};
 
 export const ChatInput = ({
   apiUrl,
@@ -59,6 +64,8 @@ export const ChatInput = ({
   const typingSentAtRef = useRef(0);
   const draftWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const storageKey = useMemo(() => `draft:${queryKey ?? apiUrl}`, [apiUrl, queryKey]);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionSuggestions, setMentionSuggestions] = useState<MentionSuggestion[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -100,6 +107,56 @@ export const ChatInput = ({
     }
 
     window.localStorage.removeItem(storageKey);
+  };
+
+  useEffect(() => {
+    if (mentionQuery === null || !query.serverId) {
+      setMentionSuggestions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      const params = new URLSearchParams({ q: mentionQuery });
+
+      void fetch(`/api/servers/${query.serverId}/members?${params.toString()}`, {
+        signal: controller.signal,
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error("Mention search failed");
+          return response.json() as Promise<{ items?: MentionSuggestion[] }>;
+        })
+        .then((payload) => {
+          setMentionSuggestions(payload.items ?? []);
+        })
+        .catch((error: unknown) => {
+          if (!controller.signal.aborted) {
+            console.error("[MENTION_SEARCH]", error);
+          }
+        });
+    }, 150);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [mentionQuery, query.serverId]);
+
+  const updateMentionQuery = (value: string) => {
+    const match = value.match(/(^|\s)@([\p{L}\p{N}_.-]*)$/u);
+    setMentionQuery(match ? match[2] : null);
+  };
+
+  const insertMention = (
+    member: MentionSuggestion,
+    value: string,
+    onChange: (value: string) => void,
+  ) => {
+    const nextValue = value.replace(/(^|\s)@([\p{L}\p{N}_.-]*)$/u, `$1<@${member.id}> `);
+    onChange(nextValue);
+    queueDraftWrite(nextValue);
+    setMentionQuery(null);
+    setMentionSuggestions([]);
   };
 
   const insertMessage = (message: AnyMessage) => {
@@ -204,7 +261,7 @@ export const ChatInput = ({
 
     try {
       const url = qs.stringifyUrl({ url: apiUrl, query });
-      const { data } = await axios.post<AnyMessage>(url, {
+      const { data } = await http.post<AnyMessage>(url, {
         ...values,
         content,
         ...(type === "channel" ? { parentMessageId: replyTo?.id } : { parentDirectMessageId: replyTo?.id }),
@@ -265,6 +322,27 @@ export const ChatInput = ({
                       <Plus className="h-5 w-5 text-white dark:text-[#313338]" />
                     </button>
                   </ActionTooltip>
+                  {!!mentionSuggestions.length && (
+                    <div className="absolute bottom-full left-14 z-20 mb-2 w-64 overflow-hidden rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                      {mentionSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion.id}
+                          type="button"
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            insertMention(suggestion, field.value, field.onChange);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                        >
+                          <span className="h-6 w-6 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={suggestion.imageUrl} alt="" className="h-full w-full object-cover" />
+                          </span>
+                          <span className="truncate">{suggestion.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <Input
                     disabled={false}
                     className="pl-14 pr-20 sm:pr-16 py-6 bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200 text-base rounded-xl"
@@ -273,6 +351,7 @@ export const ChatInput = ({
                     {...field}
                     onChange={(event) => {
                       field.onChange(event);
+                      updateMentionQuery(event.target.value);
                       queueDraftWrite(event.target.value);
                       const now = Date.now();
                       if (event.target.value.trim() && now - typingSentAtRef.current > 1200) {

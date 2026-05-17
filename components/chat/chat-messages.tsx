@@ -1,6 +1,6 @@
 "use client";
 
-import { ElementRef, useMemo, useRef } from "react";
+import { ElementRef, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { Member, Message, Profile } from "@prisma/client";
 import { Loader2, ServerCrash } from "lucide-react";
@@ -13,6 +13,7 @@ import type { ReplyTarget } from "@/components/chat/chat-shell";
 
 import { ChatWelcome } from "./chat-welcome";
 import { ChatItem } from "./chat-item";
+import { extractMentionMemberIds } from "@/lib/message-formatting";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -70,6 +71,7 @@ export const ChatMessages = ({
   const chatRef = useRef<ElementRef<"div">>(null);
   const topRef = useRef<ElementRef<"div">>(null);
   const bottomRef = useRef<ElementRef<"div">>(null);
+  const [mentionNames, setMentionNames] = useState<Record<string, string>>({});
 
   const {
     data,
@@ -97,6 +99,40 @@ export const ChatMessages = ({
   }, [data]);
 
   const shouldVirtualize = messages.length > 200;
+  const mentionIds = useMemo(() => (
+    Array.from(new Set(messages.flatMap((message) => extractMentionMemberIds(message.content))))
+  ), [messages]);
+
+  useEffect(() => {
+    const serverId = socketQuery.serverId;
+
+    if (!serverId || !mentionIds.length) {
+      setMentionNames({});
+      return;
+    }
+
+    const controller = new AbortController();
+    const params = new URLSearchParams({ ids: mentionIds.join(",") });
+
+    void fetch(`/api/servers/${serverId}/members?${params.toString()}`, {
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Mention names failed");
+        return response.json() as Promise<{ items?: { id: string; name: string }[] }>;
+      })
+      .then((payload) => {
+        setMentionNames(Object.fromEntries((payload.items ?? []).map((item) => [item.id.toLowerCase(), item.name])));
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          console.error("[MENTION_NAMES]", error);
+        }
+      });
+
+    return () => controller.abort();
+  }, [mentionIds, socketQuery.serverId]);
+
   const rowVirtualizer = useVirtualizer({
     count: messages.length,
     getScrollElement: () => chatRef.current,
@@ -135,6 +171,7 @@ export const ChatMessages = ({
       savedByCurrentMember={!!message.savedBy?.length}
       pinned={message.pinned}
       parent={message.parentMessage ?? message.parentDirectMessage ?? null}
+      mentionNames={mentionNames}
       onReply={onReply}
     />
   );

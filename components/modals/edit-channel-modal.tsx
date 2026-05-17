@@ -1,7 +1,7 @@
 "use client";
 
 import qs from "query-string";
-import axios from "axios";
+import { http } from "@/lib/http";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -103,7 +103,7 @@ export const EditChannelModal = () => {
           serverId: server?.id
         }
       });
-      await axios.patch(url, {
+      await http.patch(url, {
         ...values,
         categoryId: values.categoryId === "none" ? null : values.categoryId,
         topic: values.topic || null,

@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import { http } from "@/lib/http";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -28,7 +28,7 @@ export const DeleteServerModal = () => {
     try {
       setIsLoading(true);
 
-      await axios.delete(`/api/servers/${server?.id}`);
+      await http.delete(`/api/servers/${server?.id}`);
 
       onClose();
       router.refresh();

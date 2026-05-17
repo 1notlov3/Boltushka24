@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import { http } from "@/lib/http";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -28,7 +28,7 @@ export const LeaveServerModal = () => {
     try {
       setIsLoading(true);
 
-      await axios.patch(`/api/servers/${server?.id}/leave`);
+      await http.patch(`/api/servers/${server?.id}/leave`);
 
       onClose();
       router.refresh();

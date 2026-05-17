@@ -1,7 +1,7 @@
 "use client";
 
 import * as z from "zod";
-import axios from "axios";
+import { http } from "@/lib/http";
 import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -77,6 +77,7 @@ interface ChatItemProps {
   savedByCurrentMember: boolean;
   pinned: boolean;
   parent: ParentPreview | null;
+  mentionNames?: Record<string, string>;
   onReply: (target: ReplyTarget) => void;
 };
 
@@ -107,6 +108,7 @@ export const ChatItem = memo(({
   savedByCurrentMember,
   pinned,
   parent,
+  mentionNames,
   onReply,
 }: ChatItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -139,7 +141,7 @@ export const ChatItem = memo(({
         query: socketQuery,
       });
 
-      const { data } = await axios.patch<ChatCacheMessage>(url, values);
+      const { data } = await http.patch<ChatCacheMessage>(url, values);
 
       updateCachedMessage(() => data);
       form.reset({
@@ -197,7 +199,7 @@ export const ChatItem = memo(({
     });
 
     try {
-      const { data } = await axios.post<ChatCacheMessage>(`${actionBase}/reactions`, { emoji });
+      const { data } = await http.post<ChatCacheMessage>(`${actionBase}/reactions`, { emoji });
       updateCachedMessage(() => data);
     } catch (error) {
       console.log(error);
@@ -212,7 +214,7 @@ export const ChatItem = memo(({
     updateCachedMessage((message) => ({ ...message, pinned: !pinned }));
 
     try {
-      const { data } = await axios.patch<ChatCacheMessage>(`${actionBase}/pin`, { pinned: !pinned });
+      const { data } = await http.patch<ChatCacheMessage>(`${actionBase}/pin`, { pinned: !pinned });
       updateCachedMessage(() => data);
     } catch (error) {
       console.log(error);
@@ -227,7 +229,7 @@ export const ChatItem = memo(({
     }));
 
     try {
-      const { data } = await axios.post<{ saved: boolean }>(`${actionBase}/save`);
+      const { data } = await http.post<{ saved: boolean }>(`${actionBase}/save`);
       updateCachedMessage((message) => ({
         ...message,
         savedBy: data.saved ? [{ id: `optimistic-save-${currentMember.id}` }] : [],
@@ -322,7 +324,7 @@ export const ChatItem = memo(({
             </div>
           )}
           {!fileUrl && !isEditing && (
-            <MessageContent content={content} deleted={deleted} isUpdated={isUpdated} />
+            <MessageContent content={content} deleted={deleted} isUpdated={isUpdated} mentionNames={mentionNames} />
           )}
           {!fileUrl && isEditing && (
             <Form {...form}>
