@@ -10,6 +10,7 @@ import { ThreadPanel } from "@/components/chat/thread-panel";
 import { useTypingIndicator } from "@/hooks/use-typing-indicator";
 import { useUnreadCache } from "@/hooks/use-unread";
 import { http } from "@/lib/http";
+import type { TypingUser } from "@/components/providers/server-activity-provider";
 
 export type ReplyTarget = {
   id: string;
@@ -41,9 +42,9 @@ export const ChatShell = ({
   paramValue,
 }: ChatShellProps) => {
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
-  const { typing, sendTyping } = useTypingIndicator(chatId, member.id);
   const { markRead } = useUnreadCache();
   const serverId = socketQuery.serverId;
+  const { typing, sendTyping } = useTypingIndicator(chatId, member.id, serverId);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -90,7 +91,7 @@ export const ChatShell = ({
         paramValue={paramValue}
         onReply={setReplyTo}
         onOpenThread={openThread}
-        typingUsers={typing.map((item) => item.name)}
+        typingUsers={typing as TypingUser[]}
       />
       <ChatInput
         name={name}
@@ -101,7 +102,7 @@ export const ChatShell = ({
         currentMember={member}
         replyTo={replyTo}
         onClearReply={() => setReplyTo(null)}
-        onTyping={() => sendTyping({ memberId: member.id, name: member.profile.name })}
+        onTyping={() => sendTyping({ memberId: member.id, name: member.profile.name, imageUrl: member.profile.imageUrl })}
       />
       {threadId && type === "channel" && (
         <ThreadPanel

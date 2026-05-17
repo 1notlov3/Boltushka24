@@ -17,6 +17,8 @@ import { extractMentionMemberIds } from "@/lib/message-formatting";
 import type { PollData } from "@/components/chat/poll-block";
 import { ImageLightbox } from "@/components/chat/image-lightbox";
 import { isImageUrl } from "@/lib/upload";
+import { UserAvatar } from "@/components/user-avatar";
+import type { TypingUser } from "@/components/providers/server-activity-provider";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -56,7 +58,7 @@ interface ChatMessagesProps {
   type: "channel" | "conversation";
   onReply: (target: ReplyTarget) => void;
   onOpenThread?: (messageId: string) => void;
-  typingUsers: string[];
+  typingUsers: TypingUser[];
 }
 
 export const ChatMessages = ({
@@ -276,9 +278,20 @@ export const ChatMessages = ({
         </div>
       )}
       {!!typingUsers.length && (
-        <p className="px-4 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
-          {typingUsers.slice(0, 3).join(", ")} {typingUsers.length === 1 ? "печатает..." : "печатают..."}
-        </p>
+        <div className="flex items-center gap-2 px-4 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="flex -space-x-2">
+            {typingUsers.slice(0, 3).map((user) => (
+              <UserAvatar
+                key={user.memberId}
+                src={user.imageUrl ?? undefined}
+                className="h-6 w-6 border-2 border-white dark:border-[#313338]"
+              />
+            ))}
+          </div>
+          <p>
+            {typingUsers.slice(0, 3).map((user) => user.name).join(", ")} {typingUsers.length === 1 ? "печатает..." : "печатают..."}
+          </p>
+        </div>
       )}
       <div ref={bottomRef} />
       <ImageLightbox

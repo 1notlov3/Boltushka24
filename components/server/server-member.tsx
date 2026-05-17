@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user-avatar";
 import type { ServerMemberWithProfile } from "@/types";
+import { useMemberPresence } from "@/components/providers/server-activity-provider";
 
 interface ServerMemberProps {
   member: ServerMemberWithProfile;
@@ -31,6 +32,8 @@ export const ServerMember = ({
 }: ServerMemberProps) => {
   const params = useParams();
   const router = useRouter();
+  const presence = useMemberPresence(member.id);
+  const status = presence?.status ?? member.profile.status;
 
   const icon = roleIconMap[member.role];
 
@@ -54,7 +57,7 @@ export const ServerMember = ({
         <span
           className={cn(
             "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#F2F3F5] dark:border-[#2B2D31]",
-            statusClassName[member.profile.status] ?? statusClassName.OFFLINE
+            statusClassName[status] ?? statusClassName.OFFLINE
           )}
         />
       </div>
