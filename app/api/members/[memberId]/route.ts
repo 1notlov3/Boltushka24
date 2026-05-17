@@ -5,11 +5,13 @@ import { z } from "zod";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
+import { canManageMembers } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 const UpdateMemberSchema = z.object({
-  role: z.nativeEnum(MemberRole),
+  role: z.nativeEnum(MemberRole).optional(),
+  customRoleIds: z.array(z.string().uuid("Invalid role ID")).optional(),
 });
 
 const ParamsSchema = z.object({
@@ -54,24 +56,69 @@ export async function DELETE(
       return new NextResponse(queryValidation.error.errors[0].message, { status: 400 });
     }
 
-    const server = await db.server.update({
+    const [serverAccess, currentMember, targetMember] = await Promise.all([
+      db.server.findUnique({
+        where: { id: serverId },
+        select: { id: true, profileId: true },
+      }),
+      db.member.findFirst({
+        where: { serverId, profileId: profile.id },
+        include: {
+          serverRoles: {
+            include: {
+              role: {
+                select: { permissions: true },
+              },
+            },
+          },
+        },
+      }),
+      db.member.findFirst({
+        where: {
+          id: paramsValidation.data.memberId,
+          serverId,
+        },
+        select: {
+          id: true,
+          profileId: true,
+        },
+      }),
+    ]);
+
+    if (!serverAccess || !currentMember) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    if (!canManageMembers(currentMember)) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    if (!targetMember || targetMember.profileId === profile.id || targetMember.profileId === serverAccess.profileId) {
+      return new NextResponse("Member not found", { status: 404 });
+    }
+
+    await db.member.delete({
       where: {
-        id: serverId,
-        profileId: profile.id,
+        id: targetMember.id,
       },
-      data: {
-        members: {
-          deleteMany: {
-            id: params.memberId,
-            profileId: {
-              not: profile.id
-            }
-          }
-        }
-      },
+    });
+
+    const server = await db.server.findUnique({
+      where: { id: serverId },
       include: {
         members: {
           include: {
+            serverRoles: {
+              include: {
+                role: {
+                  select: {
+                    id: true,
+                    name: true,
+                    color: true,
+                  },
+                },
+              },
+            },
             profile: true,
           },
           orderBy: {
@@ -117,7 +164,7 @@ export async function PATCH(
       return new NextResponse(validationResult.error.errors[0].message, { status: 400 });
     }
 
-    const { role } = validationResult.data;
+    const { role, customRoleIds } = validationResult.data;
 
     if (!serverId) {
       return new NextResponse("Server ID missing", { status: 400 });
@@ -138,29 +185,93 @@ export async function PATCH(
       return new NextResponse(queryValidation.error.errors[0].message, { status: 400 });
     }
 
-    const server = await db.server.update({
+    if (customRoleIds?.length) {
+      const rolesCount = await db.serverRole.count({
+        where: {
+          id: { in: customRoleIds },
+          serverId,
+        },
+      });
+
+      if (rolesCount !== new Set(customRoleIds).size) {
+        return new NextResponse("Invalid custom role", { status: 400 });
+      }
+    }
+
+    const [serverAccess, currentMember, targetMember] = await Promise.all([
+      db.server.findUnique({
+        where: { id: serverId },
+        select: { id: true, profileId: true },
+      }),
+      db.member.findFirst({
+        where: { serverId, profileId: profile.id },
+        include: {
+          serverRoles: {
+            include: {
+              role: {
+                select: { permissions: true },
+              },
+            },
+          },
+        },
+      }),
+      db.member.findFirst({
+        where: {
+          id: paramsValidation.data.memberId,
+          serverId,
+        },
+        select: {
+          id: true,
+          profileId: true,
+        },
+      }),
+    ]);
+
+    if (!serverAccess || !currentMember) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    if (!canManageMembers(currentMember)) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    if (!targetMember || targetMember.profileId === profile.id || targetMember.profileId === serverAccess.profileId) {
+      return new NextResponse("Member not found", { status: 404 });
+    }
+
+    await db.member.update({
       where: {
-        id: serverId,
-        profileId: profile.id,
+        id: targetMember.id,
       },
       data: {
-        members: {
-          update: {
-            where: {
-              id: params.memberId,
-              profileId: {
-                not: profile.id
-              }
-            },
-            data: {
-              role
+        ...(role ? { role } : {}),
+        ...(customRoleIds
+          ? {
+              serverRoles: {
+                deleteMany: {},
+                create: Array.from(new Set(customRoleIds)).map((roleId) => ({ roleId })),
+              },
             }
-          }
-        }
+          : {}),
       },
+    });
+
+    const server = await db.server.findUnique({
+      where: { id: serverId },
       include: {
         members: {
           include: {
+            serverRoles: {
+              include: {
+                role: {
+                  select: {
+                    id: true,
+                    name: true,
+                    color: true,
+                  },
+                },
+              },
+            },
             profile: true,
           },
           orderBy: {
@@ -175,7 +286,7 @@ export async function PATCH(
       actorId: profile.id,
       serverId,
       targetId: paramsValidation.data.memberId,
-      metadata: { role },
+      metadata: { role, customRoleIds },
     });
 
     return NextResponse.json(server);

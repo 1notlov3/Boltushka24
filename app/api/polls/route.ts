@@ -52,7 +52,15 @@ export async function POST(req: Request) {
       }),
       db.member.findFirst({
         where: { serverId, profileId: profile.id },
-        select: { id: true, role: true },
+        include: {
+          serverRoles: {
+            include: {
+              role: {
+                select: { permissions: true },
+              },
+            },
+          },
+        },
       }),
     ]);
 

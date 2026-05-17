@@ -56,6 +56,7 @@
 - **Адаптивный дизайн** с viewport-units `100dvh` (корректно работает с iOS Safari)
 - **Drawer-навигация** — выезжающая панель серверов/каналов на мобильных
 - **PWA и offline outbox** — установка на устройство, service worker и очередь отправки сообщений при потере сети
+- **Глобальный command palette** — `Ctrl/Cmd+K` для переходов, поиска, создания каналов, настроек, темы и выхода
 - **Крупные touch-таргеты** (≥44×44px), safe-area-inset-bottom, отсутствие page-level скролла
 - **True optimistic updates** — сообщения отображаются до ответа сервера даже на медленных соединениях
 
@@ -65,6 +66,7 @@
 - **Signal-only Realtime** — через публичный канал транслируется только `{id, action}`, контент фетчится через аутентифицированный API
 - **Prisma** — типобезопасный ORM с композитными индексами для чата
 - **Централизованные permissions** — единый слой `lib/permissions.ts` поверх ADMIN/MODERATOR/GUEST
+- **Custom server roles** — дополнительные роли с granular permissions и назначением участникам
 - **Rate limiting** — in-memory защита для dev/single runtime с production note про Redis/Upstash
 
 ---
@@ -292,16 +294,32 @@ DirectMessage 1:N DirectMessageReaction / SavedDirectMessage / Notification
 
 ---
 
+## v2.0 changes
+
+Branch `v2` is the production upgrade line. It replaces the old upgrade plan with shipped migrations, phase tags, and a CI gate.
+
+- **Performance and App Router:** moved legacy chat APIs into App Router handlers, added shared HTTP/API error helpers, query invalidation, virtualized long chats, and safer realtime refetch patterns.
+- **Chat depth:** read states, unread counters, document title unread state, threads, replies, pinned/saved messages, reactions, polls, link previews, Tenor GIF proxy, stickers manifest, voice messages, image lightbox, and attachment upload.
+- **Presence and realtime:** server presence, idle/DND/invisible states, custom status, typing broadcasts, online counts, and sidebar typing hints.
+- **Watch together:** database-backed YouTube sessions, queue, synchronized controls, presence, and mini-chat.
+- **PWA:** install manifest, generated icons, service worker, offline outbox, and Web Push subscriptions for mentions, replies, channel messages, and DM notifications.
+- **Moderation and admin:** custom server roles, role assignment, channel slow-mode, global search with date/author filters, command palette, message forwarding, and audit-backed channel/member actions.
+- **Deployment:** Prisma migrations are committed, `npm run prisma:deploy` is the production migration command, `.github/workflows/ci.yml` runs install, Prisma generate, typecheck, lint, and build.
+
+New optional env vars for v2: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `TENOR_API_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT`.
+
+---
+
 ## 🗺️ Roadmap
 
-- [ ] **Push-уведомления** (Web Push API)
+- [x] **Push-уведомления** (Web Push API)
 - [ ] **Темизация каналов** (категории, цвета, иконки)
-- [ ] **Threads** — ветки обсуждений внутри сообщений
+- [x] **Threads** — ветки обсуждений внутри сообщений
 - [ ] **Бот API** — вебхуки для интеграций
 - [ ] **Screen sharing** в голосовых каналах (LiveKit уже поддерживает)
 - [x] **Stickers и GIF-picker** через локальный sticker manifest и Tenor proxy
 - [ ] **E2E-шифрование DM** (через libsodium)
-- [ ] **PWA** — установка как приложение, offline-first
+- [x] **PWA** — установка как приложение, offline-first
 
 ---
 

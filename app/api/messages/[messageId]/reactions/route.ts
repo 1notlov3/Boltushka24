@@ -67,9 +67,14 @@ export async function POST(req: Request, context: { params: Promise<{ messageId:
         profileId: profile.id,
         serverId: message.channel.serverId,
       },
-      select: {
-        id: true,
-        role: true,
+      include: {
+        serverRoles: {
+          include: {
+            role: {
+              select: { permissions: true },
+            },
+          },
+        },
       },
     });
 

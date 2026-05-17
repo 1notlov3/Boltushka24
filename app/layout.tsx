@@ -14,6 +14,7 @@ import { HttpProvider } from "@/components/providers/http-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ServiceWorkerProvider } from "@/components/providers/service-worker-provider";
 import { OutboxProvider } from "@/components/providers/outbox-provider";
+import { CommandPalette } from "@/components/command-palette";
 
 const font = Open_Sans({ subsets: ["latin", "cyrillic"] });
 
@@ -43,6 +44,7 @@ export default function RootLayout({
               <SocketProvider>
                 <TooltipProvider>
                   <ModalProvider />
+                  <CommandPalette />
                   <ServiceWorkerProvider />
                   <HttpProvider>
                     <QueryProvider>

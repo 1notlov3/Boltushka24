@@ -65,7 +65,15 @@ export async function POST(req: Request) {
 
     const member = await db.member.findFirst({
       where: { profileId: profile.id, serverId: parsedQuery.data.serverId },
-      select: { id: true, role: true },
+      include: {
+        serverRoles: {
+          include: {
+            role: {
+              select: { permissions: true },
+            },
+          },
+        },
+      },
     });
 
     if (!member) return unauthorized();

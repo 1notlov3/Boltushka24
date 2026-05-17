@@ -1,4 +1,4 @@
-import { NotificationType } from "@prisma/client";
+import { MemberRole, NotificationType } from "@prisma/client";
 import { z } from "zod";
 
 import { apiError, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
@@ -143,17 +143,49 @@ export async function POST(req: Request) {
     const [channel, member] = await Promise.all([
       db.channel.findFirst({
         where: { id: channelId, serverId },
-        select: { id: true },
+        select: { id: true, slowModeSeconds: true },
       }),
       db.member.findFirst({
         where: { serverId, profileId: profile.id },
-        select: { id: true, role: true },
+        include: {
+          serverRoles: {
+            include: {
+              role: {
+                select: { permissions: true },
+              },
+            },
+          },
+        },
       }),
     ]);
 
     if (!channel) return apiError("Channel not found", 404);
     if (!member) return unauthorized();
     if (!canCreateMessage(member)) return apiError("Forbidden", 403);
+
+    if (member.role === MemberRole.GUEST && channel.slowModeSeconds > 0) {
+      const lastMessage = await db.message.findFirst({
+        where: {
+          channelId,
+          memberId: member.id,
+          deleted: false,
+        },
+        select: {
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const elapsedSeconds = lastMessage
+        ? Math.floor((Date.now() - lastMessage.createdAt.getTime()) / 1000)
+        : channel.slowModeSeconds;
+
+      if (elapsedSeconds < channel.slowModeSeconds) {
+        return rateLimitError(channel.slowModeSeconds - elapsedSeconds, "В этом канале включён slow-mode");
+      }
+    }
 
     const limit = await checkRateLimit({
       key: rateLimitKey("message:create", profile.id, channelId),

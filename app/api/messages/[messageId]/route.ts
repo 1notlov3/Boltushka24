@@ -109,7 +109,15 @@ export async function PATCH(req: Request, context: { params: Promise<{ messageId
     const [member, message] = await Promise.all([
       db.member.findFirst({
         where: { serverId, profileId: profile.id },
-        select: { id: true, role: true },
+        include: {
+          serverRoles: {
+            include: {
+              role: {
+                select: { permissions: true },
+              },
+            },
+          },
+        },
       }),
       db.message.findFirst({
         where: {
@@ -160,7 +168,15 @@ export async function DELETE(req: Request, context: { params: Promise<{ messageI
     const [member, message] = await Promise.all([
       db.member.findFirst({
         where: { serverId, profileId: profile.id },
-        select: { id: true, role: true },
+        include: {
+          serverRoles: {
+            include: {
+              role: {
+                select: { permissions: true },
+              },
+            },
+          },
+        },
       }),
       db.message.findFirst({
         where: {

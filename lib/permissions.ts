@@ -12,6 +12,13 @@ export type Permission =
   | "message.save";
 
 type MinimalMember = Pick<Member, "id" | "role">;
+type MemberWithCustomRoles = MinimalMember & {
+  serverRoles?: Array<{
+    role: {
+      permissions: unknown;
+    };
+  }>;
+};
 
 const permissionsByRole: Record<MemberRole, Permission[]> = {
   [MemberRole.ADMIN]: [
@@ -47,36 +54,67 @@ export function hasPermission(role: MemberRole | null | undefined, permission: P
   return permissionsByRole[role]?.includes(permission) ?? false;
 }
 
-export function canManageChannels(member: MinimalMember | null | undefined) {
-  return hasPermission(member?.role, "channel.manage");
+function permissionList(value: unknown): Permission[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is Permission => (
+    typeof item === "string" &&
+    [
+      "server.manage",
+      "server.invite",
+      "channel.manage",
+      "member.manage",
+      "message.manage",
+      "message.create",
+      "message.react",
+      "message.pin",
+      "message.save",
+    ].includes(item)
+  ));
 }
 
-export function canManageMembers(member: MinimalMember | null | undefined) {
-  return hasPermission(member?.role, "member.manage");
+export function resolvePermissions(member: MemberWithCustomRoles | null | undefined) {
+  if (!member) return [];
+
+  return Array.from(new Set([
+    ...(permissionsByRole[member.role] ?? []),
+    ...(member.serverRoles ?? []).flatMap((assignment) => permissionList(assignment.role.permissions)),
+  ]));
 }
 
-export function canDeleteMessage(member: MinimalMember | null | undefined, authorMemberId: string) {
+export function memberHasPermission(member: MemberWithCustomRoles | null | undefined, permission: Permission) {
+  return resolvePermissions(member).includes(permission);
+}
+
+export function canManageChannels(member: MemberWithCustomRoles | null | undefined) {
+  return memberHasPermission(member, "channel.manage");
+}
+
+export function canManageMembers(member: MemberWithCustomRoles | null | undefined) {
+  return memberHasPermission(member, "member.manage");
+}
+
+export function canDeleteMessage(member: MemberWithCustomRoles | null | undefined, authorMemberId: string) {
   if (!member) return false;
-  return member.id === authorMemberId || hasPermission(member.role, "message.manage");
+  return member.id === authorMemberId || memberHasPermission(member, "message.manage");
 }
 
-export function canEditMessage(member: MinimalMember | null | undefined, authorMemberId: string) {
+export function canEditMessage(member: MemberWithCustomRoles | null | undefined, authorMemberId: string) {
   return !!member && member.id === authorMemberId;
 }
 
-export function canPinMessage(member: MinimalMember | null | undefined, authorMemberId: string) {
+export function canPinMessage(member: MemberWithCustomRoles | null | undefined, authorMemberId: string) {
   if (!member) return false;
-  return member.id === authorMemberId || hasPermission(member.role, "message.pin");
+  return member.id === authorMemberId || memberHasPermission(member, "message.pin");
 }
 
-export function canReactToMessage(member: MinimalMember | null | undefined) {
-  return hasPermission(member?.role, "message.react");
+export function canReactToMessage(member: MemberWithCustomRoles | null | undefined) {
+  return memberHasPermission(member, "message.react");
 }
 
-export function canCreateMessage(member: MinimalMember | null | undefined) {
-  return hasPermission(member?.role, "message.create");
+export function canCreateMessage(member: MemberWithCustomRoles | null | undefined) {
+  return memberHasPermission(member, "message.create");
 }
 
-export function canSaveMessage(member: MinimalMember | null | undefined) {
-  return hasPermission(member?.role, "message.save");
+export function canSaveMessage(member: MemberWithCustomRoles | null | undefined) {
+  return memberHasPermission(member, "message.save");
 }

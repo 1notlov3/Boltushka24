@@ -54,10 +54,20 @@ export async function POST(req: Request, context: { params: Promise<{ directMess
         conversation: {
           select: {
             memberOne: {
-              select: { id: true, role: true, profileId: true },
+              select: {
+                id: true,
+                role: true,
+                profileId: true,
+                serverRoles: { include: { role: { select: { permissions: true } } } },
+              },
             },
             memberTwo: {
-              select: { id: true, role: true, profileId: true },
+              select: {
+                id: true,
+                role: true,
+                profileId: true,
+                serverRoles: { include: { role: { select: { permissions: true } } } },
+              },
             },
           },
         },

@@ -158,6 +158,7 @@ export async function POST(req: Request) {
             role: true,
             profileId: true,
             serverId: true,
+            serverRoles: { include: { role: { select: { permissions: true } } } },
           },
         },
         memberTwo: {
@@ -166,6 +167,7 @@ export async function POST(req: Request) {
             role: true,
             profileId: true,
             serverId: true,
+            serverRoles: { include: { role: { select: { permissions: true } } } },
           },
         },
       },

@@ -49,8 +49,22 @@ export async function PATCH(req: Request, context: { params: Promise<{ directMes
         member: { select: { profileId: true } },
         conversation: {
           select: {
-            memberOne: { select: { id: true, role: true, profileId: true } },
-            memberTwo: { select: { id: true, role: true, profileId: true } },
+            memberOne: {
+              select: {
+                id: true,
+                role: true,
+                profileId: true,
+                serverRoles: { include: { role: { select: { permissions: true } } } },
+              },
+            },
+            memberTwo: {
+              select: {
+                id: true,
+                role: true,
+                profileId: true,
+                serverRoles: { include: { role: { select: { permissions: true } } } },
+              },
+            },
           },
         },
       },

@@ -8,6 +8,13 @@ export type ServerMemberWithProfile = Pick<
     Profile,
     "id" | "name" | "imageUrl" | "status" | "customStatus" | "lastSeenAt"
   >;
+  serverRoles?: Array<{
+    role: {
+      id: string;
+      name: string;
+      color: string;
+    };
+  }>;
 };
 
 export type ServerWithMembersWithProfiles = Server & {

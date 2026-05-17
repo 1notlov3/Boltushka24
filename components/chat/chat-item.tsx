@@ -6,7 +6,7 @@ import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
-import { Bookmark, Edit, FileIcon, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
+import { Bookmark, Edit, FileIcon, Forward, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
 import Image from "next/image";
 import { useState, memo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -483,6 +483,21 @@ export const ChatItem = memo(({
                 type="button"
               >
                 <Pin className="w-4 h-4" />
+              </button>
+            </ActionTooltip>
+          )}
+          {!deleted && (
+            <ActionTooltip label="Переслать">
+              <button
+                onClick={() => onOpen("forwardMessage", {
+                  serverId: typeof params?.serverId === "string" ? params.serverId : socketQuery.serverId,
+                  message: { id, content, fileUrl },
+                })}
+                className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+                aria-label="Переслать"
+                type="button"
+              >
+                <Forward className="w-4 h-4" />
               </button>
             </ActionTooltip>
           )}

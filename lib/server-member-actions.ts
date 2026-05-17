@@ -57,6 +57,17 @@ export async function getServerMembersPage(
       },
     },
     include: {
+      serverRoles: {
+        include: {
+          role: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
+        },
+      },
       profile: {
         select: {
           id: true,

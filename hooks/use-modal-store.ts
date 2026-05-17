@@ -7,6 +7,8 @@ export type ModalType =
   | "invite"
   | "editServer"
   | "members"
+  | "roles"
+  | "forwardMessage"
   | "createChannel"
   | "createCategory"
   | "leaveServer"
@@ -35,6 +37,11 @@ interface ModalData {
   conversationId?: string;
   apiUrl?: string;
   query?: Record<string, any>;
+  message?: {
+    id: string;
+    content: string;
+    fileUrl: string | null;
+  };
 }
 
 interface ModalStore {

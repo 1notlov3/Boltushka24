@@ -36,8 +36,22 @@ export async function POST(_req: Request, context: { params: Promise<{ directMes
         id: true,
         conversation: {
           select: {
-            memberOne: { select: { id: true, role: true, profileId: true } },
-            memberTwo: { select: { id: true, role: true, profileId: true } },
+            memberOne: {
+              select: {
+                id: true,
+                role: true,
+                profileId: true,
+                serverRoles: { include: { role: { select: { permissions: true } } } },
+              },
+            },
+            memberTwo: {
+              select: {
+                id: true,
+                role: true,
+                profileId: true,
+                serverRoles: { include: { role: { select: { permissions: true } } } },
+              },
+            },
           },
         },
       },

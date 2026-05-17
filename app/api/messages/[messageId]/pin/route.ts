@@ -50,7 +50,15 @@ export async function PATCH(req: Request, context: { params: Promise<{ messageId
 
     const member = await db.member.findFirst({
       where: { profileId: profile.id, serverId: message.channel.serverId },
-      select: { id: true, role: true },
+      include: {
+        serverRoles: {
+          include: {
+            role: {
+              select: { permissions: true },
+            },
+          },
+        },
+      },
     });
 
     if (!member) return unauthorized();

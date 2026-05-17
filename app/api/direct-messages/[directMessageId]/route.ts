@@ -112,8 +112,24 @@ export async function PATCH(req: Request, context: { params: Promise<{ directMes
         ],
       },
       include: {
-        memberOne: { select: { id: true, role: true, profileId: true, serverId: true } },
-        memberTwo: { select: { id: true, role: true, profileId: true, serverId: true } },
+        memberOne: {
+          select: {
+            id: true,
+            role: true,
+            profileId: true,
+            serverId: true,
+            serverRoles: { include: { role: { select: { permissions: true } } } },
+          },
+        },
+        memberTwo: {
+          select: {
+            id: true,
+            role: true,
+            profileId: true,
+            serverId: true,
+            serverRoles: { include: { role: { select: { permissions: true } } } },
+          },
+        },
       },
     });
 
@@ -173,8 +189,24 @@ export async function DELETE(req: Request, context: { params: Promise<{ directMe
         ],
       },
       include: {
-        memberOne: { select: { id: true, role: true, profileId: true, serverId: true } },
-        memberTwo: { select: { id: true, role: true, profileId: true, serverId: true } },
+        memberOne: {
+          select: {
+            id: true,
+            role: true,
+            profileId: true,
+            serverId: true,
+            serverRoles: { include: { role: { select: { permissions: true } } } },
+          },
+        },
+        memberTwo: {
+          select: {
+            id: true,
+            role: true,
+            profileId: true,
+            serverId: true,
+            serverRoles: { include: { role: { select: { permissions: true } } } },
+          },
+        },
       },
     });
 
