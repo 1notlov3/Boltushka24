@@ -77,8 +77,10 @@ interface ChatItemProps {
   savedByCurrentMember: boolean;
   pinned: boolean;
   parent: ParentPreview | null;
+  repliesCount?: number;
   mentionNames?: Record<string, string>;
   onReply: (target: ReplyTarget) => void;
+  onOpenThread?: (messageId: string) => void;
 };
 
 const roleIconMap = {
@@ -108,8 +110,10 @@ export const ChatItem = memo(({
   savedByCurrentMember,
   pinned,
   parent,
+  repliesCount = 0,
   mentionNames,
   onReply,
+  onOpenThread,
 }: ChatItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const { onOpen } = useModal();
@@ -378,6 +382,15 @@ export const ChatItem = memo(({
           )}
           {!deleted && (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {repliesCount > 0 && onOpenThread && (
+                <button
+                  type="button"
+                  onClick={() => onOpenThread(id)}
+                  className="inline-flex h-7 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
+                >
+                  {repliesCount} {repliesCount === 1 ? "ответ" : "ответов"} · открыть тред
+                </button>
+              )}
               {Object.entries(reactionGroups).map(([emoji, list]) => {
                 const active = list.some((reaction) => reaction.memberId === currentMember.id);
                 return (

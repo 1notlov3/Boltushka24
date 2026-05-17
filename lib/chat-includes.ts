@@ -45,6 +45,11 @@ export function channelMessageInclude(currentMemberId: string) {
         member: memberWithProfile,
       },
     },
+    _count: {
+      select: {
+        replies: true,
+      },
+    },
   } satisfies Prisma.MessageInclude;
 }
 
@@ -76,6 +81,11 @@ export function directMessageInclude(currentMemberId: string) {
         content: true,
         deleted: true,
         member: memberWithProfile,
+      },
+    },
+    _count: {
+      select: {
+        replies: true,
       },
     },
   } satisfies Prisma.DirectMessageInclude;

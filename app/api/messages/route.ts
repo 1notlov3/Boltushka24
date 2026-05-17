@@ -241,6 +241,10 @@ export async function POST(req: Request) {
 
     await broadcast(`chat:${channelId}:messages`, { id: message.id, action: "add" });
 
+    if (parentMessage?.id) {
+      await broadcast(`thread:${parentMessage.id}:messages`, { id: message.id, action: "add" });
+    }
+
     return Response.json(message);
   } catch (error) {
     console.log("[MESSAGES_POST]", error);

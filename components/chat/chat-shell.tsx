@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import type { Member, Profile } from "@prisma/client";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessages } from "@/components/chat/chat-messages";
+import { ThreadPanel } from "@/components/chat/thread-panel";
 import { useTypingIndicator } from "@/hooks/use-typing-indicator";
 import { useUnreadCache } from "@/hooks/use-unread";
 import { http } from "@/lib/http";
@@ -42,6 +44,10 @@ export const ChatShell = ({
   const { typing, sendTyping } = useTypingIndicator(chatId, member.id);
   const { markRead } = useUnreadCache();
   const serverId = socketQuery.serverId;
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const threadId = type === "channel" ? searchParams.get("thread") : null;
 
   useEffect(() => {
     const readUrl = type === "channel"
@@ -57,6 +63,19 @@ export const ChatShell = ({
       });
   }, [markRead, paramValue, serverId, type]);
 
+  const openThread = (messageId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("thread", messageId);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const closeThread = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("thread");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
   return (
     <>
       <ChatMessages
@@ -70,6 +89,7 @@ export const ChatShell = ({
         paramKey={paramKey}
         paramValue={paramValue}
         onReply={setReplyTo}
+        onOpenThread={openThread}
         typingUsers={typing.map((item) => item.name)}
       />
       <ChatInput
@@ -83,6 +103,15 @@ export const ChatShell = ({
         onClearReply={() => setReplyTo(null)}
         onTyping={() => sendTyping({ memberId: member.id, name: member.profile.name })}
       />
+      {threadId && type === "channel" && (
+        <ThreadPanel
+          messageId={threadId}
+          currentMember={member}
+          socketUrl={socketUrl}
+          socketQuery={socketQuery}
+          onClose={closeThread}
+        />
+      )}
     </>
   );
 };

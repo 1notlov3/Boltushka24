@@ -35,6 +35,9 @@ type MessageWithMemberWithProfile = Message & {
     deleted: boolean;
     member: Member & { profile: Profile };
   } | null;
+  _count?: {
+    replies?: number;
+  };
 }
 
 interface ChatMessagesProps {
@@ -48,6 +51,7 @@ interface ChatMessagesProps {
   paramValue: string;
   type: "channel" | "conversation";
   onReply: (target: ReplyTarget) => void;
+  onOpenThread?: (messageId: string) => void;
   typingUsers: string[];
 }
 
@@ -62,6 +66,7 @@ export const ChatMessages = ({
   paramValue,
   type,
   onReply,
+  onOpenThread,
   typingUsers,
 }: ChatMessagesProps) => {
   const queryKey = `chat:${chatId}`;
@@ -178,8 +183,10 @@ export const ChatMessages = ({
       savedByCurrentMember={!!message.savedBy?.length}
       pinned={message.pinned}
       parent={message.parentMessage ?? message.parentDirectMessage ?? null}
+      repliesCount={message._count?.replies ?? 0}
       mentionNames={mentionNames}
       onReply={onReply}
+      onOpenThread={type === "channel" ? onOpenThread : undefined}
     />
   );
 
