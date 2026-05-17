@@ -200,7 +200,7 @@ export function VoiceRecorder({ onSend, disabled, className }: VoiceRecorderProp
           disabled={disabled || mode === "uploading"}
           onClick={mode === "recording" ? () => stopRecording(true) : startRecording}
           className={cn(
-            "h-7 w-7 rounded-full bg-zinc-500 p-1 text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-400 dark:text-[#313338] dark:hover:bg-zinc-300",
+            "h-10 w-10 sm:h-7 sm:w-7 rounded-full bg-zinc-500 p-1 text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-400 dark:text-[#313338] dark:hover:bg-zinc-300",
             mode === "recording" && "bg-rose-500 hover:bg-rose-600 dark:bg-rose-500 dark:text-white",
             className,
           )}

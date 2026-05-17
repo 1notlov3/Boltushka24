@@ -28,9 +28,12 @@ export const EmojiPicker = ({
 }: EmojiPickerProps) => {
   return (
     <Popover>
-      <PopoverTrigger aria-label="Добавить эмодзи">
+      <PopoverTrigger
+        aria-label="Добавить эмодзи"
+        className="h-10 w-10 sm:h-6 sm:w-6 inline-flex items-center justify-center"
+      >
         <Smile
-          className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
+          className="h-6 w-6 text-zinc-500 dark:text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
         />
       </PopoverTrigger>
       <PopoverContent

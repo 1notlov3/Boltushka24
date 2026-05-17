@@ -631,7 +631,7 @@ export const ChatInput = ({
                     <button
                       type="button"
                       onClick={() => onOpen("messageFile", { apiUrl, query })}
-                      className="absolute top-1/2 -translate-y-1/2 left-5 sm:left-8 h-7 w-7 bg-zinc-500 dark:bg-zinc-400 hover:bg-zinc-600 dark:hover:bg-zinc-300 transition rounded-full p-1 flex items-center justify-center shrink-0"
+                      className="absolute top-1/2 -translate-y-1/2 left-5 sm:left-8 h-10 w-10 sm:h-7 sm:w-7 bg-zinc-500 dark:bg-zinc-400 hover:bg-zinc-600 dark:hover:bg-zinc-300 transition rounded-full p-1 flex items-center justify-center shrink-0"
                       aria-label="Прикрепить файл"
                     >
                       <Plus className="h-5 w-5 text-white dark:text-[#313338]" />
