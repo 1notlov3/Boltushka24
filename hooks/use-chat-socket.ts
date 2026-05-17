@@ -1,18 +1,57 @@
 import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 
 import { useSocket } from "@/components/providers/socket-provider";
+import type { ChatMessagesPage } from "@/hooks/use-chat-query";
 
 type ChatSocketProps = {
   addKey: string;
   updateKey: string;
   queryKey: string;
+  type: "channel" | "conversation";
 }
+
+type RealtimePayload = {
+  id: string;
+  action: "add" | "update" | "delete";
+};
+
+type CachedMessage = {
+  id: string;
+  deleted?: boolean;
+  content?: string;
+  fileUrl?: string | null;
+  [key: string]: unknown;
+};
+
+const parsePayload = (payload: unknown): RealtimePayload | null => {
+  if (!payload || typeof payload !== "object") return null;
+
+  const value = payload as Record<string, unknown>;
+  const action = value.action ?? value.type;
+
+  if (typeof value.id !== "string") return null;
+  if (typeof action !== "string") return null;
+
+  return {
+    id: value.id,
+    action: action === "add" ? "add" : action === "delete" ? "delete" : "update",
+  };
+};
+
+const isCachedMessage = (value: unknown): value is CachedMessage => (
+  !!value && typeof value === "object" && typeof (value as { id?: unknown }).id === "string"
+);
+
+const messageUrl = (type: ChatSocketProps["type"], id: string) => (
+  type === "channel" ? `/api/messages/${id}` : `/api/direct-messages/${id}`
+);
 
 export const useChatSocket = ({
   addKey,
   updateKey,
-  queryKey
+  queryKey,
+  type,
 }: ChatSocketProps) => {
   const { socket } = useSocket();
   const queryClient = useQueryClient();
@@ -22,16 +61,103 @@ export const useChatSocket = ({
       return;
     }
 
-    const refetch = () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+    const abortController = new AbortController();
+    let isMounted = true;
+
+    const writeMessage = (payload: RealtimePayload, message?: CachedMessage) => {
+      queryClient.setQueryData<InfiniteData<ChatMessagesPage>>([queryKey], (old) => {
+        if (!old?.pages?.length) return old;
+
+        if (payload.action === "add" && message) {
+          const exists = old.pages.some((page) =>
+            page.items.some((item) => isCachedMessage(item) && item.id === message.id)
+          );
+
+          if (exists) return old;
+
+          const [firstPage, ...restPages] = old.pages;
+          return {
+            ...old,
+            pages: [
+              {
+                ...firstPage,
+                items: [message, ...firstPage.items],
+              },
+              ...restPages,
+            ],
+          };
+        }
+
+        if (payload.action === "delete") {
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) => (
+                isCachedMessage(item) && item.id === payload.id
+                  ? {
+                      ...item,
+                      deleted: true,
+                      content: "Сообщение удалено",
+                      fileUrl: null,
+                    }
+                  : item
+              )),
+            })),
+          };
+        }
+
+        if (payload.action === "update" && message) {
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) => (
+                isCachedMessage(item) && item.id === message.id ? message : item
+              )),
+            })),
+          };
+        }
+
+        return old;
+      });
     };
 
-    socket.on(addKey, refetch);
-    socket.on(updateKey, refetch);
+    const handlePayload = (rawPayload: unknown) => {
+      const payload = parsePayload(rawPayload);
+      if (!payload) return;
+
+      if (payload.action === "delete") {
+        writeMessage(payload);
+        return;
+      }
+
+      void fetch(messageUrl(type, payload.id), {
+        signal: abortController.signal,
+        cache: "no-store",
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error(`Message fetch failed: ${response.status}`);
+          return response.json() as Promise<unknown>;
+        })
+        .then((message) => {
+          if (!isMounted || !isCachedMessage(message)) return;
+          writeMessage(payload, message);
+        })
+        .catch((error: unknown) => {
+          if (abortController.signal.aborted) return;
+          console.error("[CHAT_SOCKET_FETCH]", error);
+        });
+    };
+
+    socket.on(addKey, handlePayload);
+    socket.on(updateKey, handlePayload);
 
     return () => {
-      socket.off(addKey);
-      socket.off(updateKey);
+      isMounted = false;
+      abortController.abort();
+      socket.off(addKey, handlePayload);
+      socket.off(updateKey, handlePayload);
     }
-  }, [queryClient, addKey, queryKey, socket, updateKey]);
+  }, [addKey, queryClient, queryKey, socket, type, updateKey]);
 }

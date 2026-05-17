@@ -1,7 +1,6 @@
 import qs from "query-string";
-import { useInfiniteQuery } from "@tanstack/react-query";
-
-import { useSocket } from "@/components/providers/socket-provider";
+import { useCallback, useEffect } from "react";
+import { InfiniteData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
 interface ChatQueryProps {
   queryKey: string;
@@ -10,15 +9,40 @@ interface ChatQueryProps {
   paramValue: string;
 };
 
+export type ChatMessagesPage = {
+  items: unknown[];
+  nextCursor: string | null;
+};
+
 export const useChatQuery = ({
   queryKey,
   apiUrl,
   paramKey,
   paramValue
 }: ChatQueryProps) => {
-  const { isConnected } = useSocket();
+  const queryClient = useQueryClient();
 
-  const fetchMessages = async ({ pageParam = undefined }) => {
+  const buildUrl = useCallback((cursor?: string) => qs.stringifyUrl({
+    url: apiUrl,
+    query: {
+      cursor,
+      [paramKey]: paramValue,
+    }
+  }, { skipNull: true }), [apiUrl, paramKey, paramValue]);
+
+  const fetchPage = useCallback(async (cursor?: string): Promise<ChatMessagesPage> => {
+    const res = await fetch(buildUrl(cursor), {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch messages");
+    }
+
+    return res.json() as Promise<ChatMessagesPage>;
+  }, [buildUrl]);
+
+  const fetchMessages = async ({ pageParam = undefined }: { pageParam?: string }) => {
     const url = qs.stringifyUrl({
       url: apiUrl,
       query: {
@@ -28,7 +52,11 @@ export const useChatQuery = ({
     }, { skipNull: true });
 
     const res = await fetch(url);
-    return res.json();
+    if (!res.ok) {
+      throw new Error("Failed to fetch messages");
+    }
+
+    return res.json() as Promise<ChatMessagesPage>;
   };
 
   const {
@@ -41,9 +69,35 @@ export const useChatQuery = ({
     queryKey: [queryKey],
     queryFn: fetchMessages,
     getNextPageParam: (lastPage) => lastPage?.nextCursor,
-    refetchInterval: isConnected ? false : 1000,
     initialPageParam: undefined,
+    staleTime: 30_000,
+    gcTime: 300_000,
   });
+
+  useEffect(() => {
+    const handleReconnect = () => {
+      void fetchPage().then((freshPage) => {
+        queryClient.setQueryData<InfiniteData<ChatMessagesPage>>([queryKey], (old) => {
+          if (!old) {
+            return {
+              pages: [freshPage],
+              pageParams: [undefined],
+            };
+          }
+
+          return {
+            ...old,
+            pages: [freshPage, ...old.pages.slice(1)],
+          };
+        });
+      }).catch((error: unknown) => {
+        console.error("[CHAT_RECONNECT_REFETCH]", error);
+      });
+    };
+
+    window.addEventListener("rt:reconnect", handleReconnect);
+    return () => window.removeEventListener("rt:reconnect", handleReconnect);
+  }, [fetchPage, queryClient, queryKey]);
 
   return {
     data,

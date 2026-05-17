@@ -1,9 +1,10 @@
 "use client";
 
-import { Fragment, useRef, ElementRef } from "react";
+import { ElementRef, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { Member, Message, Profile } from "@prisma/client";
 import { Loader2, ServerCrash } from "lucide-react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { useChatQuery } from "@/hooks/use-chat-query";
 import { useChatSocket } from "@/hooks/use-chat-socket";
@@ -67,6 +68,7 @@ export const ChatMessages = ({
   const updateKey = `chat:${chatId}:messages:update` 
 
   const chatRef = useRef<ElementRef<"div">>(null);
+  const topRef = useRef<ElementRef<"div">>(null);
   const bottomRef = useRef<ElementRef<"div">>(null);
 
   const {
@@ -81,14 +83,61 @@ export const ChatMessages = ({
     paramKey,
     paramValue,
   });
-  useChatSocket({ queryKey, addKey, updateKey });
+  const messages = useMemo(() => {
+    const items = data?.pages.flatMap((page) => page.items) ?? [];
+    return items
+      .filter((message): message is MessageWithMemberWithProfile => (
+        !!message &&
+        typeof message === "object" &&
+        "id" in message &&
+        "member" in message &&
+        "createdAt" in message
+      ))
+      .reverse();
+  }, [data]);
+
+  const shouldVirtualize = messages.length > 200;
+  const rowVirtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => chatRef.current,
+    estimateSize: () => 96,
+    overscan: 8,
+    getItemKey: (index) => messages[index]?.id ?? index,
+    measureElement: (element) => element?.getBoundingClientRect().height ?? 96,
+  });
+
+  useChatSocket({ queryKey, addKey, updateKey, type });
   useChatScroll({
     chatRef,
+    topRef,
     bottomRef,
     loadMore: fetchNextPage,
     shouldLoadMore: !isFetchingNextPage && !!hasNextPage,
-    count: data?.pages?.[0]?.items?.length ?? 0,
+    count: messages.length,
   })
+
+  const renderMessage = (message: MessageWithMemberWithProfile) => (
+    <ChatItem
+      key={message.id}
+      id={message.id}
+      currentMember={member}
+      member={message.member}
+      content={message.content}
+      fileUrl={message.fileUrl}
+      deleted={message.deleted}
+      timestamp={format(new Date(message.createdAt), DATE_FORMAT)}
+      isUpdated={message.updatedAt !== message.createdAt}
+      socketUrl={socketUrl}
+      socketQuery={socketQuery}
+      queryKey={queryKey}
+      chatType={type}
+      reactions={message.reactions ?? []}
+      savedByCurrentMember={!!message.savedBy?.length}
+      pinned={message.pinned}
+      parent={message.parentMessage ?? message.parentDirectMessage ?? null}
+      onReply={onReply}
+    />
+  );
 
   if (status === "pending") {
     return (
@@ -121,6 +170,7 @@ export const ChatMessages = ({
           name={name}
         />
       )}
+      <div ref={topRef} className="h-px" />
       {hasNextPage && (
         <div className="flex justify-center">
           {isFetchingNextPage ? (
@@ -135,34 +185,33 @@ export const ChatMessages = ({
           )}
         </div>
       )}
-      <div className="flex flex-col-reverse mt-auto">
-        {data?.pages?.map((group, i) => (
-          <Fragment key={i}>
-            {group.items.map((message: MessageWithMemberWithProfile) => (
-              <ChatItem
-                key={message.id}
-                id={message.id}
-                currentMember={member}
-                member={message.member}
-                content={message.content}
-                fileUrl={message.fileUrl}
-                deleted={message.deleted}
-                timestamp={format(new Date(message.createdAt), DATE_FORMAT)}
-                isUpdated={message.updatedAt !== message.createdAt}
-                socketUrl={socketUrl}
-                socketQuery={socketQuery}
-                queryKey={queryKey}
-                chatType={type}
-                reactions={message.reactions ?? []}
-                savedByCurrentMember={!!message.savedBy?.length}
-                pinned={message.pinned}
-                parent={message.parentMessage ?? message.parentDirectMessage ?? null}
-                onReply={onReply}
-              />
-            ))}
-          </Fragment>
-        ))}
-      </div>
+      {shouldVirtualize ? (
+        <div
+          className="relative w-full"
+          style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+            const message = messages[virtualItem.index];
+            if (!message) return null;
+
+            return (
+              <div
+                key={virtualItem.key}
+                data-index={virtualItem.index}
+                ref={rowVirtualizer.measureElement}
+                className="absolute left-0 top-0 w-full"
+                style={{ transform: `translateY(${virtualItem.start}px)` }}
+              >
+                {renderMessage(message)}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-auto flex flex-col">
+          {messages.map((message) => renderMessage(message))}
+        </div>
+      )}
       {!!typingUsers.length && (
         <p className="px-4 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
           {typingUsers.slice(0, 3).join(", ")} {typingUsers.length === 1 ? "печатает..." : "печатают..."}

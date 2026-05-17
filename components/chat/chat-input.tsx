@@ -57,6 +57,7 @@ export const ChatInput = ({
   const { onOpen } = useModal();
   const queryClient = useQueryClient();
   const typingSentAtRef = useRef(0);
+  const draftWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const storageKey = useMemo(() => `draft:${queryKey ?? apiUrl}`, [apiUrl, queryKey]);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -72,6 +73,34 @@ export const ChatInput = ({
       form.setValue("content", draft);
     }
   }, [form, storageKey]);
+
+  useEffect(() => {
+    return () => {
+      if (draftWriteTimerRef.current) {
+        clearTimeout(draftWriteTimerRef.current);
+      }
+    };
+  }, []);
+
+  const queueDraftWrite = (value: string) => {
+    if (draftWriteTimerRef.current) {
+      clearTimeout(draftWriteTimerRef.current);
+    }
+
+    draftWriteTimerRef.current = setTimeout(() => {
+      window.localStorage.setItem(storageKey, value);
+      draftWriteTimerRef.current = null;
+    }, 300);
+  };
+
+  const clearDraft = () => {
+    if (draftWriteTimerRef.current) {
+      clearTimeout(draftWriteTimerRef.current);
+      draftWriteTimerRef.current = null;
+    }
+
+    window.localStorage.removeItem(storageKey);
+  };
 
   const insertMessage = (message: AnyMessage) => {
     if (!queryKey) return;
@@ -172,9 +201,6 @@ export const ChatInput = ({
       : null;
 
     if (optimistic) insertMessage(optimistic);
-    form.reset();
-    window.localStorage.removeItem(storageKey);
-    onClearReply?.();
 
     try {
       const url = qs.stringifyUrl({ url: apiUrl, query });
@@ -188,6 +214,9 @@ export const ChatInput = ({
       } else if (data?.id) {
         insertMessage(data);
       }
+      form.reset();
+      clearDraft();
+      onClearReply?.();
     } catch (error) {
       console.log(error);
       toast.error("Не удалось отправить сообщение");
@@ -244,7 +273,7 @@ export const ChatInput = ({
                     {...field}
                     onChange={(event) => {
                       field.onChange(event);
-                      window.localStorage.setItem(storageKey, event.target.value);
+                      queueDraftWrite(event.target.value);
                       const now = Date.now();
                       if (event.target.value.trim() && now - typingSentAtRef.current > 1200) {
                         typingSentAtRef.current = now;
@@ -259,7 +288,7 @@ export const ChatInput = ({
                   </div>
                   <button
                     type="submit"
-                    disabled={!hasContent}
+                    disabled={!hasContent || form.formState.isSubmitting}
                     aria-label="Отправить сообщение"
                     className="absolute top-1/2 -translate-y-1/2 right-5 sm:right-1.5 h-9 w-9 sm:h-7 sm:w-7 rounded-full flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm sm:bg-transparent sm:hover:bg-zinc-300/60 sm:dark:hover:bg-zinc-600/60 sm:text-zinc-600 sm:dark:text-zinc-300 sm:shadow-none"
                   >

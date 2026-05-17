@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-const MESSAGES_BATCH = 10;
+const MESSAGES_BATCH = 30;
 
 export async function GET(
   req: Request
@@ -87,10 +87,17 @@ export async function GET(
       nextCursor = messages[MESSAGES_BATCH - 1].id;
     }
 
-    return Response.json({
-      items: messages,
-      nextCursor
-    });
+    return Response.json(
+      {
+        items: messages,
+        nextCursor
+      },
+      {
+        headers: {
+          "Cache-Control": "private, no-store",
+        },
+      },
+    );
   } catch (error) {
     console.log("[MESSAGES_GET]", error);
     return apiError("Internal Error", 500);
