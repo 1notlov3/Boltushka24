@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Member, Profile } from "@prisma/client";
 
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { useTypingIndicator } from "@/hooks/use-typing-indicator";
+import { useUnreadCache } from "@/hooks/use-unread";
+import { http } from "@/lib/http";
 
 export type ReplyTarget = {
   id: string;
@@ -38,6 +40,22 @@ export const ChatShell = ({
 }: ChatShellProps) => {
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
   const { typing, sendTyping } = useTypingIndicator(chatId, member.id);
+  const { markRead } = useUnreadCache();
+  const serverId = socketQuery.serverId;
+
+  useEffect(() => {
+    const readUrl = type === "channel"
+      ? `/api/channels/${paramValue}/read`
+      : `/api/conversations/${paramValue}/read`;
+
+    void http.post(readUrl)
+      .then(() => {
+        markRead(serverId, type, paramValue);
+      })
+      .catch((error: unknown) => {
+        console.error("[MARK_READ]", error);
+      });
+  }, [markRead, paramValue, serverId, type]);
 
   return (
     <>

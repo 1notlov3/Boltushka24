@@ -3,12 +3,15 @@ import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 
 import { useSocket } from "@/components/providers/socket-provider";
 import type { ChatMessagesPage } from "@/hooks/use-chat-query";
+import { incrementUnreadInCache } from "@/hooks/use-unread";
 
 type ChatSocketProps = {
   addKey: string;
   updateKey: string;
   queryKey: string;
   type: "channel" | "conversation";
+  currentMemberId: string;
+  serverId?: string;
 }
 
 type RealtimePayload = {
@@ -18,6 +21,9 @@ type RealtimePayload = {
 
 type CachedMessage = {
   id: string;
+  memberId?: string;
+  channelId?: string;
+  conversationId?: string;
   deleted?: boolean;
   content?: string;
   fileUrl?: string | null;
@@ -52,6 +58,8 @@ export const useChatSocket = ({
   updateKey,
   queryKey,
   type,
+  currentMemberId,
+  serverId,
 }: ChatSocketProps) => {
   const { socket } = useSocket();
   const queryClient = useQueryClient();
@@ -143,6 +151,22 @@ export const useChatSocket = ({
         .then((message) => {
           if (!isMounted || !isCachedMessage(message)) return;
           writeMessage(payload, message);
+
+          if (
+            payload.action === "add" &&
+            document.hidden &&
+            message.memberId !== currentMemberId
+          ) {
+            const targetId = type === "channel" ? message.channelId : message.conversationId;
+            if (!targetId) return;
+
+            incrementUnreadInCache(
+              queryClient,
+              serverId,
+              type,
+              targetId,
+            );
+          }
         })
         .catch((error: unknown) => {
           if (abortController.signal.aborted) return;
@@ -159,5 +183,5 @@ export const useChatSocket = ({
       socket.off(addKey, handlePayload);
       socket.off(updateKey, handlePayload);
     }
-  }, [addKey, queryClient, queryKey, socket, type, updateKey]);
+  }, [addKey, currentMemberId, queryClient, queryKey, serverId, socket, type, updateKey]);
 }

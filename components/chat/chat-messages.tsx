@@ -142,7 +142,14 @@ export const ChatMessages = ({
     measureElement: (element) => element?.getBoundingClientRect().height ?? 96,
   });
 
-  useChatSocket({ queryKey, addKey, updateKey, type });
+  useChatSocket({
+    queryKey,
+    addKey,
+    updateKey,
+    type,
+    currentMemberId: member.id,
+    serverId: socketQuery.serverId,
+  });
   useChatScroll({
     chatRef,
     topRef,

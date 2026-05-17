@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "sonner";
+import { UnreadTitleProvider } from "@/components/providers/unread-title-provider";
 
 export const QueryProvider = ({
   children
@@ -17,6 +18,7 @@ export const QueryProvider = ({
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      <UnreadTitleProvider />
       <Toaster />
     </QueryClientProvider>
   )
