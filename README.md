@@ -178,6 +178,12 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
 LIVEKIT_API_KEY="APIxxx"
 LIVEKIT_API_SECRET="secret_xxx"
 NEXT_PUBLIC_LIVEKIT_URL="wss://xxx.livekit.cloud"
+
+# Optional production hardening
+UPSTASH_REDIS_REST_URL="https://example.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="upstash_token"
+SENTRY_DSN=""
+NEXT_PUBLIC_SENTRY_DSN=""
 ```
 
 ### 3. Миграции БД и Storage bucket
