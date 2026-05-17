@@ -1,11 +1,12 @@
 import { NotificationType } from "@prisma/client";
 import { z } from "zod";
 
-import { apiError, forbidden, notFound, unauthorized, validationError } from "@/lib/api-response";
+import { apiError, forbidden, notFound, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
 import { channelMessageInclude } from "@/lib/chat-includes";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { canPinMessage } from "@/lib/permissions";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
 
 export const dynamic = "force-dynamic";
@@ -49,11 +50,29 @@ export async function PATCH(req: Request, context: { params: Promise<{ messageId
 
     const member = await db.member.findFirst({
       where: { profileId: profile.id, serverId: message.channel.serverId },
-      select: { id: true, role: true },
+      include: {
+        serverRoles: {
+          include: {
+            role: {
+              select: { permissions: true },
+            },
+          },
+        },
+      },
     });
 
     if (!member) return unauthorized();
     if (!canPinMessage(member, message.memberId)) return forbidden();
+
+    const limit = await checkRateLimit({
+      key: rateLimitKey("message:pin", profile.id, "global"),
+      limit: 30,
+      windowMs: 60_000,
+    });
+
+    if (!limit.ok) {
+      return rateLimitError(limit.retryAfterSeconds, `Too many pin requests. Retry in ${limit.retryAfterSeconds}s`);
+    }
 
     const updated = await db.message.update({
       where: { id: message.id },

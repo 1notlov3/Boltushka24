@@ -1,14 +1,14 @@
 "use client";
 
 import * as z from "zod";
-import axios from "axios";
+import { http } from "@/lib/http";
 import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
-import { Bookmark, Edit, FileIcon, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
+import { Bookmark, Edit, FileIcon, Forward, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState, memo } from "react";
+import { useState, memo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { UserAvatar } from "@/components/user-avatar";
@@ -26,6 +26,9 @@ import { useModal } from "@/hooks/use-modal-store";
 import { useRouter, useParams } from "next/navigation";
 import type { ReplyTarget } from "@/components/chat/chat-shell";
 import { MessageContent } from "@/components/chat/message-content";
+import { PollBlock, type PollData } from "@/components/chat/poll-block";
+import { VoicePlayer } from "@/components/chat/voice-player";
+import { fileExtensionFromUrl, isAudioUrl, isImageUrl } from "@/lib/upload";
 
 type Reaction = {
   id: string;
@@ -42,9 +45,11 @@ type ParentPreview = {
 
 type ChatCacheMessage = {
   id: string;
+  content?: string;
   reactions?: Reaction[];
   savedBy?: { id: string }[];
   pinned?: boolean;
+  [key: string]: unknown;
 };
 
 type ChatCachePage = {
@@ -75,7 +80,13 @@ interface ChatItemProps {
   savedByCurrentMember: boolean;
   pinned: boolean;
   parent: ParentPreview | null;
+  poll?: PollData | null;
+  outbox?: boolean;
+  repliesCount?: number;
+  mentionNames?: Record<string, string>;
   onReply: (target: ReplyTarget) => void;
+  onOpenThread?: (messageId: string) => void;
+  onOpenImage?: (url: string) => void;
 };
 
 const roleIconMap = {
@@ -105,7 +116,13 @@ export const ChatItem = memo(({
   savedByCurrentMember,
   pinned,
   parent,
+  poll,
+  outbox,
+  repliesCount = 0,
+  mentionNames,
   onReply,
+  onOpenThread,
+  onOpenImage,
 }: ChatItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const { onOpen } = useModal();
@@ -120,26 +137,6 @@ export const ChatItem = memo(({
 
     router.push(`/servers/${params?.serverId}/conversations/${member.id}`);
   }
-
-  useEffect(() => {
-    // ⚡ Bolt Optimization: Only attach keydown listener when editing
-    // This prevents O(N) event listeners for N messages, reducing memory usage and event overhead.
-    if (!isEditing) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" || event.keyCode === 27) {
-        setIsEditing(false);
-      }
-    };
-
-    if (isEditing) {
-      // ⚡ Bolt Optimization: Only add the keydown listener when editing
-      // This prevents having N active listeners for N messages in the chat
-      window.addEventListener("keydown", handleKeyDown);
-    }
-
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEditing]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -157,22 +154,19 @@ export const ChatItem = memo(({
         query: socketQuery,
       });
 
-      await axios.patch(url, values);
+      const { data } = await http.patch<ChatCacheMessage>(url, values);
 
-      form.reset();
+      updateCachedMessage(() => data);
+      form.reset({
+        content: typeof data.content === "string" ? data.content : values.content,
+      });
       setIsEditing(false);
     } catch (error) {
       console.log(error);
     }
   }
 
-  useEffect(() => {
-    form.reset({
-      content: content,
-    })
-  }, [content, form]);
-
-  const fileType = fileUrl?.split(".").pop();
+  const fileType = fileUrl ? fileExtensionFromUrl(fileUrl) : "";
 
   const isAdmin = currentMember.role === MemberRole.ADMIN;
   const isModerator = currentMember.role === MemberRole.MODERATOR;
@@ -181,7 +175,8 @@ export const ChatItem = memo(({
   const canEditMessage = !deleted && isOwner && !fileUrl;
   const canPinMessage = !deleted && (isAdmin || isModerator || isOwner);
   const isPDF = fileType === "pdf" && fileUrl;
-  const isImage = !isPDF && fileUrl;
+  const isAudio = !!fileUrl && isAudioUrl(fileUrl);
+  const isImage = !!fileUrl && isImageUrl(fileUrl);
   const actionBase = chatType === "conversation"
     ? `/api/direct-messages/${id}`
     : `/api/messages/${id}`;
@@ -199,29 +194,33 @@ export const ChatItem = memo(({
     });
   };
 
-  const invalidateMessage = () => {
-    queryClient.invalidateQueries({ queryKey: [queryKey] });
-  };
-
   const onReaction = async (emoji: string) => {
-    const existing = reactions.find((reaction) => reaction.emoji === emoji && reaction.memberId === currentMember.id);
+    updateCachedMessage((message) => {
+      const currentReactions = message.reactions ?? reactions;
+      const existing = currentReactions.find((reaction) =>
+        reaction.emoji === emoji && reaction.memberId === currentMember.id
+      );
 
-    updateCachedMessage((message) => ({
-      ...message,
-      reactions: existing
-        ? (message.reactions ?? []).filter((reaction) => reaction.id !== existing.id)
-        : [
-            ...(message.reactions ?? []),
-            { id: `optimistic-${emoji}-${Date.now()}`, emoji, memberId: currentMember.id },
-          ],
-    }));
+      return {
+        ...message,
+        reactions: existing
+          ? currentReactions.filter((reaction) => reaction.id !== existing.id)
+          : [
+              ...currentReactions,
+              { id: `${currentMember.id}-${emoji}`, emoji, memberId: currentMember.id },
+            ],
+      };
+    });
 
     try {
-      await axios.post(`${actionBase}/reactions`, { emoji });
+      const { data } = await http.post<ChatCacheMessage>(`${actionBase}/reactions`, { emoji });
+      updateCachedMessage(() => data);
     } catch (error) {
       console.log(error);
-    } finally {
-      invalidateMessage();
+      updateCachedMessage((message) => ({
+        ...message,
+        reactions,
+      }));
     }
   };
 
@@ -229,11 +228,11 @@ export const ChatItem = memo(({
     updateCachedMessage((message) => ({ ...message, pinned: !pinned }));
 
     try {
-      await axios.patch(`${actionBase}/pin`, { pinned: !pinned });
+      const { data } = await http.patch<ChatCacheMessage>(`${actionBase}/pin`, { pinned: !pinned });
+      updateCachedMessage(() => data);
     } catch (error) {
       console.log(error);
-    } finally {
-      invalidateMessage();
+      updateCachedMessage((message) => ({ ...message, pinned }));
     }
   };
 
@@ -244,11 +243,17 @@ export const ChatItem = memo(({
     }));
 
     try {
-      await axios.post(`${actionBase}/save`);
+      const { data } = await http.post<{ saved: boolean }>(`${actionBase}/save`);
+      updateCachedMessage((message) => ({
+        ...message,
+        savedBy: data.saved ? [{ id: `optimistic-save-${currentMember.id}` }] : [],
+      }));
     } catch (error) {
       console.log(error);
-    } finally {
-      invalidateMessage();
+      updateCachedMessage((message) => ({
+        ...message,
+        savedBy: savedByCurrentMember ? [{ id: `optimistic-save-${currentMember.id}` }] : [],
+      }));
     }
   };
 
@@ -263,7 +268,11 @@ export const ChatItem = memo(({
   };
 
   return (
-    <div id={`message-${id}`} className="relative group flex items-center hover:bg-black/5 px-4 py-2.5 sm:py-2 transition w-full">
+    <div
+      id={`message-${id}`}
+      data-message-id={id}
+      className="relative group flex items-center hover:bg-black/5 px-4 py-2.5 sm:py-2 transition w-full"
+    >
       <div className="group flex gap-x-3 sm:gap-x-2 items-start w-full">
       <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition shrink-0">
           <UserAvatar src={member.profile.imageUrl} />
@@ -289,6 +298,11 @@ export const ChatItem = memo(({
                 закреплено
               </span>
             )}
+            {outbox && !deleted && (
+              <span className="inline-flex items-center rounded-sm bg-zinc-500/10 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-300">
+                В очереди
+              </span>
+            )}
           </div>
           {parent && !deleted && (
             <button
@@ -300,11 +314,10 @@ export const ChatItem = memo(({
               <span className="line-clamp-1">{parent.deleted ? "Сообщение удалено" : parent.content}</span>
             </button>
           )}
-          {isImage && (
-            <a 
-              href={fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+          {isImage && fileUrl && (
+            <button
+              type="button"
+              onClick={() => onOpenImage?.(fileUrl)}
               className="relative aspect-square rounded-md mt-2 overflow-hidden border flex items-center bg-secondary h-48 w-48"
             >
               <Image
@@ -313,7 +326,10 @@ export const ChatItem = memo(({
                 fill
                 className="object-cover"
               />
-            </a>
+            </button>
+          )}
+          {isAudio && fileUrl && (
+            <VoicePlayer src={fileUrl} />
           )}
           {isPDF && (
             <div className="relative flex items-center p-2 mt-2 rounded-md bg-background/10">
@@ -328,8 +344,11 @@ export const ChatItem = memo(({
               </a>
             </div>
           )}
-          {!fileUrl && !isEditing && (
-            <MessageContent content={content} deleted={deleted} isUpdated={isUpdated} />
+          {!fileUrl && !isEditing && (!poll || deleted) && (
+            <MessageContent content={content} deleted={deleted} isUpdated={isUpdated} mentionNames={mentionNames} />
+          )}
+          {!fileUrl && !deleted && poll && (
+            <PollBlock poll={poll} currentMemberId={currentMember.id} />
           )}
           {!fileUrl && isEditing && (
             <Form {...form}>
@@ -348,6 +367,12 @@ export const ChatItem = memo(({
                               className="p-2 bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200"
                               placeholder="Изменено"
                               {...field}
+                              onKeyDown={(event) => {
+                                if (event.key === "Escape") {
+                                  form.reset({ content });
+                                  setIsEditing(false);
+                                }
+                              }}
                             />
                           </div>
                         </FormControl>
@@ -356,7 +381,10 @@ export const ChatItem = memo(({
                   />
                   <Button
                     disabled={isLoading}
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      form.reset({ content });
+                      setIsEditing(false);
+                    }}
                     size="sm"
                     variant="ghost"
                     type="button"
@@ -374,6 +402,15 @@ export const ChatItem = memo(({
           )}
           {!deleted && (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {repliesCount > 0 && onOpenThread && (
+                <button
+                  type="button"
+                  onClick={() => onOpenThread(id)}
+                  className="inline-flex h-7 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
+                >
+                  {repliesCount} {repliesCount === 1 ? "ответ" : "ответов"} · открыть тред
+                </button>
+              )}
               {Object.entries(reactionGroups).map(([emoji, list]) => {
                 const active = list.some((reaction) => reaction.memberId === currentMember.id);
                 return (
@@ -450,6 +487,21 @@ export const ChatItem = memo(({
             </ActionTooltip>
           )}
           {!deleted && (
+            <ActionTooltip label="Переслать">
+              <button
+                onClick={() => onOpen("forwardMessage", {
+                  serverId: typeof params?.serverId === "string" ? params.serverId : socketQuery.serverId,
+                  message: { id, content, fileUrl },
+                })}
+                className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+                aria-label="Переслать"
+                type="button"
+              >
+                <Forward className="w-4 h-4" />
+              </button>
+            </ActionTooltip>
+          )}
+          {!deleted && (
             <ActionTooltip label={savedByCurrentMember ? "Убрать из избранного" : "Сохранить"}>
               <button
                 onClick={onSave}
@@ -467,7 +519,10 @@ export const ChatItem = memo(({
           {canEditMessage && (
             <ActionTooltip label="Редактировать">
               <button
-                onClick={() => setIsEditing(true)}
+                onClick={() => {
+                  form.reset({ content });
+                  setIsEditing(true);
+                }}
                 className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
                 aria-label="Редактировать"
                 type="button"

@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { ActionTooltip } from "@/components/action-tooltip";
 import { ModalType, useModal } from "@/hooks/use-modal-store";
 import React from "react";
+import { useServerUnread } from "@/hooks/use-unread";
+import { useServerTyping } from "@/components/providers/server-activity-provider";
 
 interface ServerChannelProps {
   channel: Channel;
@@ -34,8 +36,12 @@ export const ServerChannel = ({
   const { onOpen } = useModal();
   const params = useParams();
   const router = useRouter();
+  const { data: unread } = useServerUnread(server.id);
+  const typingUsers = useServerTyping(channel.id);
 
   const Icon = iconMap[channel.type];
+  const unreadCount = unread?.channels[channel.id] ?? 0;
+  const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
 
   const onClick = () => {
     router.push(`/servers/${params?.serverId}/channels/${channel.id}`)
@@ -57,17 +63,31 @@ export const ServerChannel = ({
         onClick={onClick}
         className={cn(
           "flex-1 text-left flex items-center gap-x-2 px-3 py-2.5 sm:py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 dark:focus-visible:ring-zinc-400 focus-visible:ring-offset-2 rounded-md transition",
-          params?.channelId === channel.id && "text-primary dark:text-zinc-200 dark:group-hover:text-white"
+          params?.channelId === channel.id && "text-primary dark:text-zinc-200 dark:group-hover:text-white",
+          unreadCount > 0 && params?.channelId !== channel.id && "font-bold"
         )}
         aria-label={`Открыть канал ${channel.name}`}
       >
         <Icon className="flex-shrink-0 w-5 h-5 text-zinc-500 dark:text-zinc-400" />
         <p className={cn(
           "line-clamp-1 font-semibold text-base sm:text-sm text-zinc-500 group-hover:text-zinc-600 dark:text-zinc-400 dark:group-hover:text-zinc-300 transition",
-          params?.channelId === channel.id && "text-primary dark:text-zinc-200 dark:group-hover:text-white"
+          params?.channelId === channel.id && "text-primary dark:text-zinc-200 dark:group-hover:text-white",
+          unreadCount > 0 && params?.channelId !== channel.id && "text-zinc-900 dark:text-zinc-100"
         )}>
           {channel.name}
         </p>
+        {unreadCount > 0 && params?.channelId !== channel.id && (
+          <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-semibold text-white">
+            {unreadLabel}
+          </span>
+        )}
+        {typingUsers.length > 0 && params?.channelId !== channel.id && (
+          <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-indigo-500/10 px-1.5 py-1 text-indigo-500 dark:text-indigo-300" title={`${typingUsers[0].name} печатает`}>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current [animation-delay:120ms]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current [animation-delay:240ms]" />
+          </span>
+        )}
       </button>
 
       {channel.name !== "основной" && role !== MemberRole.GUEST && (

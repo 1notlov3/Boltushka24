@@ -1,7 +1,7 @@
 "use client";
 
 import qs from "query-string";
-import axios from "axios";
+import { http } from "@/lib/http";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -52,6 +52,7 @@ const formSchema = z.object({
   type: z.nativeEnum(ChannelType),
   topic: z.string().trim().max(300).optional(),
   categoryId: z.string().optional(),
+  slowModeSeconds: z.coerce.number().int().min(0).max(21_600).optional(),
 });
 
 export const CreateChannelModal = () => {
@@ -69,6 +70,7 @@ export const CreateChannelModal = () => {
       type: channelType || ChannelType.TEXT,
       topic: "",
       categoryId: categoryId || "none",
+      slowModeSeconds: 0,
     }
   });
   useEffect(() => {
@@ -105,7 +107,7 @@ export const CreateChannelModal = () => {
           serverId: params?.serverId
         }
       });
-      await axios.post(url, {
+      await http.post(url, {
         ...values,
         categoryId: values.categoryId === "none" ? null : values.categoryId,
         topic: values.topic || null,
@@ -229,6 +231,28 @@ export const CreateChannelModal = () => {
                         disabled={isLoading}
                         className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black focus-visible:ring-offset-0"
                         placeholder="Короткий topic канала"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="slowModeSeconds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-secondary/70">
+                      Slow-mode, секунд
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={21600}
+                        disabled={isLoading}
+                        className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black focus-visible:ring-offset-0"
                         {...field}
                       />
                     </FormControl>

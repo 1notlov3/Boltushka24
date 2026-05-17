@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { ActionTooltip } from "@/components/action-tooltip";
+import { useServerUnread } from "@/hooks/use-unread";
+import { useServerOnlineCount } from "@/components/providers/server-activity-provider";
 
 interface NavigationItemProps {
   id: string;
@@ -19,6 +21,11 @@ export const NavigationItem = ({
 }: NavigationItemProps) => {
   const params = useParams();
   const router = useRouter();
+  const { data: unread } = useServerUnread(id);
+  const onlineCount = useServerOnlineCount(id);
+  const unreadCount = unread?.total ?? 0;
+  const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
+  const tooltipLabel = onlineCount > 0 ? `${name} · ${onlineCount} онлайн` : name;
 
   const onClick = () => {
     router.push(`/servers/${id}`);
@@ -28,7 +35,7 @@ export const NavigationItem = ({
     <ActionTooltip
       side="right"
       align="center"
-      label={name}
+      label={tooltipLabel}
     >
       <button
         onClick={onClick}
@@ -56,6 +63,16 @@ export const NavigationItem = ({
             </span>
           )}
         </div>
+        {unreadCount > 0 && params?.serverId !== id && (
+          <span className="absolute right-2 top-0 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white ring-2 ring-[#E3E5E8] dark:ring-[#1E1F22]">
+            {unreadLabel}
+          </span>
+        )}
+        {onlineCount > 0 && (
+          <span className="pointer-events-none absolute -right-2 bottom-0 hidden min-w-8 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm group-hover:inline-flex group-focus:inline-flex">
+            {onlineCount}
+          </span>
+        )}
       </button>
     </ActionTooltip>
   )

@@ -22,6 +22,7 @@ const CreateChannelSchema = z.object({
   icon: z.string().trim().max(32).optional().nullable(),
   categoryId: z.string().uuid("Invalid category ID").optional().nullable(),
   position: z.number().int().min(0).optional(),
+  slowModeSeconds: z.number().int().min(0).max(21_600).optional(),
 });
 
 export async function POST(
@@ -58,9 +59,16 @@ export async function POST(
         serverId,
         profileId: profile.id,
       },
-      select: {
-        id: true,
-        role: true,
+      include: {
+        serverRoles: {
+          include: {
+            role: {
+              select: {
+                permissions: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -72,7 +80,7 @@ export async function POST(
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    const limit = checkRateLimit({
+    const limit = await checkRateLimit({
       key: rateLimitKey("channel:create", profile.id, serverId),
       limit: 20,
       windowMs: 60_000,
@@ -82,7 +90,7 @@ export async function POST(
       return new NextResponse(`Too many channels. Retry in ${limit.retryAfterSeconds}s`, { status: 429 });
     }
 
-    const { name, type, topic, icon, categoryId, position } = validationResult.data;
+    const { name, type, topic, icon, categoryId, position, slowModeSeconds } = validationResult.data;
 
     if (categoryId) {
       const category = await db.channelCategory.findFirst({
@@ -107,13 +115,14 @@ export async function POST(
             icon: icon || null,
             categoryId: categoryId || null,
             position: position ?? 0,
+            slowModeSeconds: slowModeSeconds ?? 0,
           }
         },
         auditLogs: {
           create: {
             action: "channel.create",
             actorId: profile.id,
-            metadata: { name, type, categoryId },
+            metadata: { name, type, categoryId, slowModeSeconds },
           },
         },
       },

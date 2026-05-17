@@ -6,8 +6,13 @@ export type ApiErrorBody = {
   details?: unknown;
 };
 
-export function apiError(error: string, status = 400, details?: unknown) {
-  return NextResponse.json<ApiErrorBody>({ error, details }, { status });
+export function apiError(
+  error: string,
+  status = 400,
+  details?: unknown,
+  headers?: HeadersInit,
+) {
+  return NextResponse.json<ApiErrorBody>({ error, details }, { status, headers });
 }
 
 export function unauthorized(message = "Unauthorized") {
@@ -24,4 +29,10 @@ export function notFound(message = "Not found") {
 
 export function validationError(error: ZodError) {
   return apiError(error.errors[0]?.message ?? "Validation error", 400, error.flatten());
+}
+
+export function rateLimitError(retryAfterSeconds: number, message = "Too many requests") {
+  return apiError(message, 429, undefined, {
+    "Retry-After": String(retryAfterSeconds),
+  });
 }

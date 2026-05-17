@@ -8,6 +8,7 @@ import {
   FolderPlus,
   LogOut, 
   PlusCircle, 
+  ShieldCheck,
   Settings, 
   Trash, 
   UserPlus,
@@ -76,6 +77,14 @@ export const ServerHeader = ({
           >
             Участники и роли
             <Users className="h-4 w-4 ml-auto" />
+          </DropdownMenuItem>
+        )}
+        {isAdmin && (
+          <DropdownMenuItem onClick={() => onOpen("roles", { server })}
+            className="px-3 py-2 text-sm cursor-pointer"
+          >
+            Роли сервера
+            <ShieldCheck className="h-4 w-4 ml-auto" />
           </DropdownMenuItem>
         )}
         {isModerator && (

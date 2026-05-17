@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import { http } from "@/lib/http";
 import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -34,7 +34,7 @@ export const CreateCategoryModal = () => {
       url: "/api/channel-categories",
       query: { serverId: params?.serverId },
     });
-    await axios.post(url, values);
+    await http.post(url, values);
     form.reset();
     router.refresh();
     onClose();

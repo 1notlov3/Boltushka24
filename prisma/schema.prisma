@@ -28,6 +28,7 @@ model Profile {
   notificationsReceived Notification[] @relation("NotificationTarget")
   notificationsCreated  Notification[] @relation("NotificationActor")
   auditLogs             AuditLog[]     @relation("AuditLogActor")
+  pushSubscriptions     PushSubscription[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -106,6 +107,7 @@ model Member {
 
   messageReactions       MessageReaction[]
   directMessageReactions DirectMessageReaction[]
+  pollVotes              PollVote[]
   savedMessages          SavedMessage[]
   savedDirectMessages    SavedDirectMessage[]
   channelReadStates      ChannelReadState[]
@@ -113,6 +115,7 @@ model Member {
 
   conversationsInitiated Conversation[] @relation("MemberOne")
   conversationsReceived  Conversation[] @relation("MemberTwo")
+  serverRoles            MemberServerRole[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -152,6 +155,7 @@ model Channel {
   topic    String?     @db.Text
   icon     String?     @db.VarChar(32)
   position Int         @default(0)
+  slowModeSeconds Int   @default(0)
 
   profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -165,6 +169,7 @@ model Channel {
   messages      Message[]
   readStates    ChannelReadState[]
   notifications Notification[]
+  watchSession  WatchSession?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -200,6 +205,7 @@ model Message {
   reactions     MessageReaction[]
   savedBy       SavedMessage[]
   notifications Notification[]
+  poll          Poll?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -287,6 +293,7 @@ model DirectMessage {
   reactions     DirectMessageReaction[]
   savedBy       SavedDirectMessage[]
   notifications Notification[]
+  poll          Poll?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -380,6 +387,20 @@ model Notification {
   @@index([directMessageId])
 }
 
+model PushSubscription {
+  id        String @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  endpoint   String @unique @db.Text
+  keysAuth   String @db.Text
+  keysP256dh String @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId])
+}
+
 model ChannelReadState {
   id String @id @default(uuid())
 
@@ -415,15 +436,33 @@ model ServerRole {
   name        String
   color       String @default("#6366f1")
   permissions Json
+  position    Int @default(0)
 
   serverId String
   server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  members  MemberServerRole[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([serverId, name])
-  @@index([serverId])
+  @@index([serverId, position])
+}
+
+model MemberServerRole {
+  id String @id @default(uuid())
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  roleId String
+  role   ServerRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([memberId, roleId])
+  @@index([memberId])
+  @@index([roleId])
 }
 
 model AuditLog {
@@ -443,4 +482,76 @@ model AuditLog {
   @@index([serverId, createdAt])
   @@index([actorId])
   @@index([targetId])
+}
+
+model WatchSession {
+  id             String @id @default(uuid())
+  channelId      String @unique
+  channel        Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  currentVideoId String?
+  currentTime    Float   @default(0)
+  isPlaying      Boolean @default(false)
+  updatedById    String?
+  updatedByName  String?
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  queue          WatchQueueItem[]
+
+  @@index([channelId])
+}
+
+model WatchQueueItem {
+  id          String @id @default(uuid())
+  sessionId   String
+  session     WatchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  videoId     String
+  title       String?
+  thumbnail   String?
+  addedById   String
+  addedByName String
+  position    Int
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId, position])
+}
+
+model Poll {
+  id              String @id @default(uuid())
+  messageId       String? @unique
+  message         Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  directMessageId String? @unique
+  directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+  question        String
+  options         Json
+  multiple        Boolean @default(false)
+  closesAt        DateTime?
+  createdAt       DateTime @default(now())
+  votes           PollVote[]
+
+  @@index([messageId])
+  @@index([directMessageId])
+}
+
+model PollVote {
+  id        String @id @default(uuid())
+  pollId    String
+  poll      Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  optionId  String
+  createdAt DateTime @default(now())
+
+  @@unique([pollId, memberId, optionId])
+  @@index([memberId])
+}
+
+model LinkPreview {
+  id          String @id @default(uuid())
+  url         String @unique
+  title       String?
+  description String?
+  image       String?
+  fetchedAt   DateTime
+
+  @@index([fetchedAt])
 }

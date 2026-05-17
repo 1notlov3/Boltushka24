@@ -11,7 +11,7 @@ import { ServerHeader } from "./server-header";
 import { ServerSearch } from "./server-search";
 import { ServerSection } from "./server-section";
 import { ServerChannel } from "./server-channel";
-import { ServerMember } from "./server-member";
+import { ServerMembersList } from "./server-members-list";
 
 interface ServerSidebarProps {
   serverId: string;
@@ -56,6 +56,7 @@ export const ServerSidebar = async ({
   const audioChannels = uncategorizedChannels.filter((channel) => channel.type === ChannelType.AUDIO)
   const videoChannels = uncategorizedChannels.filter((channel) => channel.type === ChannelType.VIDEO)
   const members = server?.members.filter((member) => member.profileId !== profile.id)
+  const membersCount = Math.max((server._count?.members ?? server.members.length) - 1, members.length);
 
   const role = server.members.find((member) => member.profileId === profile.id)?.role;
 
@@ -213,12 +214,11 @@ export const ServerSidebar = async ({
               server={server}
             />
             <div className="space-y-[2px]">
-              {members.map((member) => (
-                <ServerMember
-                  key={member.id}
-                  member={member}
-                />
-              ))}
+              <ServerMembersList
+                serverId={server.id}
+                initialMembers={members}
+                totalMembers={membersCount}
+              />
             </div>
           </div>
         )}

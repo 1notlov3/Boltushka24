@@ -16,7 +16,7 @@ export async function GET() {
     const profile = await currentProfile();
     if (!profile) return unauthorized();
 
-    const limit = checkRateLimit({
+    const limit = await checkRateLimit({
       key: rateLimitKey("notifications:get", profile.id, profile.id),
       limit: 30,
       windowMs: 60_000,
@@ -68,7 +68,7 @@ export async function PATCH(req: Request) {
     const profile = await currentProfile();
     if (!profile) return unauthorized();
 
-    const limit = checkRateLimit({
+    const limit = await checkRateLimit({
       key: rateLimitKey("notifications:patch", profile.id, profile.id),
       limit: 10,
       windowMs: 60_000,

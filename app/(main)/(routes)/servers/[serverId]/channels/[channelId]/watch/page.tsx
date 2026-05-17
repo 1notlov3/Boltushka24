@@ -40,7 +40,7 @@ const WatchPage = async ({ params, searchParams }: WatchPageProps) => {
         serverId: resolvedParams.serverId,
         profileId: profile.id,
       },
-      select: { id: true },
+      include: { profile: true },
     }),
   ]);
 
@@ -53,6 +53,7 @@ const WatchPage = async ({ params, searchParams }: WatchPageProps) => {
       serverId={channel.serverId}
       channelId={channel.id}
       channelName={channel.name}
+      currentMember={member}
       initialVideoId={resolvedSearchParams.v}
     />
   );

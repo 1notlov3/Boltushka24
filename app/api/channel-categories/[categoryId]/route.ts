@@ -25,7 +25,15 @@ async function getCategoryAccess(profileId: string, categoryId: string) {
 
   const member = await db.member.findFirst({
     where: { profileId, serverId: category.serverId },
-    select: { id: true, role: true },
+    include: {
+      serverRoles: {
+        include: {
+          role: {
+            select: { permissions: true },
+          },
+        },
+      },
+    },
   });
 
   return { category, member };

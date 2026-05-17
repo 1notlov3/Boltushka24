@@ -65,13 +65,21 @@ export async function POST(req: Request) {
 
     const member = await db.member.findFirst({
       where: { profileId: profile.id, serverId: parsedQuery.data.serverId },
-      select: { id: true, role: true },
+      include: {
+        serverRoles: {
+          include: {
+            role: {
+              select: { permissions: true },
+            },
+          },
+        },
+      },
     });
 
     if (!member) return unauthorized();
     if (!canManageChannels(member)) return forbidden();
 
-    const limit = checkRateLimit({
+    const limit = await checkRateLimit({
       key: rateLimitKey("category:create", profile.id, parsedQuery.data.serverId),
       limit: 10,
       windowMs: 60_000,

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { ChannelType } from "@prisma/client";
 import { z } from "zod";
 import { canManageChannels } from "@/lib/permissions";
+import { logAudit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ const UpdateChannelSchema = z.object({
   icon: z.string().trim().max(32).optional().nullable(),
   categoryId: z.string().uuid("Invalid category ID").optional().nullable(),
   position: z.number().int().min(0).optional(),
+  slowModeSeconds: z.number().int().min(0).max(21_600).optional(),
 });
 
 const ParamsSchema = z.object({
@@ -64,7 +66,15 @@ export async function DELETE(
         serverId,
         profileId: profile.id,
       },
-      select: { id: true, role: true },
+      include: {
+        serverRoles: {
+          include: {
+            role: {
+              select: { permissions: true },
+            },
+          },
+        },
+      },
     });
 
     if (!member) {
@@ -75,6 +85,25 @@ export async function DELETE(
       return new NextResponse("Forbidden", { status: 403 });
     }
 
+    const channel = await db.channel.findFirst({
+      where: {
+        id: paramsValidation.data.channelId,
+        serverId,
+        name: {
+          not: "основной",
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+      },
+    });
+
+    if (!channel) {
+      return new NextResponse("Channel not found", { status: 404 });
+    }
+
     const server = await db.server.update({
       where:{
         id:serverId,
@@ -82,14 +111,23 @@ export async function DELETE(
       data:{
         channels:{
           delete:{
-            id:params.channelId,
-            name:{
-              not: "основной",
-            }
+            id: channel.id,
           }
         }
       }
     });
+
+    await logAudit({
+      action: "channel.delete",
+      actorId: profile.id,
+      serverId,
+      targetId: channel.id,
+      metadata: {
+        name: channel.name,
+        type: channel.type,
+      },
+    });
+
     return NextResponse.json(server);
   }
   catch(eror){
@@ -136,14 +174,22 @@ export async function PATCH(
       return new NextResponse(result.error.errors[0].message, { status: 400 });
     }
 
-    const { name, type, topic, icon, categoryId, position } = result.data;
+    const { name, type, topic, icon, categoryId, position, slowModeSeconds } = result.data;
 
     const member = await db.member.findFirst({
       where: {
         serverId,
         profileId: profile.id,
       },
-      select: { id: true, role: true },
+      include: {
+        serverRoles: {
+          include: {
+            role: {
+              select: { permissions: true },
+            },
+          },
+        },
+      },
     });
 
     if (!member) {
@@ -185,6 +231,7 @@ export async function PATCH(
               icon: icon === undefined ? undefined : icon || null,
               categoryId: categoryId === undefined ? undefined : categoryId || null,
               position,
+              slowModeSeconds,
             }
           }
         },
@@ -193,7 +240,7 @@ export async function PATCH(
             action: "channel.update",
             actorId: profile.id,
             targetId: params.channelId,
-            metadata: { name, type, topic, icon, categoryId, position },
+            metadata: { name, type, topic, icon, categoryId, position, slowModeSeconds },
           },
         }
       }

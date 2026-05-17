@@ -1,7 +1,7 @@
 "use client";
 
 import qs from "query-string";
-import axios from "axios";
+import { http } from "@/lib/http";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -52,6 +52,7 @@ const formSchema = z.object({
   type: z.nativeEnum(ChannelType),
   topic: z.string().trim().max(300).optional(),
   categoryId: z.string().optional(),
+  slowModeSeconds: z.coerce.number().int().min(0).max(21600),
 });
 
 export const EditChannelModal = () => {
@@ -68,6 +69,7 @@ export const EditChannelModal = () => {
       type:channel?.type || ChannelType.TEXT,
       topic: "",
       categoryId: "none",
+      slowModeSeconds: 0,
     }
   });
   useEffect(() => {
@@ -76,6 +78,7 @@ export const EditChannelModal = () => {
       form.setValue('type',channel.type);
       form.setValue('topic', channel.topic || "");
       form.setValue('categoryId', channel.categoryId || "none");
+      form.setValue('slowModeSeconds', channel.slowModeSeconds || 0);
     }
   }, [form, channel]);
 
@@ -103,10 +106,11 @@ export const EditChannelModal = () => {
           serverId: server?.id
         }
       });
-      await axios.patch(url, {
+      await http.patch(url, {
         ...values,
         categoryId: values.categoryId === "none" ? null : values.categoryId,
         topic: values.topic || null,
+        slowModeSeconds: values.slowModeSeconds,
       });
 
       form.reset();
@@ -227,6 +231,29 @@ export const EditChannelModal = () => {
                         disabled={isLoading}
                         className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black focus-visible:ring-offset-0"
                         placeholder="Короткий topic канала"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="slowModeSeconds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-secondary/70">
+                      Slow-mode, секунд
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={isLoading}
+                        type="number"
+                        min={0}
+                        max={21600}
+                        className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black focus-visible:ring-offset-0"
+                        placeholder="0"
                         {...field}
                       />
                     </FormControl>

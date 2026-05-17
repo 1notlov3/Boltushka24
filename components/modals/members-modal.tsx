@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import { http } from "@/lib/http";
 import qs from "query-string";
 import { 
   Check,
@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   ShieldQuestion
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MemberRole } from "@prisma/client";
 import { useRouter } from "next/navigation";
 
@@ -46,13 +46,28 @@ const roleIconMap = {
   "ADMIN": <ShieldAlert className="h-4 w-4 text-rose-500" />
 }
 
+type CustomRole = {
+  id: string;
+  name: string;
+  color: string;
+};
+
 export const MembersModal = () => {
   const router = useRouter();
   const { onOpen, isOpen, onClose, type, data } = useModal();
   const [loadingId, setLoadingId] = useState("");
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
 
   const isModalOpen = isOpen && type === "members";
   const { server } = data as { server: ServerWithMembersWithProfiles };
+
+  useEffect(() => {
+    if (!isModalOpen || !server?.id) return;
+
+    void http.get<{ items: CustomRole[] }>(`/api/servers/${server.id}/roles`)
+      .then((response) => setCustomRoles(response.data.items))
+      .catch((error: unknown) => console.error("[MEMBERS_ROLES]", error));
+  }, [isModalOpen, server?.id]);
 
   const onKick = async (memberId: string) => {
     try {
@@ -64,7 +79,7 @@ export const MembersModal = () => {
         },
       });
 
-      const response = await axios.delete(url);
+      const response = await http.delete(url);
 
       router.refresh();
       onOpen("members", { server: response.data });
@@ -85,7 +100,38 @@ export const MembersModal = () => {
         }
       });
 
-      const response = await axios.patch(url, { role });
+      const response = await http.patch(url, { role });
+
+      router.refresh();
+      onOpen("members", { server: response.data });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoadingId("");
+    }
+  }
+
+  const onCustomRolesChange = async (memberId: string, roleId: string) => {
+    const member = server.members.find((item) => item.id === memberId);
+    if (!member) return;
+
+    const currentRoleIds = new Set(member.serverRoles?.map((item) => item.role.id) ?? []);
+    if (currentRoleIds.has(roleId)) {
+      currentRoleIds.delete(roleId);
+    } else {
+      currentRoleIds.add(roleId);
+    }
+
+    try {
+      setLoadingId(memberId);
+      const url = qs.stringifyUrl({
+        url: `/api/members/${memberId}`,
+        query: {
+          serverId: server?.id,
+        }
+      });
+
+      const response = await http.patch(url, { customRoleIds: Array.from(currentRoleIds) });
 
       router.refresh();
       onOpen("members", { server: response.data });
@@ -118,6 +164,19 @@ export const MembersModal = () => {
                   {member.profile.name}
                   {roleIconMap[member.role]}
                 </div>
+                {!!member.serverRoles?.length && (
+                  <div className="flex flex-wrap gap-1">
+                    {member.serverRoles.map((assignment) => (
+                      <span
+                        key={assignment.role.id}
+                        className="rounded-sm px-1.5 py-0.5 text-[10px] font-semibold text-white"
+                        style={{ backgroundColor: assignment.role.color }}
+                      >
+                        {assignment.role.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               {server.profileId !== member.profileId && loadingId !== member.id && (
                 <div className="ml-auto">
@@ -164,6 +223,34 @@ export const MembersModal = () => {
                           </DropdownMenuSubContent>
                         </DropdownMenuPortal>
                       </DropdownMenuSub>
+                      {!!customRoles.length && (
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger className="flex items-center">
+                            <ShieldCheck className="w-4 h-4 mr-2" />
+                            <span>Кастомные роли</span>
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                              {customRoles.map((role) => {
+                                const active = member.serverRoles?.some((assignment) => assignment.role.id === role.id);
+                                return (
+                                  <DropdownMenuItem
+                                    key={role.id}
+                                    onClick={() => onCustomRolesChange(member.id, role.id)}
+                                  >
+                                    <span
+                                      className="mr-2 h-3 w-3 rounded-full"
+                                      style={{ backgroundColor: role.color }}
+                                    />
+                                    {role.name}
+                                    {active && <Check className="h-4 w-4 ml-auto" />}
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => onKick(member.id)}

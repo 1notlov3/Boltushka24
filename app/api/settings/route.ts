@@ -49,7 +49,7 @@ export async function PATCH(req: Request) {
     const profile = await currentProfile();
     if (!profile) return unauthorized();
 
-    const limit = checkRateLimit({
+    const limit = await checkRateLimit({
       key: rateLimitKey("settings:update", profile.id, profile.id),
       limit: 10,
       windowMs: 60_000,

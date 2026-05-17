@@ -1,13 +1,28 @@
+import { NotificationType } from "@prisma/client";
 import { z } from "zod";
 
-import { apiError, unauthorized } from "@/lib/api-response";
+import { apiError, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
 import { directMessageInclude } from "@/lib/chat-includes";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { canCreateMessage } from "@/lib/permissions";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { broadcast } from "@/lib/realtime";
+import { notificationPushPayload, sendPushNotification } from "@/lib/web-push";
 
 export const dynamic = "force-dynamic";
 
-const MESSAGES_BATCH = 10;
+const MESSAGES_BATCH = 30;
+
+const MessageSchema = z.object({
+  content: z.string().min(1, "Content is required").max(4000, "Content too long"),
+  fileUrl: z.string().url("Invalid file URL").regex(/^(http|https):\/\//i, "Invalid file URL protocol").optional().nullable(),
+  parentDirectMessageId: z.string().uuid("Invalid parent message ID").optional().nullable(),
+});
+
+const QuerySchema = z.object({
+  conversationId: z.string().uuid("Invalid Conversation ID"),
+});
 
 export async function GET(
   req: Request
@@ -93,12 +108,150 @@ export async function GET(
       nextCursor = messages[MESSAGES_BATCH - 1].id;
     }
 
-    return Response.json({
-      items: messages,
-      nextCursor
-    });
+    return Response.json(
+      {
+        items: messages,
+        nextCursor
+      },
+      {
+        headers: {
+          "Cache-Control": "private, no-store",
+        },
+      },
+    );
   } catch (error) {
     console.log("[DIRECT_MESSAGES_GET]", error);
+    return apiError("Internal Error", 500);
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const profile = await currentProfile();
+    if (!profile) return unauthorized();
+
+    const { searchParams } = new URL(req.url);
+    const parsedQuery = QuerySchema.safeParse({
+      conversationId: searchParams.get("conversationId"),
+    });
+
+    if (!parsedQuery.success) return validationError(parsedQuery.error);
+
+    const parsedBody = MessageSchema.safeParse(await req.json());
+    if (!parsedBody.success) return validationError(parsedBody.error);
+
+    const { conversationId } = parsedQuery.data;
+    const { content, fileUrl, parentDirectMessageId } = parsedBody.data;
+
+    const conversation = await db.conversation.findFirst({
+      where: {
+        id: conversationId,
+        OR: [
+          { memberOne: { profileId: profile.id } },
+          { memberTwo: { profileId: profile.id } },
+        ],
+      },
+      include: {
+        memberOne: {
+          select: {
+            id: true,
+            role: true,
+            profileId: true,
+            serverId: true,
+            serverRoles: { include: { role: { select: { permissions: true } } } },
+          },
+        },
+        memberTwo: {
+          select: {
+            id: true,
+            role: true,
+            profileId: true,
+            serverId: true,
+            serverRoles: { include: { role: { select: { permissions: true } } } },
+          },
+        },
+      },
+    });
+
+    if (!conversation) return apiError("Conversation not found", 404);
+
+    const member = conversation.memberOne.profileId === profile.id
+      ? conversation.memberOne
+      : conversation.memberTwo;
+
+    if (!canCreateMessage(member)) return apiError("Forbidden", 403);
+
+    const limit = await checkRateLimit({
+      key: rateLimitKey("direct-message:create", profile.id, conversationId),
+      limit: 30,
+      windowMs: 60_000,
+    });
+
+    if (!limit.ok) {
+      return rateLimitError(limit.retryAfterSeconds, `Too many messages. Retry in ${limit.retryAfterSeconds}s`);
+    }
+
+    const parentDirectMessage = parentDirectMessageId
+      ? await db.directMessage.findFirst({
+          where: {
+            id: parentDirectMessageId,
+            conversationId,
+            deleted: false,
+          },
+          select: {
+            id: true,
+            member: {
+              select: {
+                profileId: true,
+              },
+            },
+          },
+        })
+      : null;
+
+    if (parentDirectMessageId && !parentDirectMessage) {
+      return apiError("Parent message not found", 404);
+    }
+
+    const message = await db.directMessage.create({
+      data: {
+        content,
+        fileUrl,
+        parentDirectMessageId: parentDirectMessage?.id,
+        conversationId,
+        memberId: member.id,
+      },
+      include: directMessageInclude(member.id),
+    });
+
+    const otherMember = conversation.memberOne.id === member.id
+      ? conversation.memberTwo
+      : conversation.memberOne;
+    const notificationTargetId = parentDirectMessage?.member.profileId ?? otherMember.profileId;
+
+    if (notificationTargetId !== profile.id) {
+      const notification = {
+        type: parentDirectMessage ? NotificationType.REPLY : NotificationType.DIRECT_MESSAGE,
+        actorId: profile.id,
+        targetId: notificationTargetId,
+        conversationId,
+        directMessageId: message.id,
+        metadata: { preview: content.slice(0, 160) },
+      };
+
+      await db.notification.create({ data: notification });
+      await sendPushNotification(notificationTargetId, notificationPushPayload({
+        title: parentDirectMessage ? `${profile.name} ответил(а) вам` : `${profile.name} написал(а) вам`,
+        preview: content,
+        url: `/servers/${member.serverId}/conversations/${member.id}`,
+      }));
+    }
+
+    await broadcast(`chat:${conversationId}:messages`, { id: message.id, action: "add" });
+
+    return Response.json(message);
+  } catch (error) {
+    console.log("[DIRECT_MESSAGES_POST]", error);
     return apiError("Internal Error", 500);
   }
 }
