@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     const profile = await currentProfile();
     if (!profile) return unauthorized();
 
-    const limit = checkRateLimit({
+    const limit = await checkRateLimit({
       key: rateLimitKey("messages:search", profile.id, profile.id),
       limit: 20,
       windowMs: 60_000,

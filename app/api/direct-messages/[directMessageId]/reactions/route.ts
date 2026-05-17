@@ -1,7 +1,7 @@
 import { NotificationType } from "@prisma/client";
 import { z } from "zod";
 
-import { apiError, forbidden, notFound, unauthorized, validationError } from "@/lib/api-response";
+import { apiError, forbidden, notFound, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
 import { directMessageInclude } from "@/lib/chat-includes";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
@@ -72,14 +72,14 @@ export async function POST(req: Request, context: { params: Promise<{ directMess
 
     if (!canReactToMessage(member)) return forbidden();
 
-    const limit = checkRateLimit({
-      key: rateLimitKey("direct-message:reaction", profile.id, directMessage.id),
-      limit: 40,
+    const limit = await checkRateLimit({
+      key: rateLimitKey("direct-message:reaction", profile.id, "global"),
+      limit: 60,
       windowMs: 60_000,
     });
 
     if (!limit.ok) {
-      return apiError(`Too many reactions. Retry in ${limit.retryAfterSeconds}s`, 429);
+      return rateLimitError(limit.retryAfterSeconds, `Too many reactions. Retry in ${limit.retryAfterSeconds}s`);
     }
 
     const existing = await db.directMessageReaction.findUnique({

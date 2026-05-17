@@ -54,7 +54,7 @@ export const YouTubeWatchRoom = ({
       videoId: string;
       time?: number;
     }) => {
-      await fetch("/api/socket/watch", {
+      await fetch("/api/watch", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -104,7 +104,7 @@ export const YouTubeWatchRoom = ({
 
   useEffect(() => {
     const load = async () => {
-      const response = await fetch(`/api/socket/watch?serverId=${serverId}&channelId=${channelId}`);
+      const response = await fetch(`/api/watch?serverId=${serverId}&channelId=${channelId}`);
       if (!response.ok) return;
 
       const payload = await response.json();

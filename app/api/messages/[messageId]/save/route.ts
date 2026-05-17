@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-import { apiError, forbidden, notFound, unauthorized, validationError } from "@/lib/api-response";
+import { apiError, forbidden, notFound, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { canSaveMessage } from "@/lib/permissions";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,16 @@ export async function POST(_req: Request, context: { params: Promise<{ messageId
 
     if (!member) return unauthorized();
     if (!canSaveMessage(member)) return forbidden();
+
+    const limit = await checkRateLimit({
+      key: rateLimitKey("message:save", profile.id, "global"),
+      limit: 30,
+      windowMs: 60_000,
+    });
+
+    if (!limit.ok) {
+      return rateLimitError(limit.retryAfterSeconds, `Too many save requests. Retry in ${limit.retryAfterSeconds}s`);
+    }
 
     const existing = await db.savedMessage.findUnique({
       where: { memberId_messageId: { memberId: member.id, messageId: message.id } },
