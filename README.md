@@ -16,8 +16,6 @@
 
 🔗 **Production:** [boltushka24.vercel.app](https://boltushka24.vercel.app)
 
-![Boltushka24 demo](docs/assets/demo.gif)
-
 </div>
 
 ---
@@ -160,32 +158,9 @@ The hardest parts were:
 
 ---
 
-## Screenshots
+## Demo
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="docs/assets/desktop-chat.png" alt="Desktop chat" />
-      <br/><sub><b>Desktop</b> · Channel chat</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="docs/assets/mobile-chat.png" alt="Mobile chat" width="260" />
-      <br/><sub><b>Mobile</b> · Chat interface</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="docs/assets/mobile-drawer.png" alt="Mobile drawer" width="260" />
-      <br/><sub><b>Mobile</b> · Server drawer</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="3">
-      <img src="docs/assets/mobile-settings.png" alt="Mobile profile menu" width="260" />
-      <br/><sub><b>Mobile</b> · Profile and settings menu</sub>
-    </td>
-  </tr>
-</table>
-
-📽️ **Video demo:** [`docs/assets/demo.mp4`](docs/assets/demo.mp4)
+The production demo is available here: [boltushka24.vercel.app](https://boltushka24.vercel.app)
 
 ---
 
