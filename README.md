@@ -1,10 +1,11 @@
 <div align="center">
 
-# 💬 Болтушка 24
+# 💬 Boltushka24
 
-**Современный мессенджер-платформа с серверами, голосовыми каналами, прямыми сообщениями и совместным просмотром YouTube**
+**A full-stack community messenger with servers, realtime chat, voice channels, direct messages, user activity systems, and synchronized YouTube watch rooms.**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%7C%20Realtime%20%7C%20Storage-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
@@ -15,144 +16,216 @@
 
 🔗 **Production:** [boltushka24.vercel.app](https://boltushka24.vercel.app)
 
-![Демо Болтушка24](docs/assets/demo.gif)
+![Boltushka24 demo](docs/assets/demo.gif)
 
 </div>
 
 ---
 
-## 📖 О проекте
+## What is Boltushka24?
 
-**Болтушка 24** — full-stack мессенджер, вдохновлённый Discord и Telegram. Создавайте сообщества-серверы, текстовые и голосовые каналы, общайтесь в DM, совершайте видеозвонки и смотрите YouTube синхронно с друзьями.
+**Boltushka24** is my own full-stack messenger platform — basically a cozy, self-built “chat hub” inspired by Discord and Telegram, but focused on being lightweight, fast, mobile-friendly, and fun to use.
 
-Всё приложение полностью локализовано на **русский язык** — от интерфейса авторизации до модальных окон.
+The project solves a real problem: most small communities need more than a basic group chat, but running a polished communication platform usually requires many separate tools for servers, channels, direct messages, voice rooms, file uploads, moderation, notifications, and activity tracking. Boltushka24 brings those pieces into one web app with a modern stack and a clean user experience.
 
-## ✨ Возможности
-
-### 💬 Общение
-- **Серверы-сообщества** с ролями `ADMIN`, `MODERATOR`, `GUEST` и приглашениями по ссылке
-- **Текстовые каналы** с Markdown-подобными сообщениями, эмодзи и вложениями
-- **Прямые сообщения** (1-на-1 Conversations) между участниками одного сервера
-- **Мгновенная оптимистичная отправка** — сообщение появляется в UI до ответа сервера
-- **Редактирование и удаление** сообщений с визуальными индикаторами
-- **Reactions, replies, pinned и saved messages** — быстрые реакции, цитирование, закрепления и личное избранное
-- **Поиск по сообщениям** внутри каналов и личных диалогов
-- **Черновики, typing indicators, Markdown-lite и slash commands** — draft per chat, безопасный markdown-render и команды `/shrug`, `/me`, `/poll`, `/gif`, `/help`
-- **Опросы, GIF и превью ссылок** — `/poll "Вопрос" "Да" "Нет"`, Tenor proxy для GIF и серверный кэш Open Graph preview
-- **Realtime** на базе Supabase Realtime (signal-only broadcast + authenticated refetch)
-
-### 🎙️ Голос и видео
-- **Голосовые каналы** — WebRTC через [LiveKit](https://livekit.io/)
-- **Видеозвонки в DM** — кнопка старта видеосессии прямо из чата
-- **Комната совместного просмотра YouTube** — синхронизация play/pause/seek между всеми участниками канала
-
-### 🏆 Рейтинг и активность
-- **Лидерборд сервера** с прозрачной формулой расчёта рейтинга
-- Учёт сообщений в каналах (1.0x) + DM (1.2x) + бонус за активность последних 30 дней (0.6x / 0.9x)
-- **Настройки пользователя и статусы** — тема, compact mode, уведомления, звуки, online/idle/dnd/invisible и custom status
-- **Центр уведомлений** — replies, mentions, reactions, pins и новые DM
-
-### 📱 Мобильный UX
-- **Адаптивный дизайн** с viewport-units `100dvh` (корректно работает с iOS Safari)
-- **Drawer-навигация** — выезжающая панель серверов/каналов на мобильных
-- **PWA и offline outbox** — установка на устройство, service worker и очередь отправки сообщений при потере сети
-- **Глобальный command palette** — `Ctrl/Cmd+K` для переходов, поиска, создания каналов, настроек, темы и выхода
-- **Крупные touch-таргеты** (≥44×44px), safe-area-inset-bottom, отсутствие page-level скролла
-- **True optimistic updates** — сообщения отображаются до ответа сервера даже на медленных соединениях
-
-### 🔒 Безопасность и инфраструктура
-- **Clerk** — аутентификация (email + magic link, OAuth-провайдеры, 2FA)
-- **Supabase RLS** — изоляция данных между пользователями на уровне БД
-- **Signal-only Realtime** — через публичный канал транслируется только `{id, action}`, контент фетчится через аутентифицированный API
-- **Prisma** — типобезопасный ORM с композитными индексами для чата
-- **Централизованные permissions** — единый слой `lib/permissions.ts` поверх ADMIN/MODERATOR/GUEST
-- **Custom server roles** — дополнительные роли с granular permissions и назначением участникам
-- **Rate limiting** — in-memory защита для dev/single runtime с production note про Redis/Upstash
+It supports community servers, text channels, direct messages, realtime updates, voice/video communication, YouTube watch-together sessions, roles, permissions, leaderboards, notifications, mobile navigation, optimistic chat sending, and PWA/offline behavior.
 
 ---
 
-## 🖼️ Скриншоты
+## Core idea
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="docs/assets/desktop-chat.png" alt="Десктоп: канал и чат" />
-      <br/><sub><b>Десктоп</b> · Канал с сообщениями</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="docs/assets/mobile-chat.png" alt="Мобильный: чат" width="260" />
-      <br/><sub><b>Мобильный</b> · Чат-интерфейс</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="docs/assets/mobile-drawer.png" alt="Мобильный: drawer-меню" width="260" />
-      <br/><sub><b>Мобильный</b> · Drawer с серверами</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="3">
-      <img src="docs/assets/mobile-settings.png" alt="Мобильное меню профиля" width="260" />
-      <br/><sub><b>Мобильный</b> · Меню профиля (Настройки аккаунта + Выход)</sub>
-    </td>
-  </tr>
-</table>
+Boltushka24 is built around the idea of a **server-based social space**:
 
-📽️ **Видео-демо:** [`docs/assets/demo.mp4`](docs/assets/demo.mp4) (полноценная демонстрация всех мобильных фиксов)
+1. A user signs in with Clerk.
+2. They create or join a server using an invite link.
+3. Inside a server, members can chat in channels, send DMs, use reactions, replies, pinned messages, saved messages, polls, GIFs, attachments, and slash commands.
+4. Supabase Realtime sends lightweight signals when something changes.
+5. The client refetches the actual content through authenticated API routes, which keeps private messages safer than broadcasting full message payloads publicly.
+6. LiveKit powers voice and video rooms.
+7. Prisma and PostgreSQL store the app state, roles, messages, reactions, notifications, watch sessions, and activity data.
 
 ---
 
-## 🧱 Технологический стек
+## Why this project matters
 
-| Слой | Технологии |
-|------|-----------|
-| **Frontend** | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Radix UI, shadcn/ui |
-| **Auth** | Clerk (русская локализация `@clerk/localizations/ruRU`) |
-| **База данных** | PostgreSQL (Supabase), Prisma 5 |
-| **Realtime** | Supabase Realtime (broadcast + presence) |
-| **Файлы** | Supabase Storage (аватары, вложения) |
-| **WebRTC** | LiveKit (голос, видео) |
-| **State** | TanStack Query (React Query), Zustand |
-| **Формы** | React Hook Form + Zod |
-| **Хостинг** | Vercel (Edge + Node runtime) |
+This project was not just a UI experiment. It is a real engineering playground where I practiced building a production-style realtime application with authentication, database modeling, permissions, realtime events, media workflows, mobile UX, and deployment.
+
+The hardest parts were:
+
+- keeping realtime chat fast without leaking private message content;
+- making optimistic sending feel instant even on slow networks;
+- building a mobile layout that behaves correctly on iOS Safari;
+- combining server communities, DMs, voice, video, watch rooms, and notifications in one structure;
+- keeping permissions centralized so admin/moderator/guest behavior stays predictable.
 
 ---
 
-## 🏗️ Архитектура
+## Features
 
-```
+### Messaging
+
+- Community servers with invite links
+- Server roles: `ADMIN`, `MODERATOR`, `GUEST`
+- Text channels with realtime message updates
+- Direct 1-on-1 messages between members
+- Optimistic message sending with temporary client IDs
+- Message editing and deletion
+- Reactions, replies, pinned messages, and saved messages
+- Search inside channels and direct messages
+- Typing indicators and draft messages
+- Markdown-lite rendering
+- Slash commands: `/shrug`, `/me`, `/poll`, `/gif`, `/help`
+- Polls, GIF support, and Open Graph link previews
+
+### Voice, video, and watch rooms
+
+- Voice channels powered by LiveKit
+- Direct video calls
+- YouTube watch-together rooms
+- Synchronized play, pause, and seek state
+- Watch room presence and queue logic
+
+### Activity and personalization
+
+- Server leaderboard with transparent scoring
+- Rating based on channel messages, DM activity, and recent activity bonuses
+- User status: online, idle, DND, invisible, custom status
+- User settings: theme, compact mode, notifications, sounds
+- Notification center for replies, mentions, reactions, pins, and DMs
+
+### Mobile and PWA
+
+- Responsive UI built for desktop and mobile
+- iOS-friendly `100dvh` layout handling
+- Mobile drawer navigation for servers and channels
+- PWA manifest and install support
+- Service worker and offline outbox
+- Large touch targets and safe-area handling
+- Global command palette with `Ctrl/Cmd + K`
+
+### Security and infrastructure
+
+- Clerk authentication
+- Supabase PostgreSQL database
+- Supabase Storage for avatars and attachments
+- Supabase Realtime with signal-only broadcasts
+- Prisma ORM with typed database access
+- Centralized permissions in `lib/permissions.ts`
+- Custom server roles with granular permissions
+- Rate limiting for sensitive actions
+
+---
+
+## Tech stack
+
+| Layer | Technologies |
+|------|--------------|
+| Frontend | Next.js 16 App Router, React 19, TypeScript, Tailwind CSS, Radix UI, shadcn/ui |
+| Auth | Clerk |
+| Database | PostgreSQL on Supabase, Prisma 5 |
+| Realtime | Supabase Realtime |
+| Storage | Supabase Storage |
+| Voice / Video | LiveKit WebRTC |
+| State | TanStack Query, Zustand |
+| Forms | React Hook Form, Zod |
+| Deployment | Vercel |
+
+---
+
+## Architecture
+
+```text
 ┌──────────────────────────────────────────────────────────┐
-│                    Next.js 16 (Vercel)                   │
+│                    Next.js 16 on Vercel                  │
 │  ┌────────────────┐  ┌─────────────────┐  ┌───────────┐  │
 │  │  App Router    │  │  API Routes     │  │ Pages API │  │
-│  │  (RSC + Client)│  │  (Server Comp.) │  │ (socket)  │  │
+│  │  RSC + Client  │  │  Server Logic   │  │ Socket    │  │
 │  └───────┬────────┘  └────────┬────────┘  └─────┬─────┘  │
 └──────────┼────────────────────┼─────────────────┼────────┘
            │                    │                 │
      ┌─────▼──────┐      ┌──────▼──────┐   ┌──────▼──────┐
      │   Clerk    │      │   Supabase  │   │   LiveKit   │
-     │   (Auth)   │      │  ┌────────┐ │   │   (WebRTC)  │
-     └────────────┘      │  │Postgres│ │   └─────────────┘
-                         │  │Storage │ │
-                         │  │Realtime│ │
-                         │  └────────┘ │
+     │   Auth     │      │ PostgreSQL  │   │   WebRTC    │
+     └────────────┘      │ Storage     │   └─────────────┘
+                         │ Realtime    │
                          └─────────────┘
 ```
 
-**Ключевые паттерны:**
+### Key patterns
 
-- **RSC-first** — страницы — Server Components, клиентские обёртки только где нужны обработчики событий
-- **Signal-only Realtime** — `broadcast({ id, action })` → `queryClient.invalidateQueries` → authenticated refetch через API. Публичный канал не утекает содержимое DM
-- **Optimistic temp-id** — клиент вставляет сообщение с `temp-<timestamp>-<random>` до `POST`, заменяет real-id после ответа, откатывает на ошибке
+- **RSC-first structure:** server components by default, client wrappers only where interactive behavior is needed.
+- **Signal-only realtime:** realtime events broadcast only `{ id, action }`; the client then performs an authenticated refetch.
+- **Optimistic temp IDs:** messages appear instantly with temporary IDs and are replaced with real database IDs after the API response.
+- **Centralized permissions:** role checks are handled in one layer instead of being duplicated across the app.
 
 ---
 
-## 🚀 Быстрый старт
+## Screenshots
 
-### Требования
-- Node.js 18+ или 20+
-- pnpm / npm / yarn
-- Аккаунты: [Clerk](https://clerk.com/), [Supabase](https://supabase.com/), [LiveKit](https://livekit.io/) (Free tier везде)
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="docs/assets/desktop-chat.png" alt="Desktop chat" />
+      <br/><sub><b>Desktop</b> · Channel chat</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/assets/mobile-chat.png" alt="Mobile chat" width="260" />
+      <br/><sub><b>Mobile</b> · Chat interface</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/assets/mobile-drawer.png" alt="Mobile drawer" width="260" />
+      <br/><sub><b>Mobile</b> · Server drawer</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="3">
+      <img src="docs/assets/mobile-settings.png" alt="Mobile profile menu" width="260" />
+      <br/><sub><b>Mobile</b> · Profile and settings menu</sub>
+    </td>
+  </tr>
+</table>
 
-### 1. Клонирование и установка
+📽️ **Video demo:** [`docs/assets/demo.mp4`](docs/assets/demo.mp4)
+
+---
+
+## Data model
+
+```text
+Profile 1:N Server
+Profile 1:N Member
+Server 1:N Channel
+Server 1:N ChannelCategory
+Server 1:N Member
+Channel 1:N Message
+Member 1:N Message
+Member M:N Conversation
+Conversation 1:N DirectMessage
+Message 1:N MessageReaction / SavedMessage / Notification
+DirectMessage 1:N DirectMessageReaction / SavedDirectMessage / Notification
+```
+
+Important indexes include `Message(channelId, createdAt)` and `DirectMessage(conversationId, createdAt)` for efficient chat pagination.
+
+More details are available in:
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/API.md`](docs/API.md)
+- [`docs/FEATURES.md`](docs/FEATURES.md)
+
+---
+
+## Quick start
+
+### Requirements
+
+- Node.js 18+ or 20+
+- pnpm, npm, or yarn
+- Clerk account
+- Supabase project
+- LiveKit project
+
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/1notlov3/Boltushka24.git
@@ -160,25 +233,25 @@ cd Boltushka24
 npm install
 ```
 
-### 2. Переменные окружения
+### 2. Environment variables
 
-Создай файл `.env` в корне проекта:
+Create a `.env` file in the project root:
 
 ```env
-# Supabase (Postgres + Storage + Realtime)
+# Supabase
 DATABASE_URL="postgresql://postgres.xxx:PASSWORD@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 DIRECT_URL="postgresql://postgres.xxx:PASSWORD@aws-0-eu-west-1.pooler.supabase.com:5432/postgres"
 NEXT_PUBLIC_SUPABASE_URL="https://xxx.supabase.co"
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="sb_publishable_xxx"
 SUPABASE_SECRET_KEY="sb_secret_xxx"
 
-# Clerk (Auth)
+# Clerk
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_xxx"
 CLERK_SECRET_KEY="sk_test_xxx"
 NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
 NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
 
-# LiveKit (Voice / Video)
+# LiveKit
 LIVEKIT_API_KEY="APIxxx"
 LIVEKIT_API_SECRET="secret_xxx"
 NEXT_PUBLIC_LIVEKIT_URL="wss://xxx.livekit.cloud"
@@ -194,170 +267,136 @@ VAPID_PRIVATE_KEY=""
 VAPID_SUBJECT="mailto:admin@example.com"
 ```
 
-### 3. Миграции БД и Storage bucket
+### 3. Database and storage setup
 
 ```bash
-# Сгенерировать Prisma клиент и применить миграции
 npm run prisma:generate
 npm run prisma:migrate
-
-# В Supabase Dashboard → Storage → New bucket:
-#   name: uploads, public: true
 ```
 
-### 4. Запуск
+In Supabase Dashboard, create a public Storage bucket named `uploads`.
+
+### 4. Run locally
 
 ```bash
-pnpm dev           # http://localhost:3000
-pnpm build         # production-сборка
-pnpm lint          # eslint проверка
-pnpm typecheck     # TypeScript проверка
-pnpm test          # unit checks чистых helpers
+pnpm dev        # http://localhost:3000
+pnpm build      # production build
+pnpm lint       # lint check
+pnpm typecheck  # TypeScript check
+pnpm test       # helper unit checks
 ```
 
 ---
 
-## 📂 Структура проекта
+## Project structure
 
-```
+```text
 Boltushka24/
 ├── app/
-│   ├── (auth)/             # Clerk sign-in / sign-up (русская локализация)
-│   ├── (invite)/           # Страница приглашения по коду
+│   ├── (auth)/
+│   ├── (invite)/
 │   ├── (main)/
 │   │   └── (routes)/servers/[serverId]/
-│   │       ├── channels/[channelId]/       # Текстовый канал
-│   │       │   └── watch/                  # Совместный YouTube
-│   │       └── conversations/[memberId]/   # Прямое сообщение 1:1
-│   ├── api/                # App Router API (channels, members, ratings, servers)
-│   └── setup/              # Создание первого сервера
+│   │       ├── channels/[channelId]/
+│   │       │   └── watch/
+│   │       └── conversations/[memberId]/
+│   ├── api/
+│   └── setup/
 ├── components/
-│   ├── chat/               # Chat header, messages, input, items
-│   ├── modals/             # Create server, invite, edit, rating modals
-│   ├── navigation/         # Navigation sidebar (левая колонка серверов)
-│   ├── server/             # Server sidebar, channels, members
-│   ├── watch/              # YouTube Watch-Together room
-│   ├── ui/                 # shadcn/ui примитивы
-│   ├── mobile-toggle.tsx         # Мобильный гамбургер
-│   └── mobile-sheet-content.tsx  # Client-wrapper для SheetContent (RSC-граница)
+│   ├── chat/
+│   ├── modals/
+│   ├── navigation/
+│   ├── server/
+│   ├── watch/
+│   ├── ui/
+│   ├── mobile-toggle.tsx
+│   └── mobile-sheet-content.tsx
 ├── lib/
-│   ├── db.ts                  # Prisma singleton
-│   ├── supabase.ts            # Supabase клиенты (browser + admin)
-│   ├── realtime.ts            # Realtime каналы + signal-only broadcast
-│   ├── permissions.ts         # Централизованные роли и permissions
-│   ├── message-formatting.ts  # Markdown-lite + slash commands
-│   ├── youtube.ts             # YouTube URL parser
-│   ├── current-profile.ts     # Получение профиля из Clerk в RSC
-│   └── initial-profile.ts     # Создание Profile при первом логине
+│   ├── db.ts
+│   ├── supabase.ts
+│   ├── realtime.ts
+│   ├── permissions.ts
+│   ├── message-formatting.ts
+│   ├── youtube.ts
+│   ├── current-profile.ts
+│   └── initial-profile.ts
 ├── prisma/
-│   └── schema.prisma          # Модели: Profile, Server, Member, Channel, Message, Conversation, DirectMessage
-├── docs/                      # Architecture, API, deployment, features
-└── pages/api/socket/          # Legacy Pages API (сообщения, DM, watch)
+│   └── schema.prisma
+├── docs/
+└── pages/api/socket/
 ```
 
 ---
 
-## 🗄️ Модель данных
+## v2.0 highlights
 
-```
-Profile 1:N Server     (владелец серверов)
-Profile 1:N Member     (участник множества серверов)
-Server 1:N Channel     (каналы внутри сервера: TEXT / AUDIO / VIDEO)
-Server 1:N ChannelCategory
-Server 1:N Member      (участники сервера с ролями)
-Channel 1:N Message    (сообщения в канале)
-Member 1:N Message     (автор сообщения)
-Member M:N Conversation (DM между двумя участниками)
-Conversation 1:N DirectMessage
-Message 1:N MessageReaction / SavedMessage / Notification
-DirectMessage 1:N DirectMessageReaction / SavedDirectMessage / Notification
-```
+Branch `v2` is the production upgrade line. It includes shipped migrations, phase tags, and a CI gate.
 
-Композитные индексы: `Message(channelId, createdAt)`, `DirectMessage(conversationId, createdAt)` для быстрой пагинации чата.
-
-Полное описание новых моделей и API: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/API.md`](docs/API.md), [`docs/FEATURES.md`](docs/FEATURES.md).
+- Migrated legacy chat APIs toward App Router handlers.
+- Added shared HTTP/API error helpers.
+- Improved query invalidation and realtime refetch patterns.
+- Added virtualized long chats.
+- Added read states, unread counters, threads, replies, pinned/saved messages, reactions, polls, link previews, GIF proxy, stickers, voice messages, image lightbox, and uploads.
+- Added presence, idle/DND/invisible states, custom status, typing broadcasts, online counts, and sidebar typing hints.
+- Added database-backed YouTube watch sessions.
+- Added PWA install support, service worker, offline outbox, and Web Push subscriptions.
+- Added custom roles, channel slow mode, global search, command palette, message forwarding, and audit-backed admin actions.
+- Added CI workflow for install, Prisma generation, typecheck, lint, and build.
 
 ---
 
-## 📡 Деплой на Vercel
+## Deployment on Vercel
 
-1. Fork репозитория
-2. Создай проект в [Vercel](https://vercel.com/new), привяжи GitHub
-3. Добавь все env-переменные из раздела [Быстрый старт](#-быстрый-старт) во вкладке **Environment Variables**
-4. Deploy — Vercel автоматически запустит `npm run build` и задеплоит
+1. Fork this repository.
+2. Create a new Vercel project and connect GitHub.
+3. Add the required environment variables.
+4. Deploy.
+5. Run production migrations with:
 
-После деплоя:
-- Выполни миграции через `npm run prisma:deploy` (`prisma migrate deploy`), не `prisma db push`
-- В **Clerk Dashboard** → Paths → добавь домен Vercel в `signInUrl`
-- В **Supabase Dashboard** → Authentication → URL Configuration → добавь домен как Site URL
-- В **LiveKit Cloud** → Project → Settings → добавь домен в CORS origins
-
----
-
-## v2.0 changes
-
-Branch `v2` is the production upgrade line. It replaces the old upgrade plan with shipped migrations, phase tags, and a CI gate.
-
-- **Performance and App Router:** moved legacy chat APIs into App Router handlers, added shared HTTP/API error helpers, query invalidation, virtualized long chats, and safer realtime refetch patterns.
-- **Chat depth:** read states, unread counters, document title unread state, threads, replies, pinned/saved messages, reactions, polls, link previews, Tenor GIF proxy, stickers manifest, voice messages, image lightbox, and attachment upload.
-- **Presence and realtime:** server presence, idle/DND/invisible states, custom status, typing broadcasts, online counts, and sidebar typing hints.
-- **Watch together:** database-backed YouTube sessions, queue, synchronized controls, presence, and mini-chat.
-- **PWA:** install manifest, generated icons, service worker, offline outbox, and Web Push subscriptions for mentions, replies, channel messages, and DM notifications.
-- **Moderation and admin:** custom server roles, role assignment, channel slow-mode, global search with date/author filters, command palette, message forwarding, and audit-backed channel/member actions.
-- **Deployment:** Prisma migrations are committed, `npm run prisma:deploy` is the production migration command, `.github/workflows/ci.yml` runs install, Prisma generate, typecheck, lint, and build.
-
-New optional env vars for v2: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `TENOR_API_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT`.
-
----
-
-## 🗺️ Roadmap
-
-- [x] **Push-уведомления** (Web Push API)
-- [ ] **Темизация каналов** (категории, цвета, иконки)
-- [x] **Threads** — ветки обсуждений внутри сообщений
-- [ ] **Бот API** — вебхуки для интеграций
-- [ ] **Screen sharing** в голосовых каналах (LiveKit уже поддерживает)
-- [x] **Stickers и GIF-picker** через локальный sticker manifest и Tenor proxy
-- [ ] **E2E-шифрование DM** (через libsodium)
-- [x] **PWA** — установка как приложение, offline-first
-
----
-
-## 🤝 Разработка
-
-### Workflow
-- Основная ветка: `master` (всегда деплоится на прод)
-- Feature-ветки: `devin/<timestamp>-<name>` или `feat/<name>`
-- PR обязателен — CI прогоняет lint + typecheck + build
-
-### Команды
 ```bash
-pnpm dev              # dev-сервер
-pnpm build            # production build
-pnpm lint             # ESLint
-pnpm typecheck        # TypeScript
-pnpm test             # helper unit checks
-npm run prisma:generate  # Prisma client
-npm run prisma:migrate   # локальная dev-миграция
-npm run prisma:deploy    # production migrate deploy
-pnpm prisma studio    # GUI для БД
-npm run prisma:migrate -- --name <name>  # новая миграция
+npm run prisma:deploy
 ```
 
-### История ключевых релизов
-
-| PR | Описание |
-|----|----------|
-| [#293](https://github.com/1notlov3/Boltushka24/pull/293) | Миграция с MySQL на Supabase (Postgres + Storage + Realtime) |
-| [#295](https://github.com/1notlov3/Boltushka24/pull/295) | Закрытие утечки DM на публичных Realtime-каналах |
-| [#296](https://github.com/1notlov3/Boltushka24/pull/296) | Optimistic chat + мобильный редизайн |
-| [#297](https://github.com/1notlov3/Boltushka24/pull/297) | iOS viewport, focus-ring, drawer auto-tooltip, settings, true optimistic |
-| [#298](https://github.com/1notlov3/Boltushka24/pull/298) | Исправление SSR-крэша (RSC-граница) |
-| [#300](https://github.com/1notlov3/Boltushka24/pull/300) | Reactions, replies, pinned/saved messages, search, typing indicators, notifications, user settings, channel categories, audit logs, rate limiting |
+After deployment, add the production domain to Clerk, Supabase, and LiveKit settings where required.
 
 ---
 
-## 📝 Лицензия
+## Roadmap
+
+- [x] Web Push notifications
+- [x] Threads inside messages
+- [x] Stickers and GIF picker
+- [x] PWA install support and offline outbox
+- [ ] Channel theming with colors and icons
+- [ ] Bot API and webhooks
+- [ ] Screen sharing in voice channels
+- [ ] End-to-end encryption for DMs
+
+---
+
+## Development workflow
+
+- Main branch: `master`
+- Feature branches: `devin/<timestamp>-<name>` or `feat/<name>`
+- Pull requests should pass lint, typecheck, and build before merge.
+
+Useful commands:
+
+```bash
+pnpm dev
+pnpm build
+pnpm lint
+pnpm typecheck
+pnpm test
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:deploy
+pnpm prisma studio
+```
+
+---
+
+## License
 
 [MIT](LICENSE) © 1notlov3
 
@@ -365,8 +404,8 @@ npm run prisma:migrate -- --name <name>  # новая миграция
 
 <div align="center">
 
-Если проект оказался полезен — поставь ⭐ на GitHub!
+If you like this project, give it a ⭐ on GitHub.
 
-Made with ❤️ in Russia
+Built with ❤️ by 1notlov3
 
 </div>
