@@ -12,13 +12,25 @@ type TypingPayload = {
 };
 
 const TYPING_EVENT = "typing";
-const TYPING_TTL = 3500;
+export const TYPING_TTL = 3500;
+
+export function upsertTypingUser(current: TypingPayload[], payload: TypingPayload) {
+  return [
+    ...current.filter((item) => item.memberId !== payload.memberId),
+    payload,
+  ];
+}
+
+export function removeTypingUser(current: TypingPayload[], memberId: string) {
+  return current.filter((item) => item.memberId !== memberId);
+}
 
 export function useTypingIndicator(chatId: string, currentMemberId: string, serverId?: string) {
   const topic = useMemo(() => `typing:${chatId}`, [chatId]);
   const serverTopic = useMemo(() => serverId ? `typing:server:${serverId}` : null, [serverId]);
   const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowser>["channel"]> | null>(null);
   const serverChannelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowser>["channel"]> | null>(null);
+  const expiryTimersRef = useRef<Map<string, number>>(new Map());
   const [typing, setTyping] = useState<TypingPayload[]>([]);
 
   useEffect(() => {
@@ -30,14 +42,18 @@ export function useTypingIndicator(chatId: string, currentMemberId: string, serv
       const payload = event.payload;
       if (!payload?.memberId || payload.memberId === currentMemberId) return;
 
-      setTyping((current) => [
-        ...current.filter((item) => item.memberId !== payload.memberId),
-        payload,
-      ]);
+      setTyping((current) => upsertTypingUser(current, payload));
 
-      window.setTimeout(() => {
-        setTyping((current) => current.filter((item) => item.memberId !== payload.memberId));
+      const existingTimer = expiryTimersRef.current.get(payload.memberId);
+      if (existingTimer) {
+        window.clearTimeout(existingTimer);
+      }
+
+      const nextTimer = window.setTimeout(() => {
+        expiryTimersRef.current.delete(payload.memberId);
+        setTyping((current) => removeTypingUser(current, payload.memberId));
       }, TYPING_TTL);
+      expiryTimersRef.current.set(payload.memberId, nextTimer);
     });
 
     channel.subscribe();
@@ -48,7 +64,12 @@ export function useTypingIndicator(chatId: string, currentMemberId: string, serv
     serverChannelRef.current = serverChannel;
     serverChannel?.subscribe();
 
+    const expiryTimers = expiryTimersRef.current;
+
     return () => {
+      expiryTimers.forEach((timer) => window.clearTimeout(timer));
+      expiryTimers.clear();
+      setTyping([]);
       supabase.removeChannel(channel);
       if (serverChannel) {
         supabase.removeChannel(serverChannel);

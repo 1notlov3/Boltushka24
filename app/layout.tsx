@@ -25,6 +25,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
   themeColor: "#6366f1",
 };
 
@@ -38,7 +41,7 @@ export default function RootLayout({
       <html lang="ru" suppressHydrationWarning>
         <body className={cn(
             font.className,
-            "bg-white dark:bg-[#313338]"
+            "min-h-dvh overflow-hidden bg-white overscroll-none dark:bg-[#313338]"
           )}>
             <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="boltushka-theme">
               <SocketProvider>

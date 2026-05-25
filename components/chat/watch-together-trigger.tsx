@@ -15,7 +15,7 @@ export const WatchTogetherTrigger = ({ serverId, channelId }: WatchTogetherTrigg
   return (
     <button
       onClick={() => onOpen("watchTogether", { query: { serverId, channelId } })}
-      className="hover:opacity-75 transition mr-2"
+      className="rounded-md p-2 transition hover:bg-zinc-100 hover:opacity-75 dark:hover:bg-zinc-800 sm:mr-1"
       title="Совместный просмотр YouTube"
       aria-label="Совместный просмотр YouTube"
     >
