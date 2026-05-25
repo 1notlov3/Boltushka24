@@ -190,9 +190,9 @@ Boltushka24 должен стать не просто клоном Discord/Teleg
 
 ## Следующие конкретные задачи после первой итерации
 
-1. Env validation: добавить `lib/env.ts` с zod-схемой и безопасными ошибками.
-2. Home Inbox MVP: новая страница/компоненты с реальными данными unread/global.
-3. Group DM design doc + Prisma migration plan.
+1. Env validation: добавить `lib/env.ts` с zod-схемой и безопасными ошибками. — done.
+2. Home Inbox MVP: новая страница/компоненты с реальными данными unread/global. — done.
+3. Group DM foundation: additive Prisma-модель `ConversationParticipant`, миграция и сервисный слой. — done.
 4. Entertainment Pack 1: achievements schema and UI.
 5. Watch Together 2.0: queue voting and host controls.
 6. Discovery MVP: public server mode and directory.

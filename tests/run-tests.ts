@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { MemberRole } from "@prisma/client";
+import { ConversationParticipantRole, ConversationType, MemberRole } from "@prisma/client";
 
 const loadEnvFile = (path: string) => {
   if (!existsSync(path)) return;
@@ -88,6 +88,11 @@ async function main() {
   assert.equal(canDeleteMessage({ id: "m1", role: MemberRole.GUEST }, "m1"), true);
   assert.equal(canDeleteMessage({ id: "m2", role: MemberRole.MODERATOR }, "m1"), true);
   assert.equal(canEditMessage({ id: "m2", role: MemberRole.MODERATOR }, "m1"), false);
+  assert.equal(ConversationType.DIRECT, "DIRECT");
+  assert.equal(ConversationType.GROUP, "GROUP");
+  assert.equal(ConversationParticipantRole.OWNER, "OWNER");
+  assert.equal(ConversationParticipantRole.ADMIN, "ADMIN");
+  assert.equal(ConversationParticipantRole.MEMBER, "MEMBER");
 
   assert.equal(REACTION_LONG_PRESS_MS, 500);
   assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 18, y: 17 }), false);

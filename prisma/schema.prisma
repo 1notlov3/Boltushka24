@@ -66,6 +66,7 @@ model Server {
   channels          Channel[]
   channelCategories ChannelCategory[]
   serverRoles       ServerRole[]
+  conversations     Conversation[]
   auditLogs         AuditLog[]
   notifications     Notification[]
 
@@ -115,6 +116,8 @@ model Member {
 
   conversationsInitiated Conversation[] @relation("MemberOne")
   conversationsReceived  Conversation[] @relation("MemberTwo")
+  conversationsOwned     Conversation[] @relation("ConversationOwner")
+  conversationParticipants ConversationParticipant[]
   serverRoles            MemberServerRole[]
 
   createdAt DateTime @default(now())
@@ -250,8 +253,29 @@ model SavedMessage {
   @@index([messageId])
 }
 
+enum ConversationType {
+  DIRECT
+  GROUP
+}
+
+enum ConversationParticipantRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
 model Conversation {
   id String @id @default(uuid())
+
+  type     ConversationType @default(DIRECT)
+  name     String? @db.VarChar(120)
+  imageUrl String? @db.Text
+
+  serverId String?
+  server   Server? @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  ownerId String?
+  owner   Member? @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: SetNull)
 
   memberOneId String
   memberOne   Member @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
@@ -259,13 +283,45 @@ model Conversation {
   memberTwoId String
   memberTwo   Member @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
 
+  participants   ConversationParticipant[]
   directMessages DirectMessage[]
   readStates     ConversationReadState[]
   notifications  Notification[]
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([memberOneId, memberTwoId])
   @@index([memberOneId])
   @@index([memberTwoId])
+  @@index([type])
+  @@index([serverId])
+  @@index([ownerId])
+}
+
+model ConversationParticipant {
+  id String @id @default(uuid())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  role ConversationParticipantRole @default(MEMBER)
+
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+  mutedUntil  DateTime?
+  archivedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([conversationId, memberId])
+  @@index([memberId])
+  @@index([conversationId])
+  @@index([memberId, leftAt])
 }
 
 model DirectMessage {
