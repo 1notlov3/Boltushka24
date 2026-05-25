@@ -1,8 +1,9 @@
-import { NotificationType } from "@prisma/client";
+import { ConversationType, NotificationType } from "@prisma/client";
 import { z } from "zod";
 
 import { apiError, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
 import { directMessageInclude } from "@/lib/chat-includes";
+import { getConversationAccess } from "@/lib/conversation";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { canCreateMessage } from "@/lib/permissions";
@@ -49,46 +50,13 @@ export async function GET(
       }
     }
 
-    const conversation = await db.conversation.findFirst({
-      where: {
-        id: conversationId,
-        OR: [
-          {
-            memberOne: {
-              profileId: profile.id,
-            }
-          },
-          {
-            memberTwo: {
-              profileId: profile.id,
-            }
-          }
-        ]
-      },
-      select: {
-        id: true,
-        memberOne: {
-          select: {
-            id: true,
-            profileId: true,
-          },
-        },
-        memberTwo: {
-          select: {
-            id: true,
-            profileId: true,
-          },
-        },
-      }
-    });
+    const access = await getConversationAccess({ conversationId, profileId: profile.id });
 
-    if (!conversation) {
+    if (!access) {
       return unauthorized();
     }
 
-    const member = conversation.memberOne.profileId === profile.id
-      ? conversation.memberOne
-      : conversation.memberTwo;
+    const member = access.currentMember;
 
     const messages = await db.directMessage.findMany({
       take: MESSAGES_BATCH,
@@ -143,41 +111,12 @@ export async function POST(req: Request) {
     const { conversationId } = parsedQuery.data;
     const { content, fileUrl, parentDirectMessageId } = parsedBody.data;
 
-    const conversation = await db.conversation.findFirst({
-      where: {
-        id: conversationId,
-        OR: [
-          { memberOne: { profileId: profile.id } },
-          { memberTwo: { profileId: profile.id } },
-        ],
-      },
-      include: {
-        memberOne: {
-          select: {
-            id: true,
-            role: true,
-            profileId: true,
-            serverId: true,
-            serverRoles: { include: { role: { select: { permissions: true } } } },
-          },
-        },
-        memberTwo: {
-          select: {
-            id: true,
-            role: true,
-            profileId: true,
-            serverId: true,
-            serverRoles: { include: { role: { select: { permissions: true } } } },
-          },
-        },
-      },
-    });
+    const access = await getConversationAccess({ conversationId, profileId: profile.id });
 
-    if (!conversation) return apiError("Conversation not found", 404);
+    if (!access) return apiError("Conversation not found", 404);
 
-    const member = conversation.memberOne.profileId === profile.id
-      ? conversation.memberOne
-      : conversation.memberTwo;
+    const conversation = access.conversation;
+    const member = access.currentMember;
 
     if (!canCreateMessage(member)) return apiError("Forbidden", 403);
 
@@ -224,12 +163,20 @@ export async function POST(req: Request) {
       include: directMessageInclude(member.id),
     });
 
-    const otherMember = conversation.memberOne.id === member.id
-      ? conversation.memberTwo
-      : conversation.memberOne;
-    const notificationTargetId = parentDirectMessage?.member.profileId ?? otherMember.profileId;
+    const notificationTargetIds = parentDirectMessage
+      ? [parentDirectMessage.member.profileId]
+      : access.participants
+        .filter((participant) => participant.memberId !== member.id)
+        .map((participant) => participant.member.profileId);
+    const uniqueNotificationTargetIds = [...new Set(notificationTargetIds)].filter((targetId) => targetId !== profile.id);
+    const directOtherMember = conversation.type === ConversationType.DIRECT
+      ? (conversation.memberOne.id === member.id ? conversation.memberTwo : conversation.memberOne)
+      : null;
+    const notificationUrl = conversation.type === ConversationType.GROUP
+      ? `/servers/${member.serverId}/conversations/group/${conversationId}`
+      : `/servers/${member.serverId}/conversations/${directOtherMember?.id ?? member.id}`;
 
-    if (notificationTargetId !== profile.id) {
+    await Promise.all(uniqueNotificationTargetIds.map(async (notificationTargetId) => {
       const notification = {
         type: parentDirectMessage ? NotificationType.REPLY : NotificationType.DIRECT_MESSAGE,
         actorId: profile.id,
@@ -243,9 +190,9 @@ export async function POST(req: Request) {
       await sendPushNotification(notificationTargetId, notificationPushPayload({
         title: parentDirectMessage ? `${profile.name} ответил(а) вам` : `${profile.name} написал(а) вам`,
         preview: content,
-        url: `/servers/${member.serverId}/conversations/${member.id}`,
+        url: notificationUrl,
       }));
-    }
+    }));
 
     await broadcast(`chat:${conversationId}:messages`, { id: message.id, action: "add" });
 

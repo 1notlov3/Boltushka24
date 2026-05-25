@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { apiError, notFound, unauthorized, validationError } from "@/lib/api-response";
 import { directMessageInclude } from "@/lib/chat-includes";
+import { getConversationAccess } from "@/lib/conversation";
 import { logAudit } from "@/lib/audit";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
@@ -30,45 +31,22 @@ export async function GET(_req: Request, context: { params: Promise<{ directMess
     const parsedParams = ParamsSchema.safeParse(await context.params);
     if (!parsedParams.success) return validationError(parsedParams.error);
 
-    const conversation = await db.conversation.findFirst({
-      where: {
-        directMessages: {
-          some: {
-            id: parsedParams.data.directMessageId,
-          },
-        },
-        OR: [
-          { memberOne: { profileId: profile.id } },
-          { memberTwo: { profileId: profile.id } },
-        ],
-      },
-      select: {
-        id: true,
-        memberOne: {
-          select: {
-            id: true,
-            profileId: true,
-          },
-        },
-        memberTwo: {
-          select: {
-            id: true,
-            profileId: true,
-          },
-        },
-      },
+    const messageRef = await db.directMessage.findUnique({
+      where: { id: parsedParams.data.directMessageId },
+      select: { conversationId: true },
     });
 
-    if (!conversation) return notFound("Message not found");
+    if (!messageRef) return notFound("Message not found");
 
-    const member = conversation.memberOne.profileId === profile.id
-      ? conversation.memberOne
-      : conversation.memberTwo;
+    const access = await getConversationAccess({ conversationId: messageRef.conversationId, profileId: profile.id });
+    if (!access) return notFound("Message not found");
+
+    const member = access.currentMember;
 
     const directMessage = await db.directMessage.findFirst({
       where: {
         id: parsedParams.data.directMessageId,
-        conversationId: conversation.id,
+        conversationId: access.conversation.id,
       },
       include: directMessageInclude(member.id),
     });
@@ -103,41 +81,15 @@ export async function PATCH(req: Request, context: { params: Promise<{ directMes
     const parsedBody = BodySchema.safeParse(await req.json());
     if (!parsedBody.success) return validationError(parsedBody.error);
 
-    const conversation = await db.conversation.findFirst({
-      where: {
-        id: parsedQuery.data.conversationId,
-        OR: [
-          { memberOne: { profileId: profile.id } },
-          { memberTwo: { profileId: profile.id } },
-        ],
-      },
-      include: {
-        memberOne: {
-          select: {
-            id: true,
-            role: true,
-            profileId: true,
-            serverId: true,
-            serverRoles: { include: { role: { select: { permissions: true } } } },
-          },
-        },
-        memberTwo: {
-          select: {
-            id: true,
-            role: true,
-            profileId: true,
-            serverId: true,
-            serverRoles: { include: { role: { select: { permissions: true } } } },
-          },
-        },
-      },
+    const access = await getConversationAccess({
+      conversationId: parsedQuery.data.conversationId,
+      profileId: profile.id,
     });
 
-    if (!conversation) return notFound("Conversation not found");
+    if (!access) return notFound("Conversation not found");
 
-    const member = conversation.memberOne.profileId === profile.id
-      ? conversation.memberOne
-      : conversation.memberTwo;
+    const conversation = access.conversation;
+    const member = access.currentMember;
 
     const directMessage = await db.directMessage.findFirst({
       where: {
@@ -180,41 +132,15 @@ export async function DELETE(req: Request, context: { params: Promise<{ directMe
     });
     if (!parsedQuery.success) return validationError(parsedQuery.error);
 
-    const conversation = await db.conversation.findFirst({
-      where: {
-        id: parsedQuery.data.conversationId,
-        OR: [
-          { memberOne: { profileId: profile.id } },
-          { memberTwo: { profileId: profile.id } },
-        ],
-      },
-      include: {
-        memberOne: {
-          select: {
-            id: true,
-            role: true,
-            profileId: true,
-            serverId: true,
-            serverRoles: { include: { role: { select: { permissions: true } } } },
-          },
-        },
-        memberTwo: {
-          select: {
-            id: true,
-            role: true,
-            profileId: true,
-            serverId: true,
-            serverRoles: { include: { role: { select: { permissions: true } } } },
-          },
-        },
-      },
+    const access = await getConversationAccess({
+      conversationId: parsedQuery.data.conversationId,
+      profileId: profile.id,
     });
 
-    if (!conversation) return notFound("Conversation not found");
+    if (!access) return notFound("Conversation not found");
 
-    const member = conversation.memberOne.profileId === profile.id
-      ? conversation.memberOne
-      : conversation.memberTwo;
+    const conversation = access.conversation;
+    const member = access.currentMember;
 
     const directMessage = await db.directMessage.findFirst({
       where: {

@@ -188,6 +188,14 @@ export async function getHomeInboxData(): Promise<HomeInboxData | null> {
         OR: [
           { memberOneId: { in: memberIds } },
           { memberTwoId: { in: memberIds } },
+          {
+            participants: {
+              some: {
+                memberId: { in: memberIds },
+                leftAt: null,
+              },
+            },
+          },
         ],
       },
       include: {
@@ -221,6 +229,28 @@ export async function getHomeInboxData(): Promise<HomeInboxData | null> {
                 id: true,
                 name: true,
                 imageUrl: true,
+              },
+            },
+          },
+        },
+        participants: {
+          where: { leftAt: null },
+          include: {
+            member: {
+              include: {
+                profile: {
+                  select: {
+                    name: true,
+                    imageUrl: true,
+                  },
+                },
+                server: {
+                  select: {
+                    id: true,
+                    name: true,
+                    imageUrl: true,
+                  },
+                },
               },
             },
           },
@@ -321,9 +351,9 @@ export async function getHomeInboxData(): Promise<HomeInboxData | null> {
   const channelUnreadMap = new Map(channelUnreadPairs);
 
   const conversationItems = await Promise.all(conversations.map(async (conversation) => {
-    const myMember = memberIds.includes(conversation.memberOneId)
-      ? conversation.memberOne
-      : conversation.memberTwo;
+    const participantMember = conversation.participants.find((participant) => memberIds.includes(participant.memberId))?.member;
+    const myMember = participantMember
+      ?? (memberIds.includes(conversation.memberOneId) ? conversation.memberOne : conversation.memberTwo);
     const otherMember = myMember.id === conversation.memberOneId
       ? conversation.memberTwo
       : conversation.memberOne;
@@ -337,19 +367,33 @@ export async function getHomeInboxData(): Promise<HomeInboxData | null> {
         createdAt: { gt: lastReadAt },
       },
     });
+    const isGroup = conversation.type === "GROUP";
+    const groupParticipantNames = conversation.participants
+      .filter((participant) => participant.memberId !== myMember.id)
+      .map((participant) => participant.member.profile.name)
+      .slice(0, 3);
+    const title = isGroup
+      ? (conversation.name || groupParticipantNames.join(", ") || "Групповой чат")
+      : otherMember.profile.name;
+    const subtitle = isGroup
+      ? `Группа · ${conversation.participants.length} участников · ${myMember.server.name}`
+      : `Личный диалог · ${myMember.server.name}`;
+    const href = isGroup
+      ? `/servers/${myMember.serverId}/conversations/group/${conversation.id}`
+      : `/servers/${myMember.serverId}/conversations/${otherMember.id}`;
 
     return {
       id: conversation.id,
       kind: "conversation" as const,
-      title: otherMember.profile.name,
-      subtitle: `Личный диалог · ${myMember.server.name}`,
+      title,
+      subtitle,
       preview: lastMessage
         ? `${lastMessage.member.profile.name}: ${safePreview(lastMessage.content, "Вложение")}`
         : "Диалог пока без сообщений",
-      href: `/servers/${myMember.serverId}/conversations/${otherMember.id}`,
+      href,
       unreadCount,
       lastActivityAt: toIso(lastMessage?.createdAt),
-      imageUrl: otherMember.profile.imageUrl,
+      imageUrl: isGroup ? conversation.imageUrl : otherMember.profile.imageUrl,
     };
   }));
 
