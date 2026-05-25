@@ -3,6 +3,7 @@ import { MemberRole } from "@prisma/client";
 
 import { applySlashCommand, parseMessageFormatting, parsePollCommand } from "../lib/message-formatting";
 import { canDeleteMessage, canEditMessage, hasPermission } from "../lib/permissions";
+import { movedBeyondReactionTolerance, REACTION_LONG_PRESS_MS, shouldIgnoreReactionTrigger } from "../lib/reaction-trigger";
 import { extractYoutubeId } from "../lib/youtube";
 
 const videoId = "dQw4w9WgXcQ";
@@ -36,5 +37,10 @@ assert.equal(hasPermission(MemberRole.GUEST, "channel.manage"), false);
 assert.equal(canDeleteMessage({ id: "m1", role: MemberRole.GUEST }, "m1"), true);
 assert.equal(canDeleteMessage({ id: "m2", role: MemberRole.MODERATOR }, "m1"), true);
 assert.equal(canEditMessage({ id: "m2", role: MemberRole.MODERATOR }, "m1"), false);
+
+assert.equal(REACTION_LONG_PRESS_MS, 500);
+assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 18, y: 17 }), false);
+assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 25, y: 10 }), true);
+assert.equal(shouldIgnoreReactionTrigger(null), false);
 
 console.log("All unit checks passed");
