@@ -26,7 +26,16 @@ export async function GET() {
         where: { memberId: { in: memberIds }, message: { deleted: false } },
         include: {
           message: {
-            include: channelMessageInclude(memberIds[0] ?? ""),
+            include: {
+              ...channelMessageInclude(memberIds[0] ?? ""),
+              channel: {
+                select: {
+                  id: true,
+                  name: true,
+                  serverId: true,
+                },
+              },
+            },
           },
         },
         orderBy: { createdAt: "desc" },
@@ -35,8 +44,35 @@ export async function GET() {
         take: 50,
         where: { memberId: { in: memberIds }, directMessage: { deleted: false } },
         include: {
+          member: {
+            select: {
+              id: true,
+              serverId: true,
+            },
+          },
           directMessage: {
-            include: directMessageInclude(memberIds[0] ?? ""),
+            include: {
+              ...directMessageInclude(memberIds[0] ?? ""),
+              conversation: {
+                select: {
+                  id: true,
+                  memberOneId: true,
+                  memberTwoId: true,
+                  memberOne: {
+                    select: {
+                      id: true,
+                      profile: { select: { name: true, imageUrl: true } },
+                    },
+                  },
+                  memberTwo: {
+                    select: {
+                      id: true,
+                      profile: { select: { name: true, imageUrl: true } },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
         orderBy: { createdAt: "desc" },
