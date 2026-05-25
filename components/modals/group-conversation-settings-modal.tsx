@@ -3,9 +3,16 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, UserMinus, UserPlus, Users } from "lucide-react";
+import { Crown, LogOut, MoreVertical, ShieldCheck, ShieldMinus, UserMinus, UserPlus, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -20,9 +27,12 @@ import { http } from "@/lib/http";
 import { useModal } from "@/hooks/use-modal-store";
 import {
   buildGroupSettingsPayload,
+  canDemoteGroupParticipant,
   canManageGroupConversation,
+  canPromoteGroupParticipant,
   canRemoveGroupParticipant,
   canSubmitGroupSettings,
+  canTransferGroupOwnership,
   type CreateGroupMemberOption,
   type GroupConversationRole,
 } from "@/lib/group-conversation-ui";
@@ -247,6 +257,25 @@ export const GroupConversationSettingsModal = () => {
     }
   };
 
+  const updateParticipantRole = async (memberId: string, action: "promote" | "demote" | "transfer_owner") => {
+    if (!conversationId || !group) return;
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      await http.patch(`/api/conversations/group/${conversationId}/participants/${memberId}`, { action });
+      await load();
+      router.refresh();
+    } catch (error) {
+      setError(action === "transfer_owner"
+        ? "Не удалось передать владение группой."
+        : "Не удалось изменить роль участника.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
       <DialogContent className="bg-white p-0 text-black dark:bg-zinc-900 dark:text-zinc-100 sm:max-w-2xl">
@@ -323,6 +352,10 @@ export const GroupConversationSettingsModal = () => {
                       isSelf,
                       ownerCount,
                     });
+                    const promotable = canPromoteGroupParticipant({ actorRole: group.currentRole, targetRole: participant.role, isSelf });
+                    const demotable = canDemoteGroupParticipant({ actorRole: group.currentRole, targetRole: participant.role, isSelf });
+                    const transferable = canTransferGroupOwnership({ actorRole: group.currentRole, targetRole: participant.role, isSelf });
+                    const hasActions = removable || promotable || demotable || transferable;
 
                     return (
                       <div key={participant.memberId} className="flex items-center gap-3 rounded-2xl bg-zinc-50 p-2 dark:bg-white/[0.04]">
@@ -331,16 +364,50 @@ export const GroupConversationSettingsModal = () => {
                           <p className="truncate text-sm font-bold">{participant.member.profile.name}{isSelf ? " · это вы" : ""}</p>
                           <p className="text-xs text-zinc-500">{roleLabel(participant.role)}</p>
                         </div>
-                        {removable && (
-                          <Button
-                            disabled={isSaving}
-                            onClick={() => removeParticipant(participant.memberId)}
-                            variant="ghost"
-                            size="sm"
-                            className={cn("rounded-xl", isSelf ? "text-rose-500" : "text-zinc-500")}
-                          >
-                            {isSelf ? <LogOut className="h-4 w-4" /> : <UserMinus className="h-4 w-4" />}
-                          </Button>
+                        {hasActions && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                disabled={isSaving}
+                                variant="ghost"
+                                size="sm"
+                                className="rounded-xl text-zinc-500"
+                                aria-label={`Параметры участника ${participant.member.profile.name}`}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              {promotable && (
+                                <DropdownMenuItem onSelect={() => updateParticipantRole(participant.memberId, "promote")}>
+                                  <ShieldCheck className="mr-2 h-4 w-4" />
+                                  Сделать админом
+                                </DropdownMenuItem>
+                              )}
+                              {demotable && (
+                                <DropdownMenuItem onSelect={() => updateParticipantRole(participant.memberId, "demote")}>
+                                  <ShieldMinus className="mr-2 h-4 w-4" />
+                                  Снять админа
+                                </DropdownMenuItem>
+                              )}
+                              {transferable && (
+                                <DropdownMenuItem onSelect={() => updateParticipantRole(participant.memberId, "transfer_owner")}>
+                                  <Crown className="mr-2 h-4 w-4" />
+                                  Передать владение
+                                </DropdownMenuItem>
+                              )}
+                              {(promotable || demotable || transferable) && removable && <DropdownMenuSeparator />}
+                              {removable && (
+                                <DropdownMenuItem
+                                  onSelect={() => removeParticipant(participant.memberId)}
+                                  className="text-rose-500"
+                                >
+                                  {isSelf ? <LogOut className="mr-2 h-4 w-4" /> : <UserMinus className="mr-2 h-4 w-4" />}
+                                  {isSelf ? "Покинуть группу" : "Удалить из группы"}
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                       </div>
                     );

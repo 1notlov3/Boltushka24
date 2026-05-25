@@ -265,6 +265,11 @@ export const removeConversationParticipant = async ({
     if (ownerCount <= 1) return null;
   }
 
+  if (!removingSelf) {
+    if (actor.role === ConversationParticipantRole.OWNER && target.role === ConversationParticipantRole.OWNER) return null;
+    if (actor.role === ConversationParticipantRole.ADMIN && target.role !== ConversationParticipantRole.MEMBER) return null;
+  }
+
   await db.conversationParticipant.update({
     where: {
       conversationId_memberId: {
@@ -290,6 +295,91 @@ export const leaveGroupConversation = async ({
   conversationId: string;
   memberId: string;
 }) => removeConversationParticipant({ conversationId, actorMemberId: memberId, memberId });
+
+export const updateConversationParticipantRole = async ({
+  conversationId,
+  actorMemberId,
+  memberId,
+  role,
+}: {
+  conversationId: string;
+  actorMemberId: string;
+  memberId: string;
+  role: "ADMIN" | "MEMBER";
+}) => {
+  const access = await getConversationAccessByMemberId({ conversationId, memberId: actorMemberId });
+  if (!access || access.conversation.type !== ConversationType.GROUP) return null;
+
+  const actor = access.participants.find((participant) => participant.memberId === actorMemberId);
+  const target = access.participants.find((participant) => participant.memberId === memberId);
+  if (!actor || !target) return null;
+  if (actor.role !== ConversationParticipantRole.OWNER) return null;
+  if (actorMemberId === memberId || target.role === ConversationParticipantRole.OWNER) return null;
+
+  await db.conversationParticipant.update({
+    where: {
+      conversationId_memberId: {
+        conversationId,
+        memberId,
+      },
+    },
+    data: { role },
+  });
+
+  return db.conversation.findUnique({
+    where: { id: conversationId },
+    include: conversationAccessInclude,
+  });
+};
+
+export const transferGroupConversationOwnership = async ({
+  conversationId,
+  actorMemberId,
+  memberId,
+}: {
+  conversationId: string;
+  actorMemberId: string;
+  memberId: string;
+}) => {
+  const access = await getConversationAccessByMemberId({ conversationId, memberId: actorMemberId });
+  if (!access || access.conversation.type !== ConversationType.GROUP) return null;
+
+  const actor = access.participants.find((participant) => participant.memberId === actorMemberId);
+  const target = access.participants.find((participant) => participant.memberId === memberId);
+  if (!actor || !target) return null;
+  if (actor.role !== ConversationParticipantRole.OWNER) return null;
+  if (actorMemberId === memberId || target.role === ConversationParticipantRole.OWNER) return null;
+
+  await db.$transaction([
+    db.conversation.update({
+      where: { id: conversationId },
+      data: { ownerId: memberId },
+    }),
+    db.conversationParticipant.update({
+      where: {
+        conversationId_memberId: {
+          conversationId,
+          memberId: actorMemberId,
+        },
+      },
+      data: { role: ConversationParticipantRole.ADMIN },
+    }),
+    db.conversationParticipant.update({
+      where: {
+        conversationId_memberId: {
+          conversationId,
+          memberId,
+        },
+      },
+      data: { role: ConversationParticipantRole.OWNER },
+    }),
+  ]);
+
+  return db.conversation.findUnique({
+    where: { id: conversationId },
+    include: conversationAccessInclude,
+  });
+};
 
 export const getConversationAccess = async ({
   conversationId,

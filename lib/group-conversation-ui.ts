@@ -105,5 +105,43 @@ export function canRemoveGroupParticipant({
 }) {
   if (targetRole === "OWNER" && ownerCount <= 1) return false;
   if (isSelf) return true;
-  return canManageGroupConversation(actorRole) && targetRole !== "OWNER";
+  if (actorRole === "OWNER") return targetRole !== "OWNER";
+  if (actorRole === "ADMIN") return targetRole === "MEMBER";
+  return false;
+}
+
+export function canPromoteGroupParticipant({
+  actorRole,
+  targetRole,
+  isSelf,
+}: {
+  actorRole?: GroupConversationRole | null;
+  targetRole?: GroupConversationRole | null;
+  isSelf: boolean;
+}) {
+  return actorRole === "OWNER" && targetRole === "MEMBER" && !isSelf;
+}
+
+export function canDemoteGroupParticipant({
+  actorRole,
+  targetRole,
+  isSelf,
+}: {
+  actorRole?: GroupConversationRole | null;
+  targetRole?: GroupConversationRole | null;
+  isSelf: boolean;
+}) {
+  return actorRole === "OWNER" && targetRole === "ADMIN" && !isSelf;
+}
+
+export function canTransferGroupOwnership({
+  actorRole,
+  targetRole,
+  isSelf,
+}: {
+  actorRole?: GroupConversationRole | null;
+  targetRole?: GroupConversationRole | null;
+  isSelf: boolean;
+}) {
+  return actorRole === "OWNER" && targetRole !== "OWNER" && !isSelf;
 }

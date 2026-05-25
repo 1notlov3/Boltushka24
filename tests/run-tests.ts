@@ -50,10 +50,13 @@ async function main() {
   const {
     buildCreateGroupConversationPayload,
     buildGroupSettingsPayload,
+    canDemoteGroupParticipant,
     canManageGroupConversation,
+    canPromoteGroupParticipant,
     canRemoveGroupParticipant,
     canSubmitGroupConversation,
     canSubmitGroupSettings,
+    canTransferGroupOwnership,
     groupConversationHref,
   } = groupConversationUi;
 
@@ -129,9 +132,16 @@ async function main() {
   assert.equal(canManageGroupConversation("ADMIN"), true);
   assert.equal(canManageGroupConversation("MEMBER"), false);
   assert.equal(canRemoveGroupParticipant({ actorRole: "ADMIN", targetRole: "MEMBER", isSelf: false, ownerCount: 1 }), true);
+  assert.equal(canRemoveGroupParticipant({ actorRole: "ADMIN", targetRole: "ADMIN", isSelf: false, ownerCount: 1 }), false);
   assert.equal(canRemoveGroupParticipant({ actorRole: "MEMBER", targetRole: "MEMBER", isSelf: false, ownerCount: 1 }), false);
   assert.equal(canRemoveGroupParticipant({ actorRole: "OWNER", targetRole: "OWNER", isSelf: true, ownerCount: 1 }), false);
   assert.equal(canRemoveGroupParticipant({ actorRole: "OWNER", targetRole: "MEMBER", isSelf: true, ownerCount: 1 }), true);
+  assert.equal(canPromoteGroupParticipant({ actorRole: "OWNER", targetRole: "MEMBER", isSelf: false }), true);
+  assert.equal(canPromoteGroupParticipant({ actorRole: "ADMIN", targetRole: "MEMBER", isSelf: false }), false);
+  assert.equal(canDemoteGroupParticipant({ actorRole: "OWNER", targetRole: "ADMIN", isSelf: false }), true);
+  assert.equal(canDemoteGroupParticipant({ actorRole: "OWNER", targetRole: "OWNER", isSelf: false }), false);
+  assert.equal(canTransferGroupOwnership({ actorRole: "OWNER", targetRole: "ADMIN", isSelf: false }), true);
+  assert.equal(canTransferGroupOwnership({ actorRole: "OWNER", targetRole: "OWNER", isSelf: false }), false);
 
   const modalStoreSource = readFileSync(resolve(process.cwd(), "hooks/use-modal-store.ts"), "utf8");
   const modalProviderSource = readFileSync(resolve(process.cwd(), "components/providers/modal-provider.tsx"), "utf8");
@@ -146,6 +156,11 @@ async function main() {
   assert.equal(modalSource.includes("payload.memberIds.length"), true);
   assert.equal(modalSource.includes("groupConversationHref(serverId, data.conversation.id)"), true);
   assert.equal(groupSettingsModalSource.includes("/api/conversations/group/${conversationId}/participants"), true);
+  assert.equal(groupSettingsModalSource.includes("DropdownMenu"), true);
+  assert.equal(groupSettingsModalSource.includes("Сделать админом"), true);
+  assert.equal(groupSettingsModalSource.includes("Снять админа"), true);
+  assert.equal(groupSettingsModalSource.includes("Передать владение"), true);
+  assert.equal(groupSettingsModalSource.includes('"transfer_owner"'), true);
   assert.equal(chatHeaderActionsSource.includes('onOpen("groupConversationSettings"'), true);
   assert.equal(chatHeaderActionsSource.includes("isGroupConversation"), true);
 
