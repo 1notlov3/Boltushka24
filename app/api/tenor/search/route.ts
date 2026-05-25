@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { serverEnv } from "@/lib/server-env";
 import { apiError, validationError } from "@/lib/api-response";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +62,7 @@ function mediaDimensions(result: Record<string, unknown>, key: string) {
 
 export async function GET(req: Request) {
   try {
-    const apiKey = process.env.TENOR_API_KEY;
+    const apiKey = serverEnv.TENOR_API_KEY;
     if (!apiKey) {
       return Response.json({ enabled: false, items: [] } satisfies TenorSearchResponse);
     }

@@ -8,6 +8,8 @@ import { Track } from 'livekit-client';
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
+import { publicEnv } from "@/lib/public-env";
+
 interface MediaRoomProps {
   chatId: string;
   video: boolean;
@@ -56,7 +58,7 @@ export const MediaRoom = ({
   return (
     <LiveKitRoom
       data-lk-theme="default"
-      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+      serverUrl={publicEnv.NEXT_PUBLIC_LIVEKIT_URL}
       token={token}
       connect={true}
       video={video}
