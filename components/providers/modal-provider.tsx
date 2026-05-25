@@ -11,6 +11,7 @@ const MembersModal = dynamic(() => import("@/components/modals/members-modal").t
 const RolesModal = dynamic(() => import("@/components/modals/roles-modal").then(mod => mod.RolesModal), { ssr: false });
 const ForwardMessageModal = dynamic(() => import("@/components/modals/forward-message-modal").then(mod => mod.ForwardMessageModal), { ssr: false });
 const CreateChannelModal = dynamic(() => import("@/components/modals/create-channel-modal").then(mod => mod.CreateChannelModal), { ssr: false });
+const CreateGroupConversationModal = dynamic(() => import("@/components/modals/create-group-conversation-modal").then(mod => mod.CreateGroupConversationModal), { ssr: false });
 const CreateCategoryModal = dynamic(() => import("@/components/modals/create-category-modal").then(mod => mod.CreateCategoryModal), { ssr: false });
 const LeaveServerModal = dynamic(() => import("@/components/modals/leave-server-modal").then(mod => mod.LeaveServerModal), { ssr: false });
 const DeleteServerModal = dynamic(() => import("@/components/modals/delete-server-modal").then(mod => mod.DeleteServerModal), { ssr: false });
@@ -52,6 +53,7 @@ export const ModalProvider = () => {
     {mountedModals.roles && <RolesModal/>}
     {mountedModals.forwardMessage && <ForwardMessageModal/>}
     {mountedModals.createChannel && <CreateChannelModal/>}
+    {mountedModals.createGroupConversation && <CreateGroupConversationModal/>}
     {mountedModals.createCategory && <CreateCategoryModal/>}
     {mountedModals.leaveServer && <LeaveServerModal />}
     {mountedModals.deleteServer && <DeleteServerModal />}

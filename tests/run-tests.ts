@@ -33,6 +33,7 @@ async function main() {
   const reactionTrigger = await import("../lib/reaction-trigger");
   const typingIndicator = await import("../hooks/use-typing-indicator");
   const youtube = await import("../lib/youtube");
+  const groupConversationUi = await import("../lib/group-conversation-ui");
 
   const {
     applySlashCommand,
@@ -46,6 +47,7 @@ async function main() {
   const { movedBeyondReactionTolerance, REACTION_LONG_PRESS_MS, shouldIgnoreReactionTrigger } = reactionTrigger;
   const { removeTypingUser, TYPING_TTL, upsertTypingUser } = typingIndicator;
   const { extractYoutubeId } = youtube;
+  const { buildCreateGroupConversationPayload, canSubmitGroupConversation, groupConversationHref } = groupConversationUi;
 
   const videoId = "dQw4w9WgXcQ";
 
@@ -93,6 +95,32 @@ async function main() {
   assert.equal(ConversationParticipantRole.OWNER, "OWNER");
   assert.equal(ConversationParticipantRole.ADMIN, "ADMIN");
   assert.equal(ConversationParticipantRole.MEMBER, "MEMBER");
+
+  const groupPayload = buildCreateGroupConversationPayload({
+    serverId: "server-1",
+    name: "  Запуск   продукта  ",
+    imageUrl: "   ",
+    selectedMemberIds: ["member-1", "owner-1", "member-1", "member-2"],
+    currentMemberId: "owner-1",
+  });
+  assert.deepEqual(groupPayload, {
+    serverId: "server-1",
+    name: "Запуск продукта",
+    imageUrl: null,
+    memberIds: ["member-1", "member-2"],
+  });
+  assert.equal(canSubmitGroupConversation(groupPayload), true);
+  assert.equal(canSubmitGroupConversation({ ...groupPayload, memberIds: ["member-1"] }), false);
+  assert.equal(groupConversationHref("server-1", "conversation-1"), "/servers/server-1/conversations/group/conversation-1");
+
+  const modalStoreSource = readFileSync(resolve(process.cwd(), "hooks/use-modal-store.ts"), "utf8");
+  const modalProviderSource = readFileSync(resolve(process.cwd(), "components/providers/modal-provider.tsx"), "utf8");
+  const modalSource = readFileSync(resolve(process.cwd(), "components/modals/create-group-conversation-modal.tsx"), "utf8");
+  assert.equal(modalStoreSource.includes('"createGroupConversation"'), true);
+  assert.equal(modalProviderSource.includes("CreateGroupConversationModal"), true);
+  assert.equal(modalSource.includes('http.post("/api/conversations/group", payload)'), true);
+  assert.equal(modalSource.includes("payload.memberIds.length"), true);
+  assert.equal(modalSource.includes("groupConversationHref(serverId, data.conversation.id)"), true);
 
   assert.equal(REACTION_LONG_PRESS_MS, 500);
   assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 18, y: 17 }), false);

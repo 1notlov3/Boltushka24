@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Bell, Compass, Inbox, MessageCircle, Plus, Search, Server, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { HomeInboxGroupAction } from "@/components/home/home-inbox-group-action";
 import { HomeInboxData, HomeInboxItem } from "@/lib/home-inbox";
 import { cn } from "@/lib/utils";
 
@@ -129,6 +130,7 @@ export const HomeInbox = ({ data }: { data: HomeInboxData }) => {
             <Button asChild variant="outline" className="shrink-0 rounded-2xl dark:border-white/10 dark:bg-white/5 dark:text-white">
               <Link href="/setup"><Plus className="mr-2 h-4 w-4" /> Создать сервер</Link>
             </Button>
+            <HomeInboxGroupAction servers={data.servers} />
             <Button asChild variant="outline" className="shrink-0 rounded-2xl dark:border-white/10 dark:bg-white/5 dark:text-white">
               <Link href="/setup"><Compass className="mr-2 h-4 w-4" /> Command Center</Link>
             </Button>
