@@ -8,7 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
 import { Bookmark, Copy, Edit, FileIcon, Forward, Link, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
 import Image from "next/image";
-import { useState, memo } from "react";
+import { useCallback, useEffect, useRef, useState, memo } from "react";
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -30,6 +31,11 @@ import { MessageContent } from "@/components/chat/message-content";
 import { PollBlock, type PollData } from "@/components/chat/poll-block";
 import { VoicePlayer } from "@/components/chat/voice-player";
 import { fileExtensionFromUrl, isAudioUrl, isImageUrl } from "@/lib/upload";
+import {
+  movedBeyondReactionTolerance,
+  REACTION_LONG_PRESS_MS,
+  shouldIgnoreReactionTrigger,
+} from "@/lib/reaction-trigger";
 
 type Reaction = {
   id: string;
@@ -101,6 +107,8 @@ const formSchema = z.object({
   content: z.string().min(1),
 });
 
+const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥"];
+
 export const ChatItem = memo(({
   id,
   content,
@@ -128,6 +136,10 @@ export const ChatItem = memo(({
   onOpenImage,
 }: ChatItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
+  const longPressTimerRef = useRef<number | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const lastTouchAtRef = useRef(0);
   const { onOpen } = useModal();
   const params = useParams();
   const router = useRouter();
@@ -264,6 +276,7 @@ export const ChatItem = memo(({
     acc[reaction.emoji] = [...(acc[reaction.emoji] ?? []), reaction];
     return acc;
   }, {});
+  const reactionEntries = Object.entries(reactionGroups);
 
   const scrollToParent = () => {
     if (!parent) return;
@@ -303,23 +316,115 @@ export const ChatItem = memo(({
     void copyToClipboard(url.toString(), "Ссылка на сообщение скопирована");
   };
 
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const openReactionPicker = () => {
+    if (!deleted) {
+      setIsReactionPickerOpen(true);
+    }
+  };
+
+  const chooseReaction = (emoji: string) => {
+    setIsReactionPickerOpen(false);
+    void onReaction(emoji);
+  };
+
+  const handleMessageClick = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (deleted || shouldIgnoreReactionTrigger(event.target)) return;
+
+    const justTouched = Date.now() - lastTouchAtRef.current < 700;
+    if (justTouched) return;
+
+    openReactionPicker();
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (deleted || shouldIgnoreReactionTrigger(event.target)) return;
+
+    if (event.pointerType !== "touch") return;
+
+    lastTouchAtRef.current = Date.now();
+    touchStartRef.current = { x: event.clientX, y: event.clientY };
+    clearLongPressTimer();
+    longPressTimerRef.current = window.setTimeout(() => {
+      openReactionPicker();
+      longPressTimerRef.current = null;
+    }, REACTION_LONG_PRESS_MS);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "touch") return;
+
+    if (movedBeyondReactionTolerance(touchStartRef.current, { x: event.clientX, y: event.clientY })) {
+      clearLongPressTimer();
+    }
+  };
+
+  const handlePointerEnd = () => {
+    clearLongPressTimer();
+    touchStartRef.current = null;
+  };
+
+  useEffect(() => {
+    if (!isReactionPickerOpen) return;
+
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.closest(`[data-message-id="${id}"]`)) return;
+      setIsReactionPickerOpen(false);
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsReactionPickerOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsidePress);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePress);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [id, isReactionPickerOpen]);
+
+  useEffect(() => () => clearLongPressTimer(), [clearLongPressTimer]);
+
   return (
     <div
       id={`message-${id}`}
       data-message-id={id}
+      onClick={handleMessageClick}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
+      onPointerLeave={handlePointerEnd}
+      onContextMenu={(event) => {
+        if (Date.now() - lastTouchAtRef.current < 900) {
+          event.preventDefault();
+        }
+      }}
       className={cn(
         "relative group flex items-center px-4 py-2.5 sm:py-2 transition w-full hover:bg-black/5",
         highlighted && "bg-indigo-500/10 ring-1 ring-inset ring-indigo-400/40"
       )}
     >
       <div className="group flex gap-x-3 sm:gap-x-2 items-start w-full">
-      <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition shrink-0">
+      <div data-reaction-ignore onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition shrink-0">
           <UserAvatar src={member.profile.imageUrl} />
         </div>
         <div className="flex flex-col w-full min-w-0">
           <div className="flex items-center gap-x-2 flex-wrap">
             <div className="flex items-center">
-            <p onClick={onMemberClick} className="font-semibold text-sm sm:text-sm hover:underline cursor-pointer">
+            <p data-reaction-ignore onClick={onMemberClick} className="font-semibold text-sm sm:text-sm hover:underline cursor-pointer">
                 {member.profile.name}
               </p>
               {roleIconMap[member.role] && (
@@ -439,7 +544,7 @@ export const ChatItem = memo(({
               </span>
             </Form>
           )}
-          {!deleted && (
+          {!deleted && (repliesCount > 0 || reactionEntries.length > 0) && (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {repliesCount > 0 && onOpenThread && (
                 <button
@@ -450,13 +555,13 @@ export const ChatItem = memo(({
                   {repliesCount} {repliesCount === 1 ? "ответ" : "ответов"} · открыть тред
                 </button>
               )}
-              {Object.entries(reactionGroups).map(([emoji, list]) => {
+              {reactionEntries.map(([emoji, list]) => {
                 const active = list.some((reaction) => reaction.memberId === currentMember.id);
                 return (
                   <button
                     key={emoji}
                     type="button"
-                    onClick={() => onReaction(emoji)}
+                    onClick={() => chooseReaction(emoji)}
                     className={cn(
                       "inline-flex h-7 items-center gap-1 rounded-full border px-2 text-xs transition",
                       active
@@ -469,21 +574,30 @@ export const ChatItem = memo(({
                   </button>
                 );
               })}
-              {["👍", "❤️", "😂", "🔥"].map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => onReaction(emoji)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-zinc-300 text-xs opacity-80 transition hover:bg-zinc-100 hover:opacity-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                  aria-label={`Реакция ${emoji}`}
-                >
-                  {emoji}
-                </button>
-              ))}
             </div>
           )}
         </div>
       </div>
+      {!deleted && isReactionPickerOpen && (
+        <div
+          data-reaction-ignore
+          role="menu"
+          aria-label="Выбрать реакцию"
+          className="absolute -top-9 right-14 z-20 flex items-center gap-1 rounded-full border bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+        >
+          {QUICK_REACTIONS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => chooseReaction(emoji)}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:hover:bg-zinc-800"
+              aria-label={`Реакция ${emoji}`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
       {!deleted && (
         <div className="group-hover:opacity-100 focus-within:opacity-100 group-hover:pointer-events-auto focus-within:pointer-events-auto opacity-0 pointer-events-none flex items-center gap-x-2 absolute p-1 -top-2 right-5 bg-white dark:bg-zinc-800 border rounded-sm transition-opacity">
           {!deleted && (
@@ -525,9 +639,9 @@ export const ChatItem = memo(({
           {!deleted && (
             <ActionTooltip label="Реакция">
               <button
-                onClick={() => onReaction("👍")}
+                onClick={openReactionPicker}
                 className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
-                aria-label="Быстрая реакция"
+                aria-label="Открыть реакции"
                 type="button"
               >
                 <SmilePlus className="w-4 h-4" />
