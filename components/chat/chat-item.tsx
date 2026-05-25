@@ -32,11 +32,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useModal } from "@/hooks/use-modal-store";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import type { ReplyTarget } from "@/components/chat/chat-shell";
 import { MessageContent } from "@/components/chat/message-content";
 import { PollBlock, type PollData } from "@/components/chat/poll-block";
 import { VoicePlayer } from "@/components/chat/voice-player";
+import { UserProfilePopover } from "@/components/user-profile-popover";
 import { fileExtensionFromUrl, isAudioUrl, isImageUrl } from "@/lib/upload";
 import {
   movedBeyondReactionTolerance,
@@ -149,16 +150,7 @@ export const ChatItem = memo(({
   const lastTouchAtRef = useRef(0);
   const { onOpen } = useModal();
   const params = useParams();
-  const router = useRouter();
   const queryClient = useQueryClient();
-
-  const onMemberClick = () => {
-    if (member.id === currentMember.id) {
-      return;
-    }
-
-    router.push(`/servers/${params?.serverId}/conversations/${member.id}`);
-  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -442,15 +434,37 @@ export const ChatItem = memo(({
       )}
     >
       <div className="group flex gap-x-3 sm:gap-x-2 items-start w-full">
-      <div data-reaction-ignore onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition shrink-0">
-          <UserAvatar src={member.profile.imageUrl} />
-        </div>
+        <UserProfilePopover
+          memberId={member.id}
+          serverId={typeof params?.serverId === "string" ? params.serverId : socketQuery.serverId ?? ""}
+          fallbackName={member.profile.name}
+          fallbackImageUrl={member.profile.imageUrl}
+          fallbackRole={member.role}
+          currentMemberId={currentMember.id}
+          side="right"
+          align="start"
+        >
+          <div data-reaction-ignore className="cursor-pointer hover:drop-shadow-md transition shrink-0">
+            <UserAvatar src={member.profile.imageUrl} />
+          </div>
+        </UserProfilePopover>
         <div className="flex flex-col w-full min-w-0">
           <div className="flex items-center gap-x-2 flex-wrap">
             <div className="flex items-center">
-            <p data-reaction-ignore onClick={onMemberClick} className="font-semibold text-sm sm:text-sm hover:underline cursor-pointer">
-                {member.profile.name}
-              </p>
+              <UserProfilePopover
+                memberId={member.id}
+                serverId={typeof params?.serverId === "string" ? params.serverId : socketQuery.serverId ?? ""}
+                fallbackName={member.profile.name}
+                fallbackImageUrl={member.profile.imageUrl}
+                fallbackRole={member.role}
+                currentMemberId={currentMember.id}
+                side="bottom"
+                align="start"
+              >
+                <p data-reaction-ignore className="font-semibold text-sm sm:text-sm hover:underline cursor-pointer">
+                  {member.profile.name}
+                </p>
+              </UserProfilePopover>
               {roleIconMap[member.role] && (
                 <ActionTooltip label={member.role}>
                   {roleIconMap[member.role]}
