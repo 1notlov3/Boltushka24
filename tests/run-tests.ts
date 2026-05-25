@@ -15,6 +15,10 @@ assert.equal(extractYoutubeId("https://example.com/nope"), null);
 assert.equal(applySlashCommand("/me тестирует"), "_тестирует_");
 assert.equal(applySlashCommand("/poll лучший канал?"), "/poll лучший канал?");
 assert.equal(applySlashCommand("/gif cats"), "[GIF: cats]");
+assert.equal(applySlashCommand("/todo проверить деплой"), "☐ проверить деплой");
+assert.equal(applySlashCommand("/quote важная мысль"), "> важная мысль");
+assert.equal(applySlashCommand("/code const ok = true;"), "```\nconst ok = true;\n```");
+assert.equal(applySlashCommand("/table").includes("| Колонка 1 | Колонка 2 |"), true);
 
 const poll = parsePollCommand('/poll "Лучший канал?" "общий" "музыка"');
 assert.equal(poll?.question, "Лучший канал?");

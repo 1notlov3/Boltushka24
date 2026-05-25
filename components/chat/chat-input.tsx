@@ -6,7 +6,7 @@ import { isAxiosError } from "axios";
 import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileIcon, ImageIcon, Loader2, Plus, SendHorizontal, X } from "lucide-react";
+import { Code2, FileIcon, ImageIcon, ListTodo, Loader2, Plus, Quote, SendHorizontal, Table2, Wand2, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Member, Profile } from "@prisma/client";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -69,6 +69,26 @@ type UploadPreview = {
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
 };
+
+type SlashCommandSuggestion = {
+  command: string;
+  insert: string;
+  label: string;
+  description: string;
+  icon: typeof Wand2;
+};
+
+const SLASH_COMMANDS: SlashCommandSuggestion[] = [
+  { command: "/help", insert: "/help", label: "Справка", description: "Показать список команд", icon: Wand2 },
+  { command: "/todo", insert: "/todo ", label: "Задача", description: "Сообщение с чекбоксом", icon: ListTodo },
+  { command: "/quote", insert: "/quote ", label: "Цитата", description: "Выделить важную мысль", icon: Quote },
+  { command: "/code", insert: "/code ", label: "Код", description: "Оформить фрагмент кода", icon: Code2 },
+  { command: "/table", insert: "/table", label: "Таблица", description: "Быстрая markdown-таблица", icon: Table2 },
+  { command: "/poll", insert: '/poll "Вопрос" "Вариант 1" "Вариант 2"', label: "Опрос", description: "Голосование в канале", icon: Wand2 },
+  { command: "/gif", insert: "/gif ", label: "GIF", description: "Найти и отправить GIF", icon: Wand2 },
+  { command: "/me", insert: "/me ", label: "Действие", description: "Сообщение от первого лица", icon: Wand2 },
+  { command: "/shrug", insert: "/shrug", label: "Shrug", description: "¯\\_(ツ)_/¯", icon: Wand2 },
+];
 
 export const ChatInput = ({
   apiUrl,
@@ -220,23 +240,25 @@ export const ChatInput = ({
     if (!queryKey) return;
     queryClient.setQueryData([queryKey], (old: any) => {
       if (!old?.pages?.length) return old;
-      const realExists = old.pages.some((p: any) =>
-        p?.items?.some((m: AnyMessage) => m?.id === real.id)
+
+      const realExists = old.pages.some((page: any) =>
+        page?.items?.some((message: AnyMessage) => message?.id === real.id)
       );
+      const pages = old.pages.map((page: any) => ({
+        ...page,
+        items: (page?.items ?? []).filter((message: AnyMessage) => message?.id !== tempId),
+      }));
+
+      if (!realExists) {
+        pages[0] = {
+          ...pages[0],
+          items: [real, ...((pages[0]?.items as AnyMessage[]) ?? [])],
+        };
+      }
+
       return {
         ...old,
-        pages: old.pages.map((p: any) => ({
-          ...p,
-          items: (p?.items ?? [])
-            .filter((m: AnyMessage) => m?.id !== tempId)
-            .reduce((acc: AnyMessage[], m: AnyMessage) => {
-              if (!realExists && acc.length === 0 && p === old.pages[0]) {
-                acc.push(real);
-              }
-              acc.push(m);
-              return acc;
-            }, [] as AnyMessage[]),
-        })),
+        pages,
       };
     });
   };
@@ -528,7 +550,12 @@ export const ChatInput = ({
     }
   }
 
-  const hasContent = !!form.watch("content")?.trim();
+  const watchedContent = form.watch("content") ?? "";
+  const hasContent = !!watchedContent.trim();
+  const slashQuery = watchedContent.trimStart();
+  const visibleSlashCommands = slashQuery.startsWith("/") && !slashQuery.includes(" ")
+    ? SLASH_COMMANDS.filter((item) => item.command.startsWith(slashQuery.toLowerCase())).slice(0, 6)
+    : [];
 
   return (
     <Form {...form}>
@@ -663,6 +690,37 @@ export const ChatInput = ({
                       ))}
                     </div>
                   )}
+                  {!!visibleSlashCommands.length && (
+                    <div className="absolute bottom-full left-14 z-20 mb-2 w-[min(28rem,calc(100vw-5rem))] overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+                      <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                        Команды · Tab вставит первую
+                      </div>
+                      {visibleSlashCommands.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.command}
+                            type="button"
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                              field.onChange(item.insert);
+                              queueDraftWrite(item.insert);
+                              updateMentionQuery(item.insert);
+                            }}
+                            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                          >
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-500">
+                              <Icon className="h-4 w-4" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-semibold">{item.command} · {item.label}</span>
+                              <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{item.description}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                   <Input
                     disabled={false}
                     className="pl-24 pr-20 sm:pr-16 py-6 bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200 text-base rounded-xl"
@@ -677,6 +735,20 @@ export const ChatInput = ({
                       if (event.target.value.trim() && now - typingSentAtRef.current > 1200) {
                         typingSentAtRef.current = now;
                         onTyping?.();
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Tab" && visibleSlashCommands.length) {
+                        event.preventDefault();
+                        const nextValue = visibleSlashCommands[0].insert;
+                        field.onChange(nextValue);
+                        updateMentionQuery(nextValue);
+                        queueDraftWrite(nextValue);
+                      }
+
+                      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && hasContent) {
+                        event.preventDefault();
+                        void form.handleSubmit(onSubmit)();
                       }
                     }}
                   />
