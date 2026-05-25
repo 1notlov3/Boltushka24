@@ -6,6 +6,16 @@ export type MessageToken =
   | { type: "codeBlock"; text: string }
   | { type: "link"; text: string; href: string };
 
+export type ParsedMarkdownTable = {
+  headers: string[];
+  rows: string[][];
+};
+
+export type ParsedTodoContent = {
+  checked: boolean;
+  text: string;
+};
+
 export type ParsedPollCommand = {
   question: string;
   options: { id: string; text: string }[];
@@ -13,7 +23,7 @@ export type ParsedPollCommand = {
 };
 
 const tokenPattern =
-  /```([\s\S]*?)```|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|(https?:\/\/[^\s<>"']+)/g;
+  /```([\s\S]*?)```|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_|(https?:\/\/[^\s<>"']+)/g;
 
 export function parseMessageFormatting(content: string): MessageToken[] {
   const tokens: MessageToken[] = [];
@@ -36,7 +46,9 @@ export function parseMessageFormatting(content: string): MessageToken[] {
     } else if (match[4] !== undefined) {
       tokens.push({ type: "italic", text: match[4] });
     } else if (match[5] !== undefined) {
-      tokens.push({ type: "link", text: match[5], href: match[5] });
+      tokens.push({ type: "italic", text: match[5] });
+    } else if (match[6] !== undefined) {
+      tokens.push({ type: "link", text: match[6], href: match[6] });
     }
 
     lastIndex = match.index + match[0].length;
@@ -48,6 +60,47 @@ export function parseMessageFormatting(content: string): MessageToken[] {
   }
 
   return tokens.length ? tokens : [{ type: "text", text: content }];
+}
+
+function splitMarkdownRow(line: string) {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+export function parseMarkdownTable(content: string): ParsedMarkdownTable | null {
+  const lines = content.trim().split(/\r?\n/).filter(Boolean);
+  if (lines.length < 3 || !lines[0].includes("|") || !lines[1].includes("|")) return null;
+
+  const headers = splitMarkdownRow(lines[0]);
+  const divider = splitMarkdownRow(lines[1]);
+  if (headers.length < 2 || divider.length !== headers.length) return null;
+  if (!divider.every((cell) => /^:?-{3,}:?$/.test(cell))) return null;
+
+  const rows = lines.slice(2).map(splitMarkdownRow).filter((row) => row.length === headers.length);
+  if (!rows.length) return null;
+
+  return { headers, rows };
+}
+
+export function parseQuoteContent(content: string) {
+  const lines = content.trim().split(/\r?\n/);
+  if (!lines.length || !lines.every((line) => line.trim().startsWith(">"))) return null;
+
+  return lines.map((line) => line.trim().replace(/^>\s?/, ""));
+}
+
+export function parseTodoContent(content: string): ParsedTodoContent | null {
+  const match = content.trim().match(/^(☐|☑)\s+(.+)$/s);
+  if (!match) return null;
+
+  return {
+    checked: match[1] === "☑",
+    text: match[2].trim(),
+  };
 }
 
 export function applySlashCommand(raw: string) {

@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Code2, FileIcon, ImageIcon, ListTodo, Loader2, Plus, Quote, SendHorizontal, Table2, Wand2, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Member, Profile } from "@prisma/client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -18,7 +18,6 @@ import {
   FormField,
   FormItem,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useModal } from "@/hooks/use-modal-store";
 import { EmojiPicker } from "@/components/emoji-picker";
 import { ActionTooltip } from "@/components/action-tooltip";
@@ -105,6 +104,7 @@ export const ChatInput = ({
   const queryClient = useQueryClient();
   const typingSentAtRef = useRef(0);
   const draftWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const storageKey = useMemo(() => `draft:${queryKey ?? apiUrl}`, [apiUrl, queryKey]);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionSuggestions, setMentionSuggestions] = useState<MentionSuggestion[]>([]);
@@ -166,6 +166,18 @@ export const ChatInput = ({
 
     window.localStorage.removeItem(storageKey);
   };
+
+  const resizeComposer = useCallback(() => {
+    const composer = composerRef.current;
+    if (!composer) return;
+
+    composer.style.height = "0px";
+    composer.style.height = `${Math.min(composer.scrollHeight, 160)}px`;
+  }, []);
+
+  const shouldSubmitOnEnter = () => (
+    typeof window === "undefined" || !window.matchMedia("(pointer: coarse)").matches
+  );
 
   useEffect(() => {
     if (mentionQuery === null || !query.serverId) {
@@ -557,6 +569,10 @@ export const ChatInput = ({
     ? SLASH_COMMANDS.filter((item) => item.command.startsWith(slashQuery.toLowerCase())).slice(0, 6)
     : [];
 
+  useEffect(() => {
+    resizeComposer();
+  }, [resizeComposer, watchedContent]);
+
   return (
     <Form {...form}>
       <form
@@ -721,12 +737,18 @@ export const ChatInput = ({
                       })}
                     </div>
                   )}
-                  <Input
-                    disabled={false}
-                    className="pl-24 pr-20 sm:pr-16 py-6 bg-zinc-200/90 dark:bg-zinc-700/75 border-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200 text-base rounded-xl"
+                  <textarea
+                    disabled={form.formState.isSubmitting || isUploadingDrop}
+                    rows={1}
+                    className="max-h-40 min-h-12 w-full resize-none rounded-xl border-0 bg-zinc-200/90 py-3 pl-24 pr-20 text-base leading-6 text-zinc-700 outline-none transition placeholder:text-zinc-500 focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-zinc-700/75 dark:text-zinc-100 dark:placeholder:text-zinc-400 sm:pr-16"
                     placeholder={`Сообщение для ${type === "conversation" ? name : "#" + name}`}
                     aria-label="Введите сообщение"
                     {...field}
+                    ref={(node) => {
+                      field.ref(node);
+                      composerRef.current = node;
+                    }}
+                    onInput={resizeComposer}
                     onChange={(event) => {
                       field.onChange(event);
                       updateMentionQuery(event.target.value);
@@ -744,6 +766,12 @@ export const ChatInput = ({
                         field.onChange(nextValue);
                         updateMentionQuery(nextValue);
                         queueDraftWrite(nextValue);
+                      }
+
+                      if (event.key === "Enter" && !event.shiftKey && hasContent && shouldSubmitOnEnter()) {
+                        event.preventDefault();
+                        void form.handleSubmit(onSubmit)();
+                        return;
                       }
 
                       if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && hasContent) {

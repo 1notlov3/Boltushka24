@@ -1,9 +1,17 @@
 import assert from "node:assert/strict";
 import { MemberRole } from "@prisma/client";
 
-import { applySlashCommand, parseMessageFormatting, parsePollCommand } from "../lib/message-formatting";
+import {
+  applySlashCommand,
+  parseMarkdownTable,
+  parseMessageFormatting,
+  parsePollCommand,
+  parseQuoteContent,
+  parseTodoContent,
+} from "../lib/message-formatting";
 import { canDeleteMessage, canEditMessage, hasPermission } from "../lib/permissions";
 import { movedBeyondReactionTolerance, REACTION_LONG_PRESS_MS, shouldIgnoreReactionTrigger } from "../lib/reaction-trigger";
+import { removeTypingUser, TYPING_TTL, upsertTypingUser } from "../hooks/use-typing-indicator";
 import { extractYoutubeId } from "../lib/youtube";
 
 const videoId = "dQw4w9WgXcQ";
@@ -26,10 +34,20 @@ assert.equal(poll?.question, "Лучший канал?");
 assert.equal(poll?.options.length, 2);
 assert.equal(poll?.options[0]?.id, "option-1");
 
-const tokens = parseMessageFormatting("Привет **мир** `code` https://example.com");
+const tokens = parseMessageFormatting("Привет **мир** `code` _идёт_ https://example.com");
 assert.equal(tokens.some((token) => token.type === "bold" && token.text === "мир"), true);
 assert.equal(tokens.some((token) => token.type === "inlineCode" && token.text === "code"), true);
+assert.equal(tokens.some((token) => token.type === "italic" && token.text === "идёт"), true);
 assert.equal(tokens.some((token) => token.type === "link" && token.href === "https://example.com"), true);
+
+const table = parseMarkdownTable("| A | B |\n| --- | --- |\n| 1 | 2 |");
+assert.deepEqual(table?.headers, ["A", "B"]);
+assert.deepEqual(table?.rows, [["1", "2"]]);
+assert.equal(parseMarkdownTable("| A | B |\n| no | divider |"), null);
+assert.deepEqual(parseQuoteContent("> первая\n> вторая"), ["первая", "вторая"]);
+assert.equal(parseQuoteContent("не цитата"), null);
+assert.deepEqual(parseTodoContent("☐ проверить"), { checked: false, text: "проверить" });
+assert.deepEqual(parseTodoContent("☑ готово"), { checked: true, text: "готово" });
 
 assert.equal(hasPermission(MemberRole.ADMIN, "server.manage"), true);
 assert.equal(hasPermission(MemberRole.MODERATOR, "channel.manage"), true);
@@ -42,5 +60,11 @@ assert.equal(REACTION_LONG_PRESS_MS, 500);
 assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 18, y: 17 }), false);
 assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 25, y: 10 }), true);
 assert.equal(shouldIgnoreReactionTrigger(null), false);
+assert.equal(TYPING_TTL, 3500);
+const typingUsers = upsertTypingUser([], { memberId: "m1", name: "Первый" });
+assert.deepEqual(upsertTypingUser(typingUsers, { memberId: "m1", name: "Первый обновлён" }), [
+  { memberId: "m1", name: "Первый обновлён" },
+]);
+assert.deepEqual(removeTypingUser(typingUsers, "m1"), []);
 
 console.log("All unit checks passed");

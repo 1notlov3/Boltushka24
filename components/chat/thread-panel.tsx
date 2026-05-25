@@ -116,7 +116,7 @@ export const ThreadPanel = ({
       fileUrl={message.fileUrl}
       deleted={message.deleted}
       timestamp={format(new Date(message.createdAt), DATE_FORMAT)}
-      isUpdated={message.updatedAt !== message.createdAt}
+      isUpdated={new Date(message.updatedAt).getTime() !== new Date(message.createdAt).getTime()}
       socketUrl={socketUrl}
       socketQuery={socketQuery}
       queryKey={queryKey}
@@ -133,8 +133,8 @@ export const ThreadPanel = ({
   );
 
   return (
-    <aside className="fixed inset-0 z-40 flex flex-col border-l border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-[#313338] md:left-auto md:w-[420px]">
-      <header className="flex h-14 items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
+    <aside className="fixed inset-0 z-40 flex min-h-0 flex-col border-l border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-[#313338] md:left-auto md:w-[420px]">
+      <header className="flex min-h-14 shrink-0 items-center justify-between border-b border-zinc-200 px-4 pt-[env(safe-area-inset-top)] dark:border-zinc-800">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Тред: {parent?.content ? parent.content.slice(0, 80) : "сообщение"}
