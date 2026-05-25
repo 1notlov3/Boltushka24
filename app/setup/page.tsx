@@ -117,12 +117,15 @@ const SetupPage = async () => {
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
+                <Button asChild variant="primary" className="h-12 rounded-2xl px-6 text-base">
+                  <a href="/home">Открыть Home Inbox</a>
+                </Button>
                 {primaryServer ? (
-                  <Button asChild variant="primary" className="h-12 rounded-2xl px-6 text-base">
+                  <Button asChild variant="outline" className="h-12 rounded-2xl px-6 text-base dark:border-white/10 dark:bg-white/5 dark:text-white">
                     <a href={`/servers/${primaryServer.id}`}>Продолжить общение</a>
                   </Button>
                 ) : (
-                  <Button asChild variant="primary" className="h-12 rounded-2xl px-6 text-base">
+                  <Button asChild variant="outline" className="h-12 rounded-2xl px-6 text-base dark:border-white/10 dark:bg-white/5 dark:text-white">
                     <a href="/setup">Создать первый сервер</a>
                   </Button>
                 )}
