@@ -6,9 +6,10 @@ import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
-import { Bookmark, Edit, FileIcon, Forward, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
+import { Bookmark, Copy, Edit, FileIcon, Forward, Link, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
 import Image from "next/image";
 import { useState, memo } from "react";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { UserAvatar } from "@/components/user-avatar";
@@ -84,6 +85,7 @@ interface ChatItemProps {
   outbox?: boolean;
   repliesCount?: number;
   mentionNames?: Record<string, string>;
+  highlighted?: boolean;
   onReply: (target: ReplyTarget) => void;
   onOpenThread?: (messageId: string) => void;
   onOpenImage?: (url: string) => void;
@@ -120,6 +122,7 @@ export const ChatItem = memo(({
   outbox,
   repliesCount = 0,
   mentionNames,
+  highlighted = false,
   onReply,
   onOpenThread,
   onOpenImage,
@@ -267,11 +270,47 @@ export const ChatItem = memo(({
     document.getElementById(`message-${parent.id}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
   };
 
+  const copyToClipboard = async (value: string, successMessage: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = value;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      toast.success(successMessage);
+    } catch (error) {
+      console.error("[COPY_MESSAGE]", error);
+      toast.error("Не удалось скопировать");
+    }
+  };
+
+  const copyMessageText = () => {
+    const value = content.trim() || fileUrl || "";
+    if (!value) return;
+    void copyToClipboard(value, "Сообщение скопировано");
+  };
+
+  const copyMessageLink = () => {
+    const url = new URL(window.location.href);
+    url.hash = `message-${id}`;
+    void copyToClipboard(url.toString(), "Ссылка на сообщение скопирована");
+  };
+
   return (
     <div
       id={`message-${id}`}
       data-message-id={id}
-      className="relative group flex items-center hover:bg-black/5 px-4 py-2.5 sm:py-2 transition w-full"
+      className={cn(
+        "relative group flex items-center px-4 py-2.5 sm:py-2 transition w-full hover:bg-black/5",
+        highlighted && "bg-indigo-500/10 ring-1 ring-inset ring-indigo-400/40"
+      )}
     >
       <div className="group flex gap-x-3 sm:gap-x-2 items-start w-full">
       <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition shrink-0">
@@ -447,6 +486,30 @@ export const ChatItem = memo(({
       </div>
       {!deleted && (
         <div className="group-hover:opacity-100 focus-within:opacity-100 group-hover:pointer-events-auto focus-within:pointer-events-auto opacity-0 pointer-events-none flex items-center gap-x-2 absolute p-1 -top-2 right-5 bg-white dark:bg-zinc-800 border rounded-sm transition-opacity">
+          {!deleted && (
+            <ActionTooltip label="Копировать текст">
+              <button
+                onClick={copyMessageText}
+                className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+                aria-label="Копировать текст"
+                type="button"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </ActionTooltip>
+          )}
+          {!deleted && (
+            <ActionTooltip label="Ссылка на сообщение">
+              <button
+                onClick={copyMessageLink}
+                className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
+                aria-label="Ссылка на сообщение"
+                type="button"
+              >
+                <Link className="w-4 h-4" />
+              </button>
+            </ActionTooltip>
+          )}
           {!deleted && (
             <ActionTooltip label="Ответить">
               <button

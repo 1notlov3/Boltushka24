@@ -66,8 +66,24 @@ export function applySlashCommand(raw: string) {
     return query ? `[GIF: ${query}]` : "[GIF]";
   }
 
+  if (value.startsWith("/todo ")) {
+    return `☐ ${value.slice(6).trim()}`;
+  }
+
+  if (value.startsWith("/quote ")) {
+    return `> ${value.slice(7).trim()}`;
+  }
+
+  if (value.startsWith("/code ")) {
+    return `\`\`\`\n${value.slice(6).trim()}\n\`\`\``;
+  }
+
+  if (value === "/table") {
+    return "| Колонка 1 | Колонка 2 |\n| --- | --- |\n| Значение | Значение |";
+  }
+
   if (value === "/help") {
-    return "Команды: /shrug, /me текст, /poll вопрос, /gif запрос, /help";
+    return "Команды: /shrug, /me текст, /todo задача, /quote текст, /code код, /table, /poll вопрос, /gif запрос, /help";
   }
 
   return raw;
