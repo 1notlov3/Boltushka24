@@ -61,6 +61,7 @@ const GroupConversationPage = async ({ params, searchParams }: GroupConversation
         serverId={resolvedParams.serverId}
         type="conversation"
         conversationId={access.conversation.id}
+        isGroupConversation={true}
       />
       {resolvedSearchParams.video && (
         <MediaRoom

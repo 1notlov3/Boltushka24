@@ -47,7 +47,15 @@ async function main() {
   const { movedBeyondReactionTolerance, REACTION_LONG_PRESS_MS, shouldIgnoreReactionTrigger } = reactionTrigger;
   const { removeTypingUser, TYPING_TTL, upsertTypingUser } = typingIndicator;
   const { extractYoutubeId } = youtube;
-  const { buildCreateGroupConversationPayload, canSubmitGroupConversation, groupConversationHref } = groupConversationUi;
+  const {
+    buildCreateGroupConversationPayload,
+    buildGroupSettingsPayload,
+    canManageGroupConversation,
+    canRemoveGroupParticipant,
+    canSubmitGroupConversation,
+    canSubmitGroupSettings,
+    groupConversationHref,
+  } = groupConversationUi;
 
   const videoId = "dQw4w9WgXcQ";
 
@@ -113,14 +121,33 @@ async function main() {
   assert.equal(canSubmitGroupConversation({ ...groupPayload, memberIds: ["member-1"] }), false);
   assert.equal(groupConversationHref("server-1", "conversation-1"), "/servers/server-1/conversations/group/conversation-1");
 
+  const groupSettingsPayload = buildGroupSettingsPayload({ name: "  Новый   штаб  ", imageUrl: " https://example.com/a.png " });
+  assert.deepEqual(groupSettingsPayload, { name: "Новый штаб", imageUrl: "https://example.com/a.png" });
+  assert.equal(canSubmitGroupSettings(groupSettingsPayload), true);
+  assert.equal(canSubmitGroupSettings({ ...groupSettingsPayload, name: "" }), false);
+  assert.equal(canManageGroupConversation("OWNER"), true);
+  assert.equal(canManageGroupConversation("ADMIN"), true);
+  assert.equal(canManageGroupConversation("MEMBER"), false);
+  assert.equal(canRemoveGroupParticipant({ actorRole: "ADMIN", targetRole: "MEMBER", isSelf: false, ownerCount: 1 }), true);
+  assert.equal(canRemoveGroupParticipant({ actorRole: "MEMBER", targetRole: "MEMBER", isSelf: false, ownerCount: 1 }), false);
+  assert.equal(canRemoveGroupParticipant({ actorRole: "OWNER", targetRole: "OWNER", isSelf: true, ownerCount: 1 }), false);
+  assert.equal(canRemoveGroupParticipant({ actorRole: "OWNER", targetRole: "MEMBER", isSelf: true, ownerCount: 1 }), true);
+
   const modalStoreSource = readFileSync(resolve(process.cwd(), "hooks/use-modal-store.ts"), "utf8");
   const modalProviderSource = readFileSync(resolve(process.cwd(), "components/providers/modal-provider.tsx"), "utf8");
   const modalSource = readFileSync(resolve(process.cwd(), "components/modals/create-group-conversation-modal.tsx"), "utf8");
+  const groupSettingsModalSource = readFileSync(resolve(process.cwd(), "components/modals/group-conversation-settings-modal.tsx"), "utf8");
+  const chatHeaderActionsSource = readFileSync(resolve(process.cwd(), "components/chat/chat-header-actions.tsx"), "utf8");
   assert.equal(modalStoreSource.includes('"createGroupConversation"'), true);
+  assert.equal(modalStoreSource.includes('"groupConversationSettings"'), true);
   assert.equal(modalProviderSource.includes("CreateGroupConversationModal"), true);
+  assert.equal(modalProviderSource.includes("GroupConversationSettingsModal"), true);
   assert.equal(modalSource.includes('http.post("/api/conversations/group", payload)'), true);
   assert.equal(modalSource.includes("payload.memberIds.length"), true);
   assert.equal(modalSource.includes("groupConversationHref(serverId, data.conversation.id)"), true);
+  assert.equal(groupSettingsModalSource.includes("/api/conversations/group/${conversationId}/participants"), true);
+  assert.equal(chatHeaderActionsSource.includes('onOpen("groupConversationSettings"'), true);
+  assert.equal(chatHeaderActionsSource.includes("isGroupConversation"), true);
 
   assert.equal(REACTION_LONG_PRESS_MS, 500);
   assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 18, y: 17 }), false);

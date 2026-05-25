@@ -227,7 +227,7 @@ export const HomeInbox = ({ data }: { data: HomeInboxData }) => {
                 <h2 className="text-lg font-black">Следующий уровень</h2>
               </div>
               <p className="mt-3 text-sm leading-6 text-zinc-300">
-                Дальше сюда добавятся закреплённые чаты, групповые личные диалоги, активные voice rooms, quests и watch parties.
+                Дальше здесь появятся закреплённые чаты, быстрые group settings, активные voice rooms, quests и watch parties.
               </p>
             </section>
           </aside>

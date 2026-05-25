@@ -1,6 +1,6 @@
 "use client";
 
-import { Pin, Search } from "lucide-react";
+import { Pin, Search, Users } from "lucide-react";
 
 import { ActionTooltip } from "@/components/action-tooltip";
 import { useModal } from "@/hooks/use-modal-store";
@@ -11,6 +11,7 @@ interface ChatHeaderActionsProps {
   chatId: string;
   channelId?: string;
   conversationId?: string;
+  isGroupConversation?: boolean;
 }
 
 export const ChatHeaderActions = ({
@@ -19,6 +20,7 @@ export const ChatHeaderActions = ({
   chatId,
   channelId,
   conversationId,
+  isGroupConversation = false,
 }: ChatHeaderActionsProps) => {
   const { onOpen } = useModal();
 
@@ -56,6 +58,23 @@ export const ChatHeaderActions = ({
           <Pin className="h-4 w-4" />
         </button>
       </ActionTooltip>
+      {type === "conversation" && isGroupConversation && conversationId && (
+        <ActionTooltip label="Участники" side="bottom">
+          <button
+            type="button"
+            onClick={() => onOpen("groupConversationSettings", {
+              chatId,
+              chatType: type,
+              serverId,
+              conversationId,
+            })}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            aria-label="Управление группой"
+          >
+            <Users className="h-4 w-4" />
+          </button>
+        </ActionTooltip>
+      )}
     </>
   );
 };

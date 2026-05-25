@@ -11,6 +11,7 @@ export type ModalType =
   | "forwardMessage"
   | "createChannel"
   | "createGroupConversation"
+  | "groupConversationSettings"
   | "createCategory"
   | "leaveServer"
   | "deleteServer"

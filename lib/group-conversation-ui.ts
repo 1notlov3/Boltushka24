@@ -21,6 +21,18 @@ export type CreateGroupPayload = {
   memberIds: string[];
 };
 
+export type GroupConversationRole = "OWNER" | "ADMIN" | "MEMBER";
+
+export type GroupSettingsPayloadInput = {
+  name: string;
+  imageUrl?: string | null;
+};
+
+export type GroupSettingsPayload = {
+  name: string;
+  imageUrl: string | null;
+};
+
 export const MIN_GROUP_OTHER_MEMBERS = 2;
 export const MAX_GROUP_NAME_LENGTH = 120;
 
@@ -63,4 +75,35 @@ export function canSubmitGroupConversation(payload: CreateGroupPayload) {
 
 export function groupConversationHref(serverId: string, conversationId: string) {
   return `/servers/${serverId}/conversations/group/${conversationId}`;
+}
+
+export function buildGroupSettingsPayload({ name, imageUrl }: GroupSettingsPayloadInput): GroupSettingsPayload {
+  return {
+    name: normalizeGroupName(name),
+    imageUrl: normalizeImageUrl(imageUrl),
+  };
+}
+
+export function canSubmitGroupSettings(payload: GroupSettingsPayload) {
+  return payload.name.length > 0 && payload.name.length <= MAX_GROUP_NAME_LENGTH;
+}
+
+export function canManageGroupConversation(role?: GroupConversationRole | null) {
+  return role === "OWNER" || role === "ADMIN";
+}
+
+export function canRemoveGroupParticipant({
+  actorRole,
+  targetRole,
+  isSelf,
+  ownerCount,
+}: {
+  actorRole?: GroupConversationRole | null;
+  targetRole?: GroupConversationRole | null;
+  isSelf: boolean;
+  ownerCount: number;
+}) {
+  if (targetRole === "OWNER" && ownerCount <= 1) return false;
+  if (isSelf) return true;
+  return canManageGroupConversation(actorRole) && targetRole !== "OWNER";
 }
