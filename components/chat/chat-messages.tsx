@@ -89,6 +89,7 @@ export const ChatMessages = ({
   const [localSearch, setLocalSearch] = useState("");
   const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [hashTargetVersion, setHashTargetVersion] = useState(0);
 
   const {
     data,
@@ -213,18 +214,32 @@ export const ChatMessages = ({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const onHashChange = () => setHashTargetVersion((version) => version + 1);
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const targetId = window.location.hash.match(/^#message-(.+)$/)?.[1];
     if (!targetId) return;
 
     const decodedTargetId = decodeURIComponent(targetId);
     const element = document.getElementById(`message-${decodedTargetId}`);
-    if (!element) return;
+
+    if (!element) {
+      if (hasNextPage && !isFetchingNextPage && !normalizedLocalSearch) {
+        void fetchNextPage();
+      }
+      return;
+    }
 
     element.scrollIntoView({ block: "center", behavior: "smooth" });
     setHighlightedMessageId(decodedTargetId);
     const timer = window.setTimeout(() => setHighlightedMessageId(null), 3500);
     return () => window.clearTimeout(timer);
-  }, [visibleMessages.length]);
+  }, [fetchNextPage, hasNextPage, hashTargetVersion, isFetchingNextPage, normalizedLocalSearch, visibleMessages.length]);
 
   const scrollToLatest = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

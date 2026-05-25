@@ -47,6 +47,11 @@ export const PinnedMessagesModal = () => {
   }, [data.chatId, data.chatType, isModalOpen]);
 
   const jumpToMessage = (id: string) => {
+    const hash = `message-${id}`;
+    if (window.location.hash !== `#${hash}`) {
+      window.history.replaceState(null, "", `#${hash}`);
+    }
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
     document.getElementById(`message-${id}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
     onClose();
   };

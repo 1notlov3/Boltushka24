@@ -6,7 +6,7 @@ import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
-import { Bookmark, Copy, Edit, FileIcon, Forward, Link, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
+import { Bookmark, Copy, Edit, FileIcon, Forward, Link, MoreHorizontal, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, memo } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
@@ -24,6 +24,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useModal } from "@/hooks/use-modal-store";
 import { useRouter, useParams } from "next/navigation";
 import type { ReplyTarget } from "@/components/chat/chat-shell";
@@ -316,6 +323,23 @@ export const ChatItem = memo(({
     void copyToClipboard(url.toString(), "Ссылка на сообщение скопирована");
   };
 
+  const replyToMessage = () => onReply({ id, content, authorName: member.profile.name });
+
+  const openForwardModal = () => onOpen("forwardMessage", {
+    serverId: typeof params?.serverId === "string" ? params.serverId : socketQuery.serverId,
+    message: { id, content, fileUrl },
+  });
+
+  const openDeleteModal = () => onOpen("deleteMessage", {
+    apiUrl: `${socketUrl}/${id}`,
+    query: socketQuery,
+  });
+
+  const startEditing = () => {
+    form.reset({ content });
+    setIsEditing(true);
+  };
+
   const clearLongPressTimer = useCallback(() => {
     if (longPressTimerRef.current) {
       window.clearTimeout(longPressTimerRef.current);
@@ -446,6 +470,66 @@ export const ChatItem = memo(({
               <span className="inline-flex items-center rounded-sm bg-zinc-500/10 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-300">
                 В очереди
               </span>
+            )}
+            {!deleted && (
+              <div data-reaction-ignore className="ml-auto sm:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                      aria-label="Действия с сообщением"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onSelect={copyMessageText}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Копировать текст
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={copyMessageLink}>
+                      <Link className="mr-2 h-4 w-4" />
+                      Ссылка на сообщение
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={replyToMessage}>
+                      <Reply className="mr-2 h-4 w-4" />
+                      Ответить
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={openReactionPicker}>
+                      <SmilePlus className="mr-2 h-4 w-4" />
+                      Реакция
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {canPinMessage && (
+                      <DropdownMenuItem onSelect={onPin}>
+                        <Pin className="mr-2 h-4 w-4" />
+                        {pinned ? "Открепить" : "Закрепить"}
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onSelect={openForwardModal}>
+                      <Forward className="mr-2 h-4 w-4" />
+                      Переслать
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={onSave}>
+                      <Bookmark className="mr-2 h-4 w-4" />
+                      {savedByCurrentMember ? "Убрать из избранного" : "Сохранить"}
+                    </DropdownMenuItem>
+                    {canEditMessage && (
+                      <DropdownMenuItem onSelect={startEditing}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Редактировать
+                      </DropdownMenuItem>
+                    )}
+                    {canDeleteMessage && (
+                      <DropdownMenuItem onSelect={openDeleteModal} className="text-rose-600 focus:text-rose-600">
+                        <Trash className="mr-2 h-4 w-4" />
+                        Удалить
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
           </div>
           {parent && !deleted && (
@@ -627,7 +711,7 @@ export const ChatItem = memo(({
           {!deleted && (
             <ActionTooltip label="Ответить">
               <button
-                onClick={() => onReply({ id, content, authorName: member.profile.name })}
+                onClick={replyToMessage}
                 className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
                 aria-label="Ответить"
                 type="button"
@@ -666,10 +750,7 @@ export const ChatItem = memo(({
           {!deleted && (
             <ActionTooltip label="Переслать">
               <button
-                onClick={() => onOpen("forwardMessage", {
-                  serverId: typeof params?.serverId === "string" ? params.serverId : socketQuery.serverId,
-                  message: { id, content, fileUrl },
-                })}
+                onClick={openForwardModal}
                 className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
                 aria-label="Переслать"
                 type="button"
@@ -696,10 +777,7 @@ export const ChatItem = memo(({
           {canEditMessage && (
             <ActionTooltip label="Редактировать">
               <button
-                onClick={() => {
-                  form.reset({ content });
-                  setIsEditing(true);
-                }}
+                onClick={startEditing}
                 className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
                 aria-label="Редактировать"
                 type="button"
@@ -711,10 +789,7 @@ export const ChatItem = memo(({
           {canDeleteMessage && (
             <ActionTooltip label="Удалить">
               <button
-                onClick={() => onOpen("deleteMessage", {
-                  apiUrl: `${socketUrl}/${id}`,
-                  query: socketQuery,
-                })}
+                onClick={openDeleteModal}
                 className="cursor-pointer ml-auto transition text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2"
                 aria-label="Удалить"
                 type="button"
