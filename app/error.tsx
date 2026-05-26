@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { publicFeatures } from "@/lib/public-env";
 
 export default function Error({
   error,
@@ -16,7 +15,7 @@ export default function Error({
   const router = useRouter();
 
   useEffect(() => {
-    if (publicFeatures.sentryClient) {
+    if (process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN) {
       void import("@sentry/nextjs").then((Sentry) => Sentry.captureException(error));
     }
   }, [error]);

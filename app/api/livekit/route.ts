@@ -5,8 +5,6 @@ import { z } from "zod";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
-import { publicEnv } from "@/lib/public-env";
-import { serverEnv, serverFeatures } from "@/lib/server-env";
 
 export const dynamic = "force-dynamic";
 
@@ -81,12 +79,16 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  if (!serverFeatures.livekit || !publicEnv.NEXT_PUBLIC_LIVEKIT_URL || !serverEnv.LIVEKIT_API_KEY || !serverEnv.LIVEKIT_API_SECRET) {
-    return NextResponse.json({ error: "LiveKit is not configured" }, { status: 503 });
+  const apiKey = process.env.LIVEKIT_API_KEY;
+  const apiSecret = process.env.LIVEKIT_API_SECRET;
+  const wsUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL;
+
+  if (!apiKey || !apiSecret || !wsUrl) {
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 
   // Use profile.id as identity to ensure uniqueness and profile.name for display to prevent spoofing
-  const at = new AccessToken(serverEnv.LIVEKIT_API_KEY, serverEnv.LIVEKIT_API_SECRET, { identity: profile.id, name: profile.name });
+  const at = new AccessToken(apiKey, apiSecret, { identity: profile.id, name: profile.name });
 
   at.addGrant({ room, roomJoin: true, canPublish: true, canSubscribe: true });
   

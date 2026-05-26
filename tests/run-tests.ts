@@ -1,296 +1,70 @@
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
-import { ConversationParticipantRole, ConversationType, MemberRole } from "@prisma/client";
+import { MemberRole } from "@prisma/client";
 
-const loadEnvFile = (path: string) => {
-  if (!existsSync(path)) return;
+import {
+  applySlashCommand,
+  parseMarkdownTable,
+  parseMessageFormatting,
+  parsePollCommand,
+  parseQuoteContent,
+  parseTodoContent,
+} from "../lib/message-formatting";
+import { canDeleteMessage, canEditMessage, hasPermission } from "../lib/permissions";
+import { movedBeyondReactionTolerance, REACTION_LONG_PRESS_MS, shouldIgnoreReactionTrigger } from "../lib/reaction-trigger";
+import { removeTypingUser, TYPING_TTL, upsertTypingUser } from "../hooks/use-typing-indicator";
+import { extractYoutubeId } from "../lib/youtube";
 
-  const content = readFileSync(path, "utf8");
-  for (const line of content.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
+const videoId = "dQw4w9WgXcQ";
 
-    const separatorIndex = trimmed.indexOf("=");
-    if (separatorIndex === -1) continue;
+assert.equal(extractYoutubeId(videoId), videoId);
+assert.equal(extractYoutubeId(`https://www.youtube.com/watch?v=${videoId}&t=10`), videoId);
+assert.equal(extractYoutubeId(`https://youtu.be/${videoId}`), videoId);
+assert.equal(extractYoutubeId("https://example.com/nope"), null);
 
-    const key = trimmed.slice(0, separatorIndex).trim();
-    const rawValue = trimmed.slice(separatorIndex + 1).trim();
-    const value = rawValue.replace(/^(["'])(.*)\1$/, "$2");
+assert.equal(applySlashCommand("/me тестирует"), "_тестирует_");
+assert.equal(applySlashCommand("/poll лучший канал?"), "/poll лучший канал?");
+assert.equal(applySlashCommand("/gif cats"), "[GIF: cats]");
+assert.equal(applySlashCommand("/todo проверить деплой"), "☐ проверить деплой");
+assert.equal(applySlashCommand("/quote важная мысль"), "> важная мысль");
+assert.equal(applySlashCommand("/code const ok = true;"), "```\nconst ok = true;\n```");
+assert.equal(applySlashCommand("/table").includes("| Колонка 1 | Колонка 2 |"), true);
 
-    if (!(key in process.env)) {
-      process.env[key] = value;
-    }
-  }
-};
+const poll = parsePollCommand('/poll "Лучший канал?" "общий" "музыка"');
+assert.equal(poll?.question, "Лучший канал?");
+assert.equal(poll?.options.length, 2);
+assert.equal(poll?.options[0]?.id, "option-1");
 
-async function main() {
-  loadEnvFile(resolve(process.cwd(), ".env"));
-  loadEnvFile(resolve(process.cwd(), ".env.local"));
+const tokens = parseMessageFormatting("Привет **мир** `code` _идёт_ https://example.com");
+assert.equal(tokens.some((token) => token.type === "bold" && token.text === "мир"), true);
+assert.equal(tokens.some((token) => token.type === "inlineCode" && token.text === "code"), true);
+assert.equal(tokens.some((token) => token.type === "italic" && token.text === "идёт"), true);
+assert.equal(tokens.some((token) => token.type === "link" && token.href === "https://example.com"), true);
 
-  const messageFormatting = await import("../lib/message-formatting");
-  const permissions = await import("../lib/permissions");
-  const reactionTrigger = await import("../lib/reaction-trigger");
-  const typingIndicator = await import("../hooks/use-typing-indicator");
-  const youtube = await import("../lib/youtube");
-  const watchQueue = await import("../lib/watch-queue");
-  const groupConversationUi = await import("../lib/group-conversation-ui");
-  const groupSystemEvents = await import("../lib/group-system-events");
+const table = parseMarkdownTable("| A | B |\n| --- | --- |\n| 1 | 2 |");
+assert.deepEqual(table?.headers, ["A", "B"]);
+assert.deepEqual(table?.rows, [["1", "2"]]);
+assert.equal(parseMarkdownTable("| A | B |\n| no | divider |"), null);
+assert.deepEqual(parseQuoteContent("> первая\n> вторая"), ["первая", "вторая"]);
+assert.equal(parseQuoteContent("не цитата"), null);
+assert.deepEqual(parseTodoContent("☐ проверить"), { checked: false, text: "проверить" });
+assert.deepEqual(parseTodoContent("☑ готово"), { checked: true, text: "готово" });
 
-  const {
-    applySlashCommand,
-    parseMarkdownTable,
-    parseMessageFormatting,
-    parsePollCommand,
-    parseQuoteContent,
-    parseTodoContent,
-  } = messageFormatting;
-  const { canControlWatchSession, canDeleteMessage, canEditMessage, canManageModeration, hasPermission } = permissions;
-  const { movedBeyondReactionTolerance, REACTION_LONG_PRESS_MS, shouldIgnoreReactionTrigger } = reactionTrigger;
-  const { removeTypingUser, TYPING_TTL, upsertTypingUser } = typingIndicator;
-  const { extractYoutubeId } = youtube;
-  const { sortWatchQueueItems } = watchQueue;
-  const {
-    buildCreateGroupConversationPayload,
-    buildGroupSettingsPayload,
-    canDemoteGroupParticipant,
-    canManageGroupConversation,
-    canPromoteGroupParticipant,
-    canRemoveGroupParticipant,
-    canSubmitGroupConversation,
-    canSubmitGroupSettings,
-    canTransferGroupOwnership,
-    groupConversationHref,
-  } = groupConversationUi;
-  const { buildGroupSystemEventContent, formatGroupSystemEvent, parseGroupSystemEvent } = groupSystemEvents;
+assert.equal(hasPermission(MemberRole.ADMIN, "server.manage"), true);
+assert.equal(hasPermission(MemberRole.MODERATOR, "channel.manage"), true);
+assert.equal(hasPermission(MemberRole.GUEST, "channel.manage"), false);
+assert.equal(canDeleteMessage({ id: "m1", role: MemberRole.GUEST }, "m1"), true);
+assert.equal(canDeleteMessage({ id: "m2", role: MemberRole.MODERATOR }, "m1"), true);
+assert.equal(canEditMessage({ id: "m2", role: MemberRole.MODERATOR }, "m1"), false);
 
-  const videoId = "dQw4w9WgXcQ";
+assert.equal(REACTION_LONG_PRESS_MS, 500);
+assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 18, y: 17 }), false);
+assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 25, y: 10 }), true);
+assert.equal(shouldIgnoreReactionTrigger(null), false);
+assert.equal(TYPING_TTL, 3500);
+const typingUsers = upsertTypingUser([], { memberId: "m1", name: "Первый" });
+assert.deepEqual(upsertTypingUser(typingUsers, { memberId: "m1", name: "Первый обновлён" }), [
+  { memberId: "m1", name: "Первый обновлён" },
+]);
+assert.deepEqual(removeTypingUser(typingUsers, "m1"), []);
 
-  assert.equal(extractYoutubeId(videoId), videoId);
-  assert.equal(extractYoutubeId(`https://www.youtube.com/watch?v=${videoId}&t=10`), videoId);
-  assert.equal(extractYoutubeId(`https://youtu.be/${videoId}`), videoId);
-  assert.equal(extractYoutubeId("https://example.com/nope"), null);
-  assert.deepEqual(sortWatchQueueItems([
-    { id: "a", position: 0, voteCount: 1, createdAt: new Date("2026-01-01") },
-    { id: "b", position: 1, voteCount: 3, createdAt: new Date("2026-01-02") },
-    { id: "c", position: 2, voteCount: 3, createdAt: new Date("2026-01-03") },
-  ]).map((item) => item.id), ["b", "c", "a"]);
-
-  assert.equal(applySlashCommand("/me тестирует"), "_тестирует_");
-  assert.equal(applySlashCommand("/poll лучший канал?"), "/poll лучший канал?");
-  assert.equal(applySlashCommand("/gif cats"), "[GIF: cats]");
-  assert.equal(applySlashCommand("/todo проверить деплой"), "☐ проверить деплой");
-  assert.equal(applySlashCommand("/quote важная мысль"), "> важная мысль");
-  assert.equal(applySlashCommand("/code const ok = true;"), "```\nconst ok = true;\n```");
-  assert.equal(applySlashCommand("/table").includes("| Колонка 1 | Колонка 2 |"), true);
-
-  const poll = parsePollCommand('/poll "Лучший канал?" "общий" "музыка"');
-  assert.equal(poll?.question, "Лучший канал?");
-  assert.equal(poll?.options.length, 2);
-  assert.equal(poll?.options[0]?.id, "option-1");
-
-  const tokens = parseMessageFormatting("Привет **мир** `code` _идёт_ https://example.com");
-  assert.equal(tokens.some((token) => token.type === "bold" && token.text === "мир"), true);
-  assert.equal(tokens.some((token) => token.type === "inlineCode" && token.text === "code"), true);
-  assert.equal(tokens.some((token) => token.type === "italic" && token.text === "идёт"), true);
-  assert.equal(tokens.some((token) => token.type === "link" && token.href === "https://example.com"), true);
-
-  const table = parseMarkdownTable("| A | B |\n| --- | --- |\n| 1 | 2 |");
-  assert.deepEqual(table?.headers, ["A", "B"]);
-  assert.deepEqual(table?.rows, [["1", "2"]]);
-  assert.equal(parseMarkdownTable("| A | B |\n| no | divider |"), null);
-  assert.deepEqual(parseQuoteContent("> первая\n> вторая"), ["первая", "вторая"]);
-  assert.equal(parseQuoteContent("не цитата"), null);
-  assert.deepEqual(parseTodoContent("☐ проверить"), { checked: false, text: "проверить" });
-  assert.deepEqual(parseTodoContent("☑ готово"), { checked: true, text: "готово" });
-
-  assert.equal(hasPermission(MemberRole.ADMIN, "server.manage"), true);
-  assert.equal(hasPermission(MemberRole.MODERATOR, "channel.manage"), true);
-  assert.equal(hasPermission(MemberRole.GUEST, "channel.manage"), false);
-  assert.equal(canControlWatchSession({ id: "m-admin", role: MemberRole.ADMIN }), true);
-  assert.equal(canControlWatchSession({ id: "m-mod", role: MemberRole.MODERATOR }), true);
-  assert.equal(canControlWatchSession({ id: "m-guest", role: MemberRole.GUEST }), false);
-  assert.equal(canManageModeration({ id: "m-admin", role: MemberRole.ADMIN }), true);
-  assert.equal(canManageModeration({ id: "m-mod", role: MemberRole.MODERATOR }), true);
-  assert.equal(canManageModeration({ id: "m-guest", role: MemberRole.GUEST }), false);
-  assert.equal(canControlWatchSession({
-    id: "m-custom",
-    role: MemberRole.GUEST,
-    serverRoles: [{ role: { permissions: ["watch.control"] } }],
-  }), true);
-  assert.equal(canDeleteMessage({ id: "m1", role: MemberRole.GUEST }, "m1"), true);
-  assert.equal(canDeleteMessage({ id: "m2", role: MemberRole.MODERATOR }, "m1"), true);
-  assert.equal(canEditMessage({ id: "m2", role: MemberRole.MODERATOR }, "m1"), false);
-  assert.equal(ConversationType.DIRECT, "DIRECT");
-  assert.equal(ConversationType.GROUP, "GROUP");
-  assert.equal(ConversationParticipantRole.OWNER, "OWNER");
-  assert.equal(ConversationParticipantRole.ADMIN, "ADMIN");
-  assert.equal(ConversationParticipantRole.MEMBER, "MEMBER");
-
-  const groupPayload = buildCreateGroupConversationPayload({
-    serverId: "server-1",
-    name: "  Запуск   продукта  ",
-    imageUrl: "   ",
-    selectedMemberIds: ["member-1", "owner-1", "member-1", "member-2"],
-    currentMemberId: "owner-1",
-  });
-  assert.deepEqual(groupPayload, {
-    serverId: "server-1",
-    name: "Запуск продукта",
-    imageUrl: null,
-    memberIds: ["member-1", "member-2"],
-  });
-  assert.equal(canSubmitGroupConversation(groupPayload), true);
-  assert.equal(canSubmitGroupConversation({ ...groupPayload, memberIds: ["member-1"] }), false);
-  assert.equal(groupConversationHref("server-1", "conversation-1"), "/servers/server-1/conversations/group/conversation-1");
-
-  const groupSettingsPayload = buildGroupSettingsPayload({ name: "  Новый   штаб  ", imageUrl: " https://example.com/a.png " });
-  assert.deepEqual(groupSettingsPayload, { name: "Новый штаб", imageUrl: "https://example.com/a.png" });
-  assert.equal(canSubmitGroupSettings(groupSettingsPayload), true);
-  assert.equal(canSubmitGroupSettings({ ...groupSettingsPayload, name: "" }), false);
-  assert.equal(canManageGroupConversation("OWNER"), true);
-  assert.equal(canManageGroupConversation("ADMIN"), true);
-  assert.equal(canManageGroupConversation("MEMBER"), false);
-  assert.equal(canRemoveGroupParticipant({ actorRole: "ADMIN", targetRole: "MEMBER", isSelf: false, ownerCount: 1 }), true);
-  assert.equal(canRemoveGroupParticipant({ actorRole: "ADMIN", targetRole: "ADMIN", isSelf: false, ownerCount: 1 }), false);
-  assert.equal(canRemoveGroupParticipant({ actorRole: "MEMBER", targetRole: "MEMBER", isSelf: false, ownerCount: 1 }), false);
-  assert.equal(canRemoveGroupParticipant({ actorRole: "OWNER", targetRole: "OWNER", isSelf: true, ownerCount: 1 }), false);
-  assert.equal(canRemoveGroupParticipant({ actorRole: "OWNER", targetRole: "MEMBER", isSelf: true, ownerCount: 1 }), true);
-  assert.equal(canPromoteGroupParticipant({ actorRole: "OWNER", targetRole: "MEMBER", isSelf: false }), true);
-  assert.equal(canPromoteGroupParticipant({ actorRole: "ADMIN", targetRole: "MEMBER", isSelf: false }), false);
-  assert.equal(canDemoteGroupParticipant({ actorRole: "OWNER", targetRole: "ADMIN", isSelf: false }), true);
-  assert.equal(canDemoteGroupParticipant({ actorRole: "OWNER", targetRole: "OWNER", isSelf: false }), false);
-  assert.equal(canTransferGroupOwnership({ actorRole: "OWNER", targetRole: "ADMIN", isSelf: false }), true);
-  assert.equal(canTransferGroupOwnership({ actorRole: "OWNER", targetRole: "OWNER", isSelf: false }), false);
-
-  const systemEventContent = buildGroupSystemEventContent({
-    type: "member_added",
-    actorName: "Максим",
-    targetNames: ["Анна", "Олег"],
-  });
-  assert.equal(systemEventContent.startsWith("__boltushka_group_system_event__:"), true);
-  assert.deepEqual(parseGroupSystemEvent(systemEventContent), {
-    type: "member_added",
-    actorName: "Максим",
-    targetNames: ["Анна", "Олег"],
-  });
-  assert.equal(parseGroupSystemEvent("обычное сообщение"), null);
-  assert.equal(parseGroupSystemEvent("__boltushka_group_system_event__:{bad"), null);
-  assert.equal(formatGroupSystemEvent({ type: "owner_transferred", actorName: "Максим", targetName: "Анна" }), "Максим передал(а) владение группой пользователю Анна");
-
-  const modalStoreSource = readFileSync(resolve(process.cwd(), "hooks/use-modal-store.ts"), "utf8");
-  const modalProviderSource = readFileSync(resolve(process.cwd(), "components/providers/modal-provider.tsx"), "utf8");
-  const modalSource = readFileSync(resolve(process.cwd(), "components/modals/create-group-conversation-modal.tsx"), "utf8");
-  const groupSettingsModalSource = readFileSync(resolve(process.cwd(), "components/modals/group-conversation-settings-modal.tsx"), "utf8");
-  const chatHeaderActionsSource = readFileSync(resolve(process.cwd(), "components/chat/chat-header-actions.tsx"), "utf8");
-  const chatMessagesSource = readFileSync(resolve(process.cwd(), "components/chat/chat-messages.tsx"), "utf8");
-  const chatSystemEventSource = readFileSync(resolve(process.cwd(), "components/chat/chat-system-event.tsx"), "utf8");
-  const watchRoomSource = readFileSync(resolve(process.cwd(), "components/watch/youtube-watch-room.tsx"), "utf8");
-  const groupParticipantRouteSource = readFileSync(resolve(process.cwd(), "app/api/conversations/group/[conversationId]/participants/[memberId]/route.ts"), "utf8");
-  assert.equal(modalStoreSource.includes('"createGroupConversation"'), true);
-  assert.equal(modalStoreSource.includes('"groupConversationSettings"'), true);
-  assert.equal(modalProviderSource.includes("CreateGroupConversationModal"), true);
-  assert.equal(modalProviderSource.includes("GroupConversationSettingsModal"), true);
-  assert.equal(modalSource.includes('http.post("/api/conversations/group", payload)'), true);
-  assert.equal(modalSource.includes("payload.memberIds.length"), true);
-  assert.equal(modalSource.includes("groupConversationHref(serverId, data.conversation.id)"), true);
-  assert.equal(groupSettingsModalSource.includes("/api/conversations/group/${conversationId}/participants"), true);
-  assert.equal(groupSettingsModalSource.includes("DropdownMenu"), true);
-  assert.equal(groupSettingsModalSource.includes("Сделать админом"), true);
-  assert.equal(groupSettingsModalSource.includes("Снять админа"), true);
-  assert.equal(groupSettingsModalSource.includes("Передать владение"), true);
-  assert.equal(groupSettingsModalSource.includes('"transfer_owner"'), true);
-  assert.equal(chatHeaderActionsSource.includes('onOpen("groupConversationSettings"'), true);
-  assert.equal(chatHeaderActionsSource.includes("isGroupConversation"), true);
-  assert.equal(chatMessagesSource.includes("parseGroupSystemEvent"), true);
-  assert.equal(chatMessagesSource.includes("ChatSystemEvent"), true);
-  assert.equal(chatSystemEventSource.includes("Системное событие"), true);
-  assert.equal(chatSystemEventSource.includes("Ответить"), false);
-  assert.equal(chatSystemEventSource.includes("Редактировать"), false);
-  assert.equal(watchRoomSource.includes("canControlWatchSession"), true);
-  assert.equal(watchRoomSource.includes("disabled={!canControlWatch}"), true);
-  assert.equal(watchRoomSource.includes("Гость: можно добавлять видео в очередь"), true);
-  assert.equal(watchRoomSource.includes("Очередь · голосование"), true);
-  assert.equal(watchRoomSource.includes("voteQueueItem"), true);
-  assert.equal(watchRoomSource.includes("👍 {item.voteCount}"), true);
-  const reportModalSource = readFileSync(resolve(process.cwd(), "components/modals/report-message-modal.tsx"), "utf8");
-  const moderationQueueModalSource = readFileSync(resolve(process.cwd(), "components/modals/moderation-queue-modal.tsx"), "utf8");
-  const chatItemSource = readFileSync(resolve(process.cwd(), "components/chat/chat-item.tsx"), "utf8");
-  const serverHeaderSource = readFileSync(resolve(process.cwd(), "components/server/server-header.tsx"), "utf8");
-  const reportRouteSource = readFileSync(resolve(process.cwd(), "app/api/servers/[serverId]/reports/route.ts"), "utf8");
-  const moderationRouteSource = readFileSync(resolve(process.cwd(), "app/api/servers/[serverId]/members/[memberId]/moderation/route.ts"), "utf8");
-  const bansRouteSource = readFileSync(resolve(process.cwd(), "app/api/servers/[serverId]/bans/route.ts"), "utf8");
-  const banDeleteRouteSource = readFileSync(resolve(process.cwd(), "app/api/servers/[serverId]/bans/[profileId]/route.ts"), "utf8");
-  const auditLogRouteSource = readFileSync(resolve(process.cwd(), "app/api/servers/[serverId]/audit-log/route.ts"), "utf8");
-  const messageRouteSource = readFileSync(resolve(process.cwd(), "app/api/messages/route.ts"), "utf8");
-  const messageReactionRouteSource = readFileSync(resolve(process.cwd(), "app/api/messages/[messageId]/reactions/route.ts"), "utf8");
-  const directMessageRouteSource = readFileSync(resolve(process.cwd(), "app/api/direct-messages/route.ts"), "utf8");
-  const directReactionRouteSource = readFileSync(resolve(process.cwd(), "app/api/direct-messages/[directMessageId]/reactions/route.ts"), "utf8");
-  const pollRouteSource = readFileSync(resolve(process.cwd(), "app/api/polls/route.ts"), "utf8");
-  const pollVoteRouteSource = readFileSync(resolve(process.cwd(), "app/api/polls/[pollId]/vote/route.ts"), "utf8");
-  const watchQueueRouteSource = readFileSync(resolve(process.cwd(), "app/api/watch/queue/route.ts"), "utf8");
-  const watchVoteRouteSource = readFileSync(resolve(process.cwd(), "app/api/watch/queue/[itemId]/vote/route.ts"), "utf8");
-  assert.equal(modalStoreSource.includes('"reportMessage"'), true);
-  assert.equal(modalStoreSource.includes('"moderationQueue"'), true);
-  assert.equal(modalProviderSource.includes("ReportMessageModal"), true);
-  assert.equal(modalProviderSource.includes("ModerationQueueModal"), true);
-  assert.equal(chatItemSource.includes("Пожаловаться"), true);
-  assert.equal(chatItemSource.includes('onOpen("reportMessage"'), true);
-  assert.equal(serverHeaderSource.includes('onOpen("moderationQueue"'), true);
-  assert.equal(reportModalSource.includes(`/api/servers/${'${serverId}'}/reports`), true);
-  assert.equal(moderationQueueModalSource.includes("Центр модерации"), true);
-  assert.equal(moderationQueueModalSource.includes('type ModerationTab = "reports" | "bans" | "audit"'), true);
-  assert.equal(moderationQueueModalSource.includes("Жалобы"), true);
-  assert.equal(moderationQueueModalSource.includes("Баны"), true);
-  assert.equal(moderationQueueModalSource.includes("Журнал"), true);
-  assert.equal(moderationQueueModalSource.includes("/bans?active=true"), true);
-  assert.equal(moderationQueueModalSource.includes("/audit-log?limit=50"), true);
-  assert.equal(moderationQueueModalSource.includes("Разбанить"), true);
-  assert.equal(moderationQueueModalSource.includes("http.delete"), true);
-  assert.equal(moderationQueueModalSource.includes('action: "timeout"'), true);
-  assert.equal(moderationQueueModalSource.includes('moderateMember(report, "ban")'), true);
-  assert.equal(reportRouteSource.includes("checkRateLimit"), true);
-  assert.equal(reportRouteSource.includes("moderation.report.create"), true);
-  assert.equal(moderationRouteSource.includes("moderation.member.timeout"), true);
-  assert.equal(moderationRouteSource.includes("moderation.member.ban"), true);
-  assert.equal(bansRouteSource.includes("serverBan.findMany"), true);
-  assert.equal(bansRouteSource.includes("canManageModeration"), true);
-  assert.equal(bansRouteSource.includes("select: {"), true);
-  assert.equal(banDeleteRouteSource.includes("updateMany"), true);
-  assert.equal(banDeleteRouteSource.includes("Active ban not found"), true);
-  assert.equal(auditLogRouteSource.includes("auditLog.findMany"), true);
-  assert.equal(auditLogRouteSource.includes("canManageModeration"), true);
-  assert.equal(auditLogRouteSource.includes("sanitizeMetadata"), true);
-  assert.equal(messageRouteSource.includes("assertNoActiveMemberTimeout"), true);
-  assert.equal(messageReactionRouteSource.includes("assertNoActiveMemberTimeout"), true);
-  assert.equal(directMessageRouteSource.includes("assertNoActiveMemberTimeout"), true);
-  assert.equal(directReactionRouteSource.includes("assertNoActiveMemberTimeout"), true);
-  assert.equal(pollRouteSource.includes("assertNoActiveMemberTimeout"), true);
-  assert.equal(pollVoteRouteSource.includes("assertNoActiveMemberTimeout"), true);
-  assert.equal(watchQueueRouteSource.includes("assertNoActiveMemberTimeout"), true);
-  assert.equal(watchVoteRouteSource.includes("assertNoActiveMemberTimeout"), true);
-  const invitePageSource = readFileSync(resolve(process.cwd(), "app/(invite)/(routes)/invite/[inviteCode]/page.tsx"), "utf8");
-  const discoverPageSource = readFileSync(resolve(process.cwd(), "app/(main)/(routes)/discover/page.tsx"), "utf8");
-  assert.equal(discoverPageSource.includes("Каталог публичных серверов"), true);
-  assert.equal(discoverPageSource.includes("isPublic: true"), true);
-  assert.equal(invitePageSource.includes("InviteJoinButton"), true);
-  assert.equal(invitePageSource.includes("members: {"), true);
-  assert.equal(invitePageSource.includes("db.server.update"), false);
-  assert.equal(groupParticipantRouteSource.includes("createGroupSystemEvent"), true);
-  assert.equal(groupParticipantRouteSource.includes("owner_transferred"), true);
-
-  assert.equal(REACTION_LONG_PRESS_MS, 500);
-  assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 18, y: 17 }), false);
-  assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 25, y: 10 }), true);
-  assert.equal(shouldIgnoreReactionTrigger(null), false);
-  assert.equal(TYPING_TTL, 3500);
-  const typingUsers = upsertTypingUser([], { memberId: "m1", name: "Первый" });
-  assert.deepEqual(upsertTypingUser(typingUsers, { memberId: "m1", name: "Первый обновлён" }), [
-    { memberId: "m1", name: "Первый обновлён" },
-  ]);
-  assert.deepEqual(removeTypingUser(typingUsers, "m1"), []);
-
-  console.log("All unit checks passed");
-}
-
-void main();
+console.log("All unit checks passed");

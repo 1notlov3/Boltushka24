@@ -1,8 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-import { serverEnv } from "@/lib/server-env";
-
 type RateLimitEntry = {
   count: number;
   resetAt: number;
@@ -20,8 +18,8 @@ type RateLimitResult = {
 };
 
 const buckets = new Map<string, RateLimitEntry>();
-const redisUrl = serverEnv.UPSTASH_REDIS_REST_URL;
-const redisToken = serverEnv.UPSTASH_REDIS_REST_TOKEN;
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 const redis = redisUrl && redisToken
   ? new Redis({ url: redisUrl, token: redisToken })
   : null;
