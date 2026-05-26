@@ -4,6 +4,7 @@ import { apiError, rateLimitError, unauthorized, validationError } from "@/lib/a
 import { channelMessageInclude } from "@/lib/chat-includes";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { assertNoActiveMemberTimeout } from "@/lib/moderation-enforcement";
 import { canCreateMessage } from "@/lib/permissions";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
@@ -67,6 +68,9 @@ export async function POST(req: Request) {
     if (!channel) return apiError("Channel not found", 404);
     if (!member) return unauthorized();
     if (!canCreateMessage(member)) return apiError("Forbidden", 403);
+
+    const timeoutError = await assertNoActiveMemberTimeout(serverId, member.id, "У вас таймаут на создание опросов");
+    if (timeoutError) return timeoutError;
 
     const limit = await checkRateLimit({
       key: rateLimitKey("poll:create", profile.id, channelId),

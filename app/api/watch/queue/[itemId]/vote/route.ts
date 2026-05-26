@@ -3,6 +3,7 @@ import { z } from "zod";
 import { apiError, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { assertNoActiveMemberTimeout } from "@/lib/moderation-enforcement";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
 
@@ -30,6 +31,9 @@ export async function POST(req: Request, context: { params: Promise<{ itemId: st
     });
 
     if (!member) return unauthorized();
+
+    const timeoutError = await assertNoActiveMemberTimeout(serverId, member.id, "У вас таймаут на голосование");
+    if (timeoutError) return timeoutError;
 
     const limit = await checkRateLimit({
       key: rateLimitKey("watch:queue-vote", profile.id, channelId),

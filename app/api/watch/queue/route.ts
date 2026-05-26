@@ -3,6 +3,7 @@ import { z } from "zod";
 import { apiError, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { assertNoActiveMemberTimeout } from "@/lib/moderation-enforcement";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
 import { normalizeWatchQueueItem } from "@/lib/watch-queue";
@@ -43,6 +44,9 @@ export async function POST(req: Request) {
     const { serverId, channelId, videoId, title } = parsedBody.data;
     const member = await ensureAccess(serverId, channelId, profile.id);
     if (!member) return unauthorized();
+
+    const timeoutError = await assertNoActiveMemberTimeout(serverId, member.id, "У вас таймаут на добавление видео");
+    if (timeoutError) return timeoutError;
 
     const limit = await checkRateLimit({
       key: rateLimitKey("watch:queue-add", profile.id, channelId),

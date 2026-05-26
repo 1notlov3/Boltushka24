@@ -6,6 +6,7 @@ import { directMessageInclude } from "@/lib/chat-includes";
 import { getConversationAccess } from "@/lib/conversation";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { assertNoActiveMemberTimeout } from "@/lib/moderation-enforcement";
 import { canCreateMessage } from "@/lib/permissions";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
@@ -119,6 +120,9 @@ export async function POST(req: Request) {
     const member = access.currentMember;
 
     if (!canCreateMessage(member)) return apiError("Forbidden", 403);
+
+    const timeoutError = await assertNoActiveMemberTimeout(member.serverId, member.id, "У вас таймаут на отправку сообщений");
+    if (timeoutError) return timeoutError;
 
     const limit = await checkRateLimit({
       key: rateLimitKey("direct-message:create", profile.id, conversationId),

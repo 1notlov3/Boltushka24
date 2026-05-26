@@ -4,6 +4,7 @@ import { z } from "zod";
 import { apiError, notFound, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { assertNoActiveMemberTimeout } from "@/lib/moderation-enforcement";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
 
@@ -52,12 +53,14 @@ async function resolvePollAccess(pollId: string, profileId: string) {
                 select: {
                   id: true,
                   profileId: true,
+                  serverId: true,
                 },
               },
               memberTwo: {
                 select: {
                   id: true,
                   profileId: true,
+                  serverId: true,
                 },
               },
             },
@@ -85,6 +88,7 @@ async function resolvePollAccess(pollId: string, profileId: string) {
     return {
       poll,
       member,
+      serverId: poll.message.channel.serverId,
       messageId: poll.message.id,
       topic: `chat:${poll.message.channelId}:messages:update`,
     };
@@ -99,6 +103,7 @@ async function resolvePollAccess(pollId: string, profileId: string) {
     return {
       poll,
       member: { id: member.id },
+      serverId: member.serverId,
       messageId: poll.directMessage.id,
       topic: `chat:${poll.directMessage.conversationId}:messages:update`,
     };
@@ -132,6 +137,9 @@ export async function POST(req: Request, context: { params: Promise<{ pollId: st
 
     const { poll, member, topic, messageId } = access;
     const optionId = parsedBody.data.optionId;
+
+    const timeoutError = await assertNoActiveMemberTimeout(access.serverId, member.id, "У вас таймаут на голосование");
+    if (timeoutError) return timeoutError;
 
     if (poll.closesAt && poll.closesAt.getTime() <= Date.now()) {
       return apiError("Poll is closed", 400);

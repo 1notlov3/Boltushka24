@@ -5,6 +5,7 @@ import { apiError, forbidden, notFound, rateLimitError, unauthorized, validation
 import { directMessageInclude } from "@/lib/chat-includes";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { assertNoActiveMemberTimeout } from "@/lib/moderation-enforcement";
 import { canReactToMessage } from "@/lib/permissions";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
@@ -58,6 +59,7 @@ export async function POST(req: Request, context: { params: Promise<{ directMess
                 id: true,
                 role: true,
                 profileId: true,
+                serverId: true,
                 serverRoles: { include: { role: { select: { permissions: true } } } },
               },
             },
@@ -66,6 +68,7 @@ export async function POST(req: Request, context: { params: Promise<{ directMess
                 id: true,
                 role: true,
                 profileId: true,
+                serverId: true,
                 serverRoles: { include: { role: { select: { permissions: true } } } },
               },
             },
@@ -81,6 +84,9 @@ export async function POST(req: Request, context: { params: Promise<{ directMess
       : directMessage.conversation.memberTwo;
 
     if (!canReactToMessage(member)) return forbidden();
+
+    const timeoutError = await assertNoActiveMemberTimeout(member.serverId, member.id, "У вас таймаут на реакции");
+    if (timeoutError) return timeoutError;
 
     const limit = await checkRateLimit({
       key: rateLimitKey("direct-message:reaction", profile.id, "global"),
