@@ -109,6 +109,7 @@ model Member {
   messageReactions       MessageReaction[]
   directMessageReactions DirectMessageReaction[]
   pollVotes              PollVote[]
+  watchQueueVotes        WatchQueueVote[]
   savedMessages          SavedMessage[]
   savedDirectMessages    SavedDirectMessage[]
   channelReadStates      ChannelReadState[]
@@ -567,8 +568,25 @@ model WatchQueueItem {
   addedByName String
   position    Int
   createdAt   DateTime @default(now())
+  votes       WatchQueueVote[]
 
   @@index([sessionId, position])
+}
+
+model WatchQueueVote {
+  id String @id @default(uuid())
+
+  itemId String
+  item   WatchQueueItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([itemId, memberId])
+  @@index([memberId])
+  @@index([itemId, createdAt])
 }
 
 model Poll {

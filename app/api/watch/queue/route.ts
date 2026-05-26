@@ -1,9 +1,11 @@
 import { z } from "zod";
 
-import { apiError, unauthorized, validationError } from "@/lib/api-response";
+import { apiError, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
+import { normalizeWatchQueueItem } from "@/lib/watch-queue";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +44,16 @@ export async function POST(req: Request) {
     const member = await ensureAccess(serverId, channelId, profile.id);
     if (!member) return unauthorized();
 
+    const limit = await checkRateLimit({
+      key: rateLimitKey("watch:queue-add", profile.id, channelId),
+      limit: 10,
+      windowMs: 60_000,
+    });
+
+    if (!limit.ok) {
+      return rateLimitError(limit.retryAfterSeconds, `Too many queue additions. Retry in ${limit.retryAfterSeconds}s`);
+    }
+
     const session = await db.watchSession.upsert({
       where: { channelId },
       create: {
@@ -50,7 +62,14 @@ export async function POST(req: Request) {
         updatedByName: profile.name,
       },
       update: {},
-      include: { queue: true },
+      include: {
+        queue: {
+          include: {
+            _count: { select: { votes: true } },
+            votes: { where: { memberId: member.id }, select: { id: true } },
+          },
+        },
+      },
     });
 
     const maxPosition = session.queue.reduce((max, item) => Math.max(max, item.position), -1);
@@ -64,11 +83,16 @@ export async function POST(req: Request) {
         addedByName: profile.name,
         position: maxPosition + 1,
       },
+      include: {
+        _count: { select: { votes: true } },
+        votes: { where: { memberId: member.id }, select: { id: true } },
+      },
     });
 
-    await broadcast(`watch:${channelId}:state`, { action: "queue", item });
+    const queueItem = normalizeWatchQueueItem(item);
+    await broadcast(`watch:${channelId}:state`, { action: "queue", item: queueItem });
 
-    return Response.json(item);
+    return Response.json(queueItem);
   } catch (error) {
     console.log("[WATCH_QUEUE_POST]", error);
     return apiError("Internal Error", 500);

@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { canControlWatchSession } from "@/lib/permissions";
 import { broadcast } from "@/lib/realtime";
+import { normalizeWatchQueueItem, sortWatchQueueItems } from "@/lib/watch-queue";
 
 export const dynamic = "force-dynamic";
 
@@ -48,11 +49,15 @@ const ensureAccess = async (serverId: string, channelId: string, profileId: stri
   return member;
 };
 
-const includeSession = {
-  queue: {
-    orderBy: { position: "asc" as const },
+const queueInclude = (memberId: string) => ({
+  _count: {
+    select: { votes: true },
   },
-};
+  votes: {
+    where: { memberId },
+    select: { id: true },
+  },
+});
 
 export async function GET(req: Request) {
   try {
@@ -72,10 +77,22 @@ export async function GET(req: Request) {
 
     const session = await db.watchSession.findUnique({
       where: { channelId },
-      include: includeSession,
+      include: {
+        queue: {
+          orderBy: { position: "asc" },
+          include: queueInclude(member.id),
+        },
+      },
     });
 
-    return Response.json({ session });
+    if (!session) return Response.json({ session });
+
+    return Response.json({
+      session: {
+        ...session,
+        queue: sortWatchQueueItems(session.queue.map(normalizeWatchQueueItem)),
+      },
+    });
   } catch (error) {
     console.log("[WATCH_GET]", error);
     return apiError("Internal Error", 500);
@@ -116,7 +133,12 @@ export async function POST(req: Request) {
         updatedByName: profile.name,
       },
       update: {},
-      include: includeSession,
+      include: {
+        queue: {
+          orderBy: { position: "asc" },
+          include: queueInclude(member.id),
+        },
+      },
     });
 
     let nextVideoId = videoId ?? existingSession.currentVideoId;
@@ -172,9 +194,11 @@ export async function POST(req: Request) {
     }
 
     if (action === "ended") {
-      const [nextItem] = existingSession.queue
-        .filter((item) => item.videoId !== existingSession.currentVideoId)
-        .sort((a, b) => a.position - b.position);
+      const [nextItem] = sortWatchQueueItems(
+        existingSession.queue
+          .map(normalizeWatchQueueItem)
+          .filter((item) => item.videoId !== existingSession.currentVideoId),
+      );
 
       if (nextItem) {
         nextVideoId = nextItem.videoId;
@@ -194,19 +218,30 @@ export async function POST(req: Request) {
         updatedById: profile.id,
         updatedByName: profile.name,
       },
-      include: includeSession,
+      include: {
+        queue: {
+          orderBy: { position: "asc" },
+          include: queueInclude(member.id),
+        },
+      },
     });
 
+    const queue = sortWatchQueueItems(session.queue.map(normalizeWatchQueueItem));
     await broadcast(`watch:${channelId}:state`, {
       action,
       videoId: session.currentVideoId,
       time: session.currentTime,
       isPlaying: session.isPlaying,
       updatedByName: session.updatedByName,
-      queue: session.queue,
+      queue,
     });
 
-    return Response.json({ session });
+    return Response.json({
+      session: {
+        ...session,
+        queue,
+      },
+    });
   } catch (error) {
     console.log("[WATCH_POST]", error);
     return apiError("Internal Error", 500);

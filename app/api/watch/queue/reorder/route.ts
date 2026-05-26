@@ -49,7 +49,10 @@ export async function POST(req: Request) {
       select: {
         id: true,
         queue: {
-          select: { id: true },
+          select: {
+            id: true,
+            _count: { select: { votes: true } },
+          },
         },
       },
     });
@@ -65,6 +68,18 @@ export async function POST(req: Request) {
     const hasOnlySessionItems = itemIds.every((id) => sessionItemIds.has(id));
     if (!hasOnlySessionItems) {
       return validationError(BodySchema.refine(() => false, "Queue reorder contains unknown items").safeParse(parsedBody.data).error!);
+    }
+
+    const orderedItems = itemIds
+      .map((id) => session.queue.find((item) => item.id === id))
+      .filter((item): item is NonNullable<typeof item> => !!item);
+    const isMovingVotedItemDown = orderedItems.some((item, index) => {
+      const previous = orderedItems[index - 1];
+      return !!previous && item._count.votes > previous._count.votes;
+    });
+
+    if (isMovingVotedItemDown) {
+      return validationError(BodySchema.refine(() => false, "Queue reorder cannot move higher-voted items below lower-voted items").safeParse(parsedBody.data).error!);
     }
 
     await db.$transaction(itemIds.map((id, position) => (

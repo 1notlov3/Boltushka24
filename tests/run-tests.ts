@@ -33,6 +33,7 @@ async function main() {
   const reactionTrigger = await import("../lib/reaction-trigger");
   const typingIndicator = await import("../hooks/use-typing-indicator");
   const youtube = await import("../lib/youtube");
+  const watchQueue = await import("../lib/watch-queue");
   const groupConversationUi = await import("../lib/group-conversation-ui");
   const groupSystemEvents = await import("../lib/group-system-events");
 
@@ -48,6 +49,7 @@ async function main() {
   const { movedBeyondReactionTolerance, REACTION_LONG_PRESS_MS, shouldIgnoreReactionTrigger } = reactionTrigger;
   const { removeTypingUser, TYPING_TTL, upsertTypingUser } = typingIndicator;
   const { extractYoutubeId } = youtube;
+  const { sortWatchQueueItems } = watchQueue;
   const {
     buildCreateGroupConversationPayload,
     buildGroupSettingsPayload,
@@ -68,6 +70,11 @@ async function main() {
   assert.equal(extractYoutubeId(`https://www.youtube.com/watch?v=${videoId}&t=10`), videoId);
   assert.equal(extractYoutubeId(`https://youtu.be/${videoId}`), videoId);
   assert.equal(extractYoutubeId("https://example.com/nope"), null);
+  assert.deepEqual(sortWatchQueueItems([
+    { id: "a", position: 0, voteCount: 1, createdAt: new Date("2026-01-01") },
+    { id: "b", position: 1, voteCount: 3, createdAt: new Date("2026-01-02") },
+    { id: "c", position: 2, voteCount: 3, createdAt: new Date("2026-01-03") },
+  ]).map((item) => item.id), ["b", "c", "a"]);
 
   assert.equal(applySlashCommand("/me тестирует"), "_тестирует_");
   assert.equal(applySlashCommand("/poll лучший канал?"), "/poll лучший канал?");
@@ -200,6 +207,9 @@ async function main() {
   assert.equal(watchRoomSource.includes("canControlWatchSession"), true);
   assert.equal(watchRoomSource.includes("disabled={!canControlWatch}"), true);
   assert.equal(watchRoomSource.includes("Гость: можно добавлять видео в очередь"), true);
+  assert.equal(watchRoomSource.includes("Очередь · голосование"), true);
+  assert.equal(watchRoomSource.includes("voteQueueItem"), true);
+  assert.equal(watchRoomSource.includes("👍 {item.voteCount}"), true);
   assert.equal(groupParticipantRouteSource.includes("createGroupSystemEvent"), true);
   assert.equal(groupParticipantRouteSource.includes("owner_transferred"), true);
 
