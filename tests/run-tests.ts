@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { MemberRole } from "@prisma/client";
 
 import {
@@ -66,5 +68,28 @@ assert.deepEqual(upsertTypingUser(typingUsers, { memberId: "m1", name: "Перв
   { memberId: "m1", name: "Первый обновлён" },
 ]);
 assert.deepEqual(removeTypingUser(typingUsers, "m1"), []);
+
+const rootDir = join(__dirname, "..");
+const createServerModalSource = readFileSync(join(rootDir, "components/modals/create-server-modal.tsx"), "utf8");
+assert.equal(createServerModalSource.includes("router.push(`/servers/${serverId}`)"), true);
+assert.equal(createServerModalSource.includes("onClose();"), true);
+assert.equal(createServerModalSource.includes("toast.error"), true);
+assert.equal(createServerModalSource.includes("pb-[max(env(safe-area-inset-bottom),1rem)]"), true);
+
+const setupPageSource = readFileSync(join(rootDir, "app/setup/page.tsx"), "utf8");
+assert.equal(setupPageSource.includes("CreateServerButton"), true);
+assert.equal(setupPageSource.includes("href: \"create-server\""), true);
+assert.equal(setupPageSource.includes("href=\"/setup\">Создать первый сервер"), false);
+
+const homeInboxSource = readFileSync(join(rootDir, "components/home/home-inbox.tsx"), "utf8");
+assert.equal(homeInboxSource.includes("CreateServerButton"), true);
+assert.equal(homeInboxSource.includes("href=\"/setup\"><Plus"), false);
+
+const inputSource = readFileSync(join(rootDir, "components/ui/input.tsx"), "utf8");
+assert.equal(inputSource.includes("text-base sm:text-sm"), true);
+
+const mobileBarSource = readFileSync(join(rootDir, "components/main-mobile-bar.tsx"), "utf8");
+assert.equal(mobileBarSource.includes('pathname?.startsWith("/servers/")'), true);
+assert.equal(mobileBarSource.includes("return null"), true);
 
 console.log("All unit checks passed");

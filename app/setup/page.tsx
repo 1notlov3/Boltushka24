@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Bell, Compass, Gamepad2, MessageSquareText, Plus, Radio, ShieldCheck, Sparkles, Star, Video } from "lucide-react";
 
+import { CreateServerButton } from "@/components/create-server-button";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { currentProfile } from "@/lib/current-profile";
@@ -40,7 +41,7 @@ const quickActions = [
   {
     title: "Создать сообщество",
     description: "Запусти свой сервер с каналами, голосом и watch rooms.",
-    href: "/setup",
+    href: "create-server",
     icon: Plus,
   },
   {
@@ -99,8 +100,8 @@ const SetupPage = async () => {
   const primaryServer = servers[0];
 
   return (
-    <div className="min-h-full overflow-y-auto bg-[#f4f7fb] text-zinc-900 dark:bg-[#111214] dark:text-zinc-100">
-      <div className="mx-auto flex min-h-full w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-dvh overflow-y-auto bg-[#f4f7fb] pb-[max(env(safe-area-inset-bottom),1rem)] text-zinc-900 dark:bg-[#111214] dark:text-zinc-100">
+      <div className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
         {dataError ? (
           <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
             <p className="font-semibold">Часть данных временно недоступна</p>
@@ -136,9 +137,11 @@ const SetupPage = async () => {
                     <a href={`/servers/${primaryServer.id}`}>Продолжить общение</a>
                   </Button>
                 ) : (
-                  <Button asChild variant="outline" className="h-12 rounded-2xl px-6 text-base dark:border-white/10 dark:bg-white/5 dark:text-white">
-                    <a href="/setup">Создать первый сервер</a>
-                  </Button>
+                  <CreateServerButton
+                    variant="outline"
+                    label="Создать первый сервер"
+                    className="h-12 rounded-2xl px-6 text-base dark:border-white/10 dark:bg-white/5 dark:text-white"
+                  />
                 )}
                 <Button asChild variant="outline" className="h-12 rounded-2xl px-6 text-base dark:border-white/10 dark:bg-white/5 dark:text-white">
                   <a href="/search">Открыть поиск</a>
@@ -219,6 +222,19 @@ const SetupPage = async () => {
             <div className="space-y-3">
               {quickActions.map((action) => {
                 const Icon = action.icon;
+
+                if (action.href === "create-server") {
+                  return (
+                    <CreateServerButton
+                      key={action.title}
+                      variant="outline"
+                      label={action.title}
+                      showIcon
+                      className="h-auto w-full justify-start rounded-2xl border-zinc-100 p-4 text-left text-zinc-900 hover:border-blue-200 hover:bg-blue-50 dark:border-white/10 dark:bg-transparent dark:text-zinc-100 dark:hover:bg-white/5"
+                    />
+                  );
+                }
+
                 return (
                   <a key={action.title} href={action.href} className="flex gap-4 rounded-2xl border border-zinc-100 p-4 transition hover:border-blue-200 hover:bg-blue-50 dark:border-white/10 dark:hover:bg-white/5">
                     <Icon className="mt-1 h-5 w-5 text-blue-500" />

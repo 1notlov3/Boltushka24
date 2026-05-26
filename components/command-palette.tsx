@@ -142,6 +142,10 @@ export function CommandPalette() {
         )}
         <CommandSeparator />
         <CommandGroup heading="Действия">
+          <CommandItem onSelect={() => run(() => onOpen("createServer"))}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Создать сообщество
+          </CommandItem>
           {serverId && (
             <CommandItem onSelect={() => run(() => onOpen("createChannel"))}>
               <PlusCircle className="mr-2 h-4 w-4" />

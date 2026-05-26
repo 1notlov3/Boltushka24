@@ -11,7 +11,7 @@ export const MobileSheetContent = ({ children }: MobileSheetContentProps) => {
   return (
     <SheetContent
       side="left"
-      className="p-0 flex gap-0 w-[88%] sm:max-w-md"
+      className="p-0 flex gap-0 w-[calc(100vw-0.5rem)] max-w-[312px] sm:max-w-md pb-[env(safe-area-inset-bottom)]"
       onOpenAutoFocus={(e) => e.preventDefault()}
       onCloseAutoFocus={(e) => e.preventDefault()}
     >

@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Compass, Inbox, MessageCircle, Plus, Search, Server, Sparkles } from "lucide-react";
+import { Bell, Compass, Inbox, MessageCircle, Search, Server, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { HomeInboxGroupAction } from "@/components/home/home-inbox-group-action";
+import { CreateServerButton } from "@/components/create-server-button";
 import { HomeInboxData, HomeInboxItem } from "@/lib/home-inbox";
 import { cn } from "@/lib/utils";
 
@@ -91,7 +92,7 @@ export const HomeInbox = ({ data }: { data: HomeInboxData }) => {
     : "Всё спокойно";
 
   return (
-    <div className="min-h-full overflow-y-auto bg-[#f4f7fb] text-zinc-900 dark:bg-[#111214] dark:text-zinc-100">
+    <div className="min-h-dvh overflow-y-auto bg-[#f4f7fb] pb-[max(env(safe-area-inset-bottom),1rem)] text-zinc-900 dark:bg-[#111214] dark:text-zinc-100">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <section className="overflow-hidden rounded-[2rem] border border-white/70 bg-white p-6 shadow-xl shadow-blue-950/10 dark:border-white/10 dark:bg-[#1e1f22]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -127,9 +128,12 @@ export const HomeInbox = ({ data }: { data: HomeInboxData }) => {
             <Button asChild variant="primary" className="shrink-0 rounded-2xl">
               <Link href="/search"><Search className="mr-2 h-4 w-4" /> Найти</Link>
             </Button>
-            <Button asChild variant="outline" className="shrink-0 rounded-2xl dark:border-white/10 dark:bg-white/5 dark:text-white">
-              <Link href="/setup"><Plus className="mr-2 h-4 w-4" /> Создать сервер</Link>
-            </Button>
+            <CreateServerButton
+              variant="outline"
+              label="Создать сервер"
+              showIcon
+              className="shrink-0 rounded-2xl dark:border-white/10 dark:bg-white/5 dark:text-white"
+            />
             <HomeInboxGroupAction servers={data.servers} />
             <Button asChild variant="outline" className="shrink-0 rounded-2xl dark:border-white/10 dark:bg-white/5 dark:text-white">
               <Link href="/discover"><Compass className="mr-2 h-4 w-4" /> Открыть каталог</Link>

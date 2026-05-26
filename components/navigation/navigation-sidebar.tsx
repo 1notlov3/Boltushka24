@@ -20,7 +20,7 @@ export const NavigationSidebar = async () => {
 
   return (
     <div
-      className="space-y-4 flex flex-col items-center h-full text-primary w-full dark:bg-[#1E1F22] bg-[#E3E5E8] py-3"
+      className="space-y-4 flex flex-col items-center h-full text-primary w-full dark:bg-[#1E1F22] bg-[#E3E5E8] pt-[max(env(safe-area-inset-top),0.75rem)] pb-3"
     >
       <NavigationHome />
       <NavigationAction />
@@ -38,7 +38,7 @@ export const NavigationSidebar = async () => {
           </div>
         ))}
       </ScrollArea>
-      <div className="pb-3 mt-auto flex items-center flex-col gap-y-4">
+      <div className="pb-[max(env(safe-area-inset-bottom),0.75rem)] mt-auto flex items-center flex-col gap-y-4">
         <ModeToggle />
         <UserMenu />
       </div>

@@ -1,20 +1,22 @@
+import { MainMobileBar } from "@/components/main-mobile-bar";
 import { NavigationSidebar } from "@/components/navigation/navigation-sidebar";
 
 const MainLayout = async ({
-  children
+  children,
 }: {
   children: React.ReactNode;
 }) => {
-  return ( 
-    <div className="h-full">
-      <div className="hidden md:flex h-full w-[72px] z-30 flex-col fixed inset-y-0">
+  return (
+    <div className="min-h-dvh md:h-dvh md:overflow-hidden">
+      <div className="hidden md:flex h-dvh w-[72px] z-30 flex-col fixed inset-y-0">
         <NavigationSidebar />
       </div>
-      <main className="md:pl-[72px] h-full">
+      <main className="min-h-dvh md:h-dvh md:pl-[72px]">
+        <MainMobileBar />
         {children}
       </main>
     </div>
-   );
-}
- 
+  );
+};
+
 export default MainLayout;

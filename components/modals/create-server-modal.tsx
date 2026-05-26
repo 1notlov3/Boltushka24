@@ -1,9 +1,12 @@
 "use client";
+
 import { http } from "@/lib/http";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import {
   Dialog,
   DialogContent,
@@ -18,7 +21,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,71 +30,77 @@ import { useModal } from "@/hooks/use-modal-store";
 
 const formSchema = z.object({
   name: z.string().min(1, {
-    message: "Название сообщества обязательно"
+    message: "Название сообщества обязательно",
   }),
   imageUrl: z.string().optional(),
 });
 
+type CreateServerResponse = {
+  id: string;
+};
+
 export const CreateServerModal = () => {
-  const {isOpen,onClose,type} = useModal();
+  const { isOpen, onClose, type } = useModal();
   const router = useRouter();
   const isModalOpen = isOpen && type === "createServer";
 
-  const form = useForm({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       imageUrl: "",
-    }
+    },
   });
 
   const isLoading = form.formState.isSubmitting;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await http.post("/api/servers", values);
+      const response = await http.post<CreateServerResponse>("/api/servers", values);
+      const serverId = response.data.id;
 
       form.reset();
+      onClose();
       router.refresh();
+      router.push(`/servers/${serverId}`);
+      toast.success("Сообщество создано");
     } catch (error) {
-      console.log(error);
+      console.error("[CREATE_SERVER_MODAL]", error);
+      toast.error("Не удалось создать сообщество");
     }
-  }
+  };
 
-const handleClose = () => {
-  form.reset();
-  onClose();
-}
+  const handleClose = () => {
+    form.reset();
+    onClose();
+  };
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-white text-black p-0 overflow-hidden">
+      <DialogContent className="bg-white text-black p-0 overflow-y-auto">
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
             Создайте ваше собственное сообщество!
           </DialogTitle>
           <DialogDescription className="text-center text-zinc-500">
-          Придайте своему сообществу индивидуальность с помощью имени и изображения. Вы всегда сможете изменить их позже.
+            Придайте своему сообществу индивидуальность с помощью имени и изображения. Вы всегда сможете изменить их позже.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className=" space-y-8 px-6">
+            <div className="space-y-8 px-6">
               <div className="flex items-center justify-center text-center">
-                
-                <FormField 
-               
+                <FormField
                   control={form.control}
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <FileUpload 
+                        <FileUpload
                           endpoint="serverImage"
                           value={field.value ?? ""}
                           onChange={field.onChange}
                         />
-                        
                       </FormControl>
                     </FormItem>
                   )}
@@ -103,9 +112,7 @@ const handleClose = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel
-                      className="uppercase text-xs font-bold text-zinc-500 dark:text-secondary/70"
-                    >
+                    <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-secondary/70">
                       Название сообщества
                     </FormLabel>
                     <FormControl>
@@ -121,7 +128,7 @@ const handleClose = () => {
                 )}
               />
             </div>
-            <DialogFooter className="bg-gray-100 px-6 py-4">
+            <DialogFooter className="sticky bottom-0 bg-gray-100 px-6 py-4 pb-[max(env(safe-area-inset-bottom),1rem)]">
               <Button variant="primary" isLoading={isLoading} disabled={isLoading}>
                 Создать сообщество!
               </Button>
@@ -130,5 +137,5 @@ const handleClose = () => {
         </Form>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

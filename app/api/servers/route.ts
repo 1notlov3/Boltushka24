@@ -39,7 +39,10 @@ export async function POST(req: Request) {
     });
 
     if (!validationResult.success) {
-      return new NextResponse("Validation Error", { status: 400 });
+      return NextResponse.json(
+        { error: "Validation Error", issues: validationResult.error.flatten() },
+        { status: 400 }
+      );
     }
 
     const { name } = validationResult.data;

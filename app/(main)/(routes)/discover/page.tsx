@@ -53,7 +53,7 @@ const DiscoverPage = async ({ searchParams }: DiscoverPageProps) => {
   });
 
   return (
-    <div className="min-h-full overflow-y-auto bg-[#f4f7fb] text-zinc-900 dark:bg-[#111214] dark:text-zinc-100">
+    <div className="min-h-dvh overflow-y-auto bg-[#f4f7fb] pb-[max(env(safe-area-inset-bottom),1rem)] text-zinc-900 dark:bg-[#111214] dark:text-zinc-100">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
         <section className="rounded-[2rem] border border-white/70 bg-white p-6 shadow-xl shadow-blue-950/10 dark:border-white/10 dark:bg-[#1e1f22]">
           <div className="flex items-center gap-4">
