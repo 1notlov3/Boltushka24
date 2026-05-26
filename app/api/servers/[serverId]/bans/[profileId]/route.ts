@@ -39,16 +39,24 @@ export async function DELETE(_req: Request, context: { params: Promise<{ serverI
     const moderator = await requireModerator(serverId, profile.id);
     if (!moderator) return unauthorized();
 
-    const ban = await db.serverBan.update({
-      where: { serverId_profileId: { serverId, profileId } },
+    const updated = await db.serverBan.updateMany({
+      where: {
+        serverId,
+        profileId,
+        revokedAt: null,
+      },
       data: { revokedAt: new Date() },
     });
+
+    if (updated.count === 0) {
+      return apiError("Active ban not found", 404);
+    }
 
     await logAudit({
       action: "moderation.member.unban",
       actorId: profile.id,
       serverId,
-      targetId: ban.id,
+      targetId: profileId,
       metadata: { targetProfileId: profileId },
     });
 
