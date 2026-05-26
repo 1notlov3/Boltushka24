@@ -132,7 +132,7 @@ export const HomeInbox = ({ data }: { data: HomeInboxData }) => {
             </Button>
             <HomeInboxGroupAction servers={data.servers} />
             <Button asChild variant="outline" className="shrink-0 rounded-2xl dark:border-white/10 dark:bg-white/5 dark:text-white">
-              <Link href="/setup"><Compass className="mr-2 h-4 w-4" /> Command Center</Link>
+              <Link href="/discover"><Compass className="mr-2 h-4 w-4" /> Открыть каталог</Link>
             </Button>
           </div>
         </section>

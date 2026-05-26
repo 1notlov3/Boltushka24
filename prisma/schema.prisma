@@ -54,10 +54,12 @@ model UserSettings {
 }
 
 model Server {
-  id         String @id @default(uuid())
-  name       String
-  imageUrl   String @db.Text
-  inviteCode String @unique
+  id          String @id @default(uuid())
+  name        String
+  imageUrl    String @db.Text
+  inviteCode  String @unique
+  description String? @db.VarChar(500)
+  isPublic    Boolean @default(false)
 
   profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -74,6 +76,7 @@ model Server {
   updatedAt DateTime @updatedAt
 
   @@index([profileId])
+  @@index([isPublic, updatedAt])
 }
 
 enum MemberRole {

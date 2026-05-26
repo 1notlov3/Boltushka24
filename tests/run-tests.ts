@@ -210,6 +210,13 @@ async function main() {
   assert.equal(watchRoomSource.includes("Очередь · голосование"), true);
   assert.equal(watchRoomSource.includes("voteQueueItem"), true);
   assert.equal(watchRoomSource.includes("👍 {item.voteCount}"), true);
+  const invitePageSource = readFileSync(resolve(process.cwd(), "app/(invite)/(routes)/invite/[inviteCode]/page.tsx"), "utf8");
+  const discoverPageSource = readFileSync(resolve(process.cwd(), "app/(main)/(routes)/discover/page.tsx"), "utf8");
+  assert.equal(discoverPageSource.includes("Каталог публичных серверов"), true);
+  assert.equal(discoverPageSource.includes("isPublic: true"), true);
+  assert.equal(invitePageSource.includes("InviteJoinButton"), true);
+  assert.equal(invitePageSource.includes("members: {"), true);
+  assert.equal(invitePageSource.includes("db.server.update"), false);
   assert.equal(groupParticipantRouteSource.includes("createGroupSystemEvent"), true);
   assert.equal(groupParticipantRouteSource.includes("owner_transferred"), true);
 

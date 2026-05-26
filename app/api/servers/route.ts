@@ -6,6 +6,7 @@ import { z } from "zod";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { serverIconDataUri } from "@/lib/server-icon";
+import { normalizeServerDescription } from "@/lib/discovery";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ const ImageUrlSchema = z
 const CreateServerSchema = z.object({
   name: z.string().min(1).max(100),
   imageUrl: ImageUrlSchema.optional(),
+  description: z.string().trim().max(500).optional().nullable(),
 });
 
 export async function POST(req: Request) {
@@ -42,12 +44,14 @@ export async function POST(req: Request) {
 
     const { name } = validationResult.data;
     const imageUrl = validationResult.data.imageUrl || serverIconDataUri(name);
+    const description = normalizeServerDescription(validationResult.data.description);
 
     const server = await db.server.create({
       data: {
         profileId: profile.id,
         name,
         imageUrl,
+        description,
         inviteCode: uuidv4(),
         channels: {
           create: [{ name: "основной", profileId: profile.id }],
