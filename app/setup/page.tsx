@@ -51,6 +51,13 @@ const quickActions = [
   },
 ];
 
+type SetupServer = {
+  id: string;
+  name: string;
+  imageUrl: string;
+  _count: { members: number; channels: number };
+};
+
 const SetupPage = async () => {
   const profile = await currentProfile();
 
@@ -58,44 +65,48 @@ const SetupPage = async () => {
     return redirect("/sign-in");
   }
 
-  const [servers, unreadNotifications] = await Promise.all([
-    db.server.findMany({
-      where: {
-        members: {
-          some: {
-            profileId: profile.id,
-          },
+  // Fetch dashboard data resiliently — if Prisma fails (DB down, schema mismatch,
+  // missing DATABASE_URL), still render the page with empty state instead of
+  // crashing into the global error boundary.
+  let servers: SetupServer[] = [];
+  let unreadNotifications = 0;
+  let dataError: string | null = null;
+
+  try {
+    const [s, n] = await Promise.all([
+      db.server.findMany({
+        where: { members: { some: { profileId: profile.id } } },
+        select: {
+          id: true,
+          name: true,
+          imageUrl: true,
+          _count: { select: { members: true, channels: true } },
         },
-      },
-      select: {
-        id: true,
-        name: true,
-        imageUrl: true,
-        _count: {
-          select: {
-            members: true,
-            channels: true,
-          },
-        },
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-      take: 6,
-    }),
-    db.notification.count({
-      where: {
-        targetId: profile.id,
-        read: false,
-      },
-    }),
-  ]);
+        orderBy: { updatedAt: "desc" },
+        take: 6,
+      }),
+      db.notification.count({
+        where: { targetId: profile.id, read: false },
+      }),
+    ]);
+    servers = s;
+    unreadNotifications = n;
+  } catch (error) {
+    console.error("[SETUP_PAGE] Failed to load dashboard data", error);
+    dataError = error instanceof Error ? error.message : "Не удалось загрузить данные";
+  }
 
   const primaryServer = servers[0];
 
   return (
     <div className="min-h-full overflow-y-auto bg-[#f4f7fb] text-zinc-900 dark:bg-[#111214] dark:text-zinc-100">
       <div className="mx-auto flex min-h-full w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+        {dataError ? (
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            <p className="font-semibold">Часть данных временно недоступна</p>
+            <p className="mt-1 break-words text-xs opacity-80">{dataError}</p>
+          </div>
+        ) : null}
         <section className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white p-6 shadow-2xl shadow-blue-950/10 dark:border-white/10 dark:bg-[#1e1f22] md:p-10">
           <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
           <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-violet-500/20 blur-3xl" />
