@@ -2,15 +2,13 @@
 
 import { useEffect } from "react";
 
-import { publicFeatures } from "@/lib/public-env";
-
 export default function GlobalError({
   error,
 }: {
   error: Error & { digest?: string };
 }) {
   useEffect(() => {
-    if (publicFeatures.sentryClient) {
+    if (process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN) {
       void import("@sentry/nextjs").then((Sentry) => Sentry.captureException(error));
     }
   }, [error]);

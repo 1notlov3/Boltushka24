@@ -1,8 +1,5 @@
-import { publicEnv } from "@/lib/public-env";
-import { serverEnv } from "@/lib/server-env";
-
-const SUPABASE_URL = publicEnv.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SECRET_KEY = serverEnv.SUPABASE_SECRET_KEY;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
 export const REALTIME_BROADCAST_EVENT = "msg";
 
