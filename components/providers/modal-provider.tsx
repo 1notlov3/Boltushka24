@@ -9,6 +9,8 @@ const InviteModal = dynamic(() => import("@/components/modals/invite-modal").the
 const EditServerModal = dynamic(() => import("@/components/modals/edit-server-modal").then(mod => mod.EditServerModal), { ssr: false });
 const MembersModal = dynamic(() => import("@/components/modals/members-modal").then(mod => mod.MembersModal), { ssr: false });
 const RolesModal = dynamic(() => import("@/components/modals/roles-modal").then(mod => mod.RolesModal), { ssr: false });
+const ReportMessageModal = dynamic(() => import("@/components/modals/report-message-modal").then(mod => mod.ReportMessageModal), { ssr: false });
+const ModerationQueueModal = dynamic(() => import("@/components/modals/moderation-queue-modal").then(mod => mod.ModerationQueueModal), { ssr: false });
 const ForwardMessageModal = dynamic(() => import("@/components/modals/forward-message-modal").then(mod => mod.ForwardMessageModal), { ssr: false });
 const CreateChannelModal = dynamic(() => import("@/components/modals/create-channel-modal").then(mod => mod.CreateChannelModal), { ssr: false });
 const CreateGroupConversationModal = dynamic(() => import("@/components/modals/create-group-conversation-modal").then(mod => mod.CreateGroupConversationModal), { ssr: false });
@@ -52,6 +54,8 @@ export const ModalProvider = () => {
     {mountedModals.editServer && <EditServerModal />}
     {mountedModals.members && <MembersModal/>}
     {mountedModals.roles && <RolesModal/>}
+    {mountedModals.reportMessage && <ReportMessageModal/>}
+    {mountedModals.moderationQueue && <ModerationQueueModal/>}
     {mountedModals.forwardMessage && <ForwardMessageModal/>}
     {mountedModals.createChannel && <CreateChannelModal/>}
     {mountedModals.createGroupConversation && <CreateGroupConversationModal/>}

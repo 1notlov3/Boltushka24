@@ -163,6 +163,22 @@ export async function POST(req: Request) {
     if (!member) return unauthorized();
     if (!canCreateMessage(member)) return apiError("Forbidden", 403);
 
+    const activeTimeout = await db.memberTimeout.findFirst({
+      where: {
+        serverId,
+        memberId: member.id,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { expiresAt: "desc" },
+      select: { expiresAt: true },
+    });
+
+    if (activeTimeout) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((activeTimeout.expiresAt.getTime() - Date.now()) / 1000));
+      return rateLimitError(retryAfterSeconds, "У вас таймаут на отправку сообщений");
+    }
+
     if (member.role === MemberRole.GUEST && channel.slowModeSeconds > 0) {
       const lastMessage = await db.message.findFirst({
         where: {

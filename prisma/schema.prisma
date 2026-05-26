@@ -25,10 +25,14 @@ model Profile {
   channels Channel[]
   settings UserSettings?
 
-  notificationsReceived Notification[] @relation("NotificationTarget")
-  notificationsCreated  Notification[] @relation("NotificationActor")
-  auditLogs             AuditLog[]     @relation("AuditLogActor")
-  pushSubscriptions     PushSubscription[]
+  notificationsReceived     Notification[]     @relation("NotificationTarget")
+  notificationsCreated      Notification[]     @relation("NotificationActor")
+  auditLogs                 AuditLog[]         @relation("AuditLogActor")
+  pushSubscriptions         PushSubscription[]
+  serverBans                ServerBan[]
+  moderationReportsResolved ModerationReport[] @relation("ModerationReportResolvedBy")
+  moderationBansIssued      ServerBan[]        @relation("ServerBanModerator")
+  moderationTimeoutsIssued  MemberTimeout[]    @relation("MemberTimeoutModerator")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -54,10 +58,10 @@ model UserSettings {
 }
 
 model Server {
-  id          String @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
-  imageUrl    String @db.Text
-  inviteCode  String @unique
+  imageUrl    String  @db.Text
+  inviteCode  String  @unique
   description String? @db.VarChar(500)
   isPublic    Boolean @default(false)
 
@@ -71,6 +75,9 @@ model Server {
   conversations     Conversation[]
   auditLogs         AuditLog[]
   notifications     Notification[]
+  moderationReports ModerationReport[]
+  serverBans        ServerBan[]
+  memberTimeouts    MemberTimeout[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -113,16 +120,21 @@ model Member {
   directMessageReactions DirectMessageReaction[]
   pollVotes              PollVote[]
   watchQueueVotes        WatchQueueVote[]
+  reportsCreated         ModerationReport[]      @relation("ModerationReportReporter")
+  reportsTargeted        ModerationReport[]      @relation("ModerationReportTarget")
+  serverBansModerated    ServerBan[]             @relation("ServerBanModeratorMember")
+  memberTimeouts         MemberTimeout[]         @relation("MemberTimeoutTarget")
+  timeoutsModerated      MemberTimeout[]         @relation("MemberTimeoutModeratorMember")
   savedMessages          SavedMessage[]
   savedDirectMessages    SavedDirectMessage[]
   channelReadStates      ChannelReadState[]
   conversationReadStates ConversationReadState[]
 
-  conversationsInitiated Conversation[] @relation("MemberOne")
-  conversationsReceived  Conversation[] @relation("MemberTwo")
-  conversationsOwned     Conversation[] @relation("ConversationOwner")
+  conversationsInitiated   Conversation[]            @relation("MemberOne")
+  conversationsReceived    Conversation[]            @relation("MemberTwo")
+  conversationsOwned       Conversation[]            @relation("ConversationOwner")
   conversationParticipants ConversationParticipant[]
-  serverRoles            MemberServerRole[]
+  serverRoles              MemberServerRole[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -156,13 +168,13 @@ model ChannelCategory {
 }
 
 model Channel {
-  id       String      @id @default(uuid())
-  name     String
-  type     ChannelType @default(TEXT)
-  topic    String?     @db.Text
-  icon     String?     @db.VarChar(32)
-  position Int         @default(0)
-  slowModeSeconds Int   @default(0)
+  id              String      @id @default(uuid())
+  name            String
+  type            ChannelType @default(TEXT)
+  topic           String?     @db.Text
+  icon            String?     @db.VarChar(32)
+  position        Int         @default(0)
+  slowModeSeconds Int         @default(0)
 
   profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -209,10 +221,11 @@ model Message {
 
   deleted Boolean @default(false)
 
-  reactions     MessageReaction[]
-  savedBy       SavedMessage[]
-  notifications Notification[]
-  poll          Poll?
+  reactions         MessageReaction[]
+  savedBy           SavedMessage[]
+  notifications     Notification[]
+  poll              Poll?
+  moderationReports ModerationReport[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -272,8 +285,8 @@ model Conversation {
   id String @id @default(uuid())
 
   type     ConversationType @default(DIRECT)
-  name     String? @db.VarChar(120)
-  imageUrl String? @db.Text
+  name     String?          @db.VarChar(120)
+  imageUrl String?          @db.Text
 
   serverId String?
   server   Server? @relation(fields: [serverId], references: [id], onDelete: Cascade)
@@ -314,10 +327,10 @@ model ConversationParticipant {
 
   role ConversationParticipantRole @default(MEMBER)
 
-  joinedAt    DateTime @default(now())
-  leftAt      DateTime?
-  mutedUntil  DateTime?
-  archivedAt  DateTime?
+  joinedAt   DateTime  @default(now())
+  leftAt     DateTime?
+  mutedUntil DateTime?
+  archivedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -448,7 +461,7 @@ model Notification {
 }
 
 model PushSubscription {
-  id        String @id @default(uuid())
+  id        String  @id @default(uuid())
   profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
@@ -496,10 +509,10 @@ model ServerRole {
   name        String
   color       String @default("#6366f1")
   permissions Json
-  position    Int @default(0)
+  position    Int    @default(0)
 
   serverId String
-  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  server   Server             @relation(fields: [serverId], references: [id], onDelete: Cascade)
   members  MemberServerRole[]
 
   createdAt DateTime @default(now())
@@ -544,33 +557,134 @@ model AuditLog {
   @@index([targetId])
 }
 
+enum ModerationReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+enum ModerationReportReason {
+  SPAM
+  HARASSMENT
+  HATE
+  NSFW
+  VIOLENCE
+  SCAM
+  OTHER
+}
+
+model ModerationReport {
+  id String @id @default(uuid())
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  reporterMemberId String
+  reporterMember   Member @relation("ModerationReportReporter", fields: [reporterMemberId], references: [id], onDelete: Cascade)
+
+  targetMemberId String?
+  targetMember   Member? @relation("ModerationReportTarget", fields: [targetMemberId], references: [id], onDelete: SetNull)
+
+  messageId String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  reason  ModerationReportReason
+  comment String?                @db.VarChar(1000)
+  status  ModerationReportStatus @default(OPEN)
+
+  resolvedById String?
+  resolvedBy   Profile?  @relation("ModerationReportResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serverId, status, createdAt])
+  @@index([reporterMemberId])
+  @@index([targetMemberId])
+  @@index([messageId])
+}
+
+model ServerBan {
+  id String @id @default(uuid())
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  moderatorId String?
+  moderator   Member? @relation("ServerBanModeratorMember", fields: [moderatorId], references: [id], onDelete: SetNull)
+
+  moderatorProfileId String?
+  moderatorProfile   Profile? @relation("ServerBanModerator", fields: [moderatorProfileId], references: [id], onDelete: SetNull)
+
+  reason    String?   @db.VarChar(1000)
+  expiresAt DateTime?
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serverId, profileId])
+  @@index([serverId, revokedAt, expiresAt])
+  @@index([profileId])
+}
+
+model MemberTimeout {
+  id String @id @default(uuid())
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  memberId String
+  member   Member @relation("MemberTimeoutTarget", fields: [memberId], references: [id], onDelete: Cascade)
+
+  moderatorId String?
+  moderator   Member? @relation("MemberTimeoutModeratorMember", fields: [moderatorId], references: [id], onDelete: SetNull)
+
+  moderatorProfileId String?
+  moderatorProfile   Profile? @relation("MemberTimeoutModerator", fields: [moderatorProfileId], references: [id], onDelete: SetNull)
+
+  reason    String?   @db.VarChar(1000)
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serverId, memberId, expiresAt])
+  @@index([serverId, revokedAt, expiresAt])
+}
+
 model WatchSession {
-  id             String @id @default(uuid())
-  channelId      String @unique
-  channel        Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  id             String           @id @default(uuid())
+  channelId      String           @unique
+  channel        Channel          @relation(fields: [channelId], references: [id], onDelete: Cascade)
   currentVideoId String?
-  currentTime    Float   @default(0)
-  isPlaying      Boolean @default(false)
+  currentTime    Float            @default(0)
+  isPlaying      Boolean          @default(false)
   updatedById    String?
   updatedByName  String?
-  updatedAt      DateTime @updatedAt
-  createdAt      DateTime @default(now())
+  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime         @default(now())
   queue          WatchQueueItem[]
 
   @@index([channelId])
 }
 
 model WatchQueueItem {
-  id          String @id @default(uuid())
+  id          String           @id @default(uuid())
   sessionId   String
-  session     WatchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session     WatchSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   videoId     String
   title       String?
   thumbnail   String?
   addedById   String
   addedByName String
   position    Int
-  createdAt   DateTime @default(now())
+  createdAt   DateTime         @default(now())
   votes       WatchQueueVote[]
 
   @@index([sessionId, position])
@@ -593,16 +707,16 @@ model WatchQueueVote {
 }
 
 model Poll {
-  id              String @id @default(uuid())
-  messageId       String? @unique
-  message         Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  directMessageId String? @unique
+  id              String         @id @default(uuid())
+  messageId       String?        @unique
+  message         Message?       @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  directMessageId String?        @unique
   directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
   question        String
   options         Json
-  multiple        Boolean @default(false)
+  multiple        Boolean        @default(false)
   closesAt        DateTime?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime       @default(now())
   votes           PollVote[]
 
   @@index([messageId])
@@ -610,11 +724,11 @@ model Poll {
 }
 
 model PollVote {
-  id        String @id @default(uuid())
+  id        String   @id @default(uuid())
   pollId    String
-  poll      Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
   memberId  String
-  member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   optionId  String
   createdAt DateTime @default(now())
 
@@ -623,8 +737,8 @@ model PollVote {
 }
 
 model LinkPreview {
-  id          String @id @default(uuid())
-  url         String @unique
+  id          String   @id @default(uuid())
+  url         String   @unique
   title       String?
   description String?
   image       String?

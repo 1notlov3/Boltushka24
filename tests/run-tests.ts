@@ -45,7 +45,7 @@ async function main() {
     parseQuoteContent,
     parseTodoContent,
   } = messageFormatting;
-  const { canControlWatchSession, canDeleteMessage, canEditMessage, hasPermission } = permissions;
+  const { canControlWatchSession, canDeleteMessage, canEditMessage, canManageModeration, hasPermission } = permissions;
   const { movedBeyondReactionTolerance, REACTION_LONG_PRESS_MS, shouldIgnoreReactionTrigger } = reactionTrigger;
   const { removeTypingUser, TYPING_TTL, upsertTypingUser } = typingIndicator;
   const { extractYoutubeId } = youtube;
@@ -110,6 +110,9 @@ async function main() {
   assert.equal(canControlWatchSession({ id: "m-admin", role: MemberRole.ADMIN }), true);
   assert.equal(canControlWatchSession({ id: "m-mod", role: MemberRole.MODERATOR }), true);
   assert.equal(canControlWatchSession({ id: "m-guest", role: MemberRole.GUEST }), false);
+  assert.equal(canManageModeration({ id: "m-admin", role: MemberRole.ADMIN }), true);
+  assert.equal(canManageModeration({ id: "m-mod", role: MemberRole.MODERATOR }), true);
+  assert.equal(canManageModeration({ id: "m-guest", role: MemberRole.GUEST }), false);
   assert.equal(canControlWatchSession({
     id: "m-custom",
     role: MemberRole.GUEST,
@@ -210,6 +213,27 @@ async function main() {
   assert.equal(watchRoomSource.includes("Очередь · голосование"), true);
   assert.equal(watchRoomSource.includes("voteQueueItem"), true);
   assert.equal(watchRoomSource.includes("👍 {item.voteCount}"), true);
+  const reportModalSource = readFileSync(resolve(process.cwd(), "components/modals/report-message-modal.tsx"), "utf8");
+  const moderationQueueModalSource = readFileSync(resolve(process.cwd(), "components/modals/moderation-queue-modal.tsx"), "utf8");
+  const chatItemSource = readFileSync(resolve(process.cwd(), "components/chat/chat-item.tsx"), "utf8");
+  const serverHeaderSource = readFileSync(resolve(process.cwd(), "components/server/server-header.tsx"), "utf8");
+  const reportRouteSource = readFileSync(resolve(process.cwd(), "app/api/servers/[serverId]/reports/route.ts"), "utf8");
+  const moderationRouteSource = readFileSync(resolve(process.cwd(), "app/api/servers/[serverId]/members/[memberId]/moderation/route.ts"), "utf8");
+  assert.equal(modalStoreSource.includes('"reportMessage"'), true);
+  assert.equal(modalStoreSource.includes('"moderationQueue"'), true);
+  assert.equal(modalProviderSource.includes("ReportMessageModal"), true);
+  assert.equal(modalProviderSource.includes("ModerationQueueModal"), true);
+  assert.equal(chatItemSource.includes("Пожаловаться"), true);
+  assert.equal(chatItemSource.includes('onOpen("reportMessage"'), true);
+  assert.equal(serverHeaderSource.includes('onOpen("moderationQueue"'), true);
+  assert.equal(reportModalSource.includes(`/api/servers/${'${serverId}'}/reports`), true);
+  assert.equal(moderationQueueModalSource.includes("Очередь модерации"), true);
+  assert.equal(moderationQueueModalSource.includes('action: "timeout"'), true);
+  assert.equal(moderationQueueModalSource.includes('moderateMember(report, "ban")'), true);
+  assert.equal(reportRouteSource.includes("checkRateLimit"), true);
+  assert.equal(reportRouteSource.includes("moderation.report.create"), true);
+  assert.equal(moderationRouteSource.includes("moderation.member.timeout"), true);
+  assert.equal(moderationRouteSource.includes("moderation.member.ban"), true);
   const invitePageSource = readFileSync(resolve(process.cwd(), "app/(invite)/(routes)/invite/[inviteCode]/page.tsx"), "utf8");
   const discoverPageSource = readFileSync(resolve(process.cwd(), "app/(main)/(routes)/discover/page.tsx"), "utf8");
   assert.equal(discoverPageSource.includes("Каталог публичных серверов"), true);

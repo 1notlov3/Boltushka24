@@ -32,6 +32,23 @@ export async function POST(_req: Request, context: { params: Promise<{ inviteCod
     if (!server) return new NextResponse("Invite not found", { status: 404 });
     if (server.members.length > 0) return NextResponse.json({ serverId: server.id });
 
+    const activeBan = await db.serverBan.findFirst({
+      where: {
+        serverId: server.id,
+        profileId: profile.id,
+        revokedAt: null,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (activeBan) {
+      return new NextResponse("Вы забанены на этом сервере", { status: 403 });
+    }
+
     await db.member.create({
       data: {
         profileId: profile.id,

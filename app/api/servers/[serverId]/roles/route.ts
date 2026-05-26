@@ -3,21 +3,11 @@ import { z } from "zod";
 import { apiError, unauthorized, validationError } from "@/lib/api-response";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
-import { canManageMembers, type Permission } from "@/lib/permissions";
+import { ALL_PERMISSIONS, canManageMembers, type Permission } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
-const permissions: Permission[] = [
-  "server.manage",
-  "server.invite",
-  "channel.manage",
-  "member.manage",
-  "message.manage",
-  "message.create",
-  "message.react",
-  "message.pin",
-  "message.save",
-];
+const permissions: Permission[] = ALL_PERMISSIONS;
 
 const ParamsSchema = z.object({
   serverId: z.string().uuid("Invalid server ID"),

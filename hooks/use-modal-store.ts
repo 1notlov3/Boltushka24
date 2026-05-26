@@ -8,6 +8,8 @@ export type ModalType =
   | "editServer"
   | "members"
   | "roles"
+  | "reportMessage"
+  | "moderationQueue"
   | "forwardMessage"
   | "createChannel"
   | "createGroupConversation"
