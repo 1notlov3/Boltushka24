@@ -94,7 +94,7 @@ export function parseQuoteContent(content: string) {
 }
 
 export function parseTodoContent(content: string): ParsedTodoContent | null {
-  const match = content.trim().match(/^(☐|☑)\s+(.+)$/s);
+  const match = content.trim().match(/^(☐|☑)\s+([\s\S]+)$/);
   if (!match) return null;
 
   return {

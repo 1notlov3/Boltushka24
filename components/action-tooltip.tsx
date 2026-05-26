@@ -1,3 +1,4 @@
+import { isValidElement } from "react";
 import {
     Tooltip,
     TooltipContent,
@@ -17,6 +18,10 @@ import {
     side,
     align
   }: ActionTooltipProps) => {
+    if (!isValidElement(children)) {
+      return <>{children}</>;
+    }
+
     return (
       <Tooltip delayDuration={50}>
         <TooltipTrigger asChild>
