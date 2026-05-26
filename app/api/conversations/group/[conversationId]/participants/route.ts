@@ -6,6 +6,7 @@ import { addConversationParticipants, getConversationAccess } from "@/lib/conver
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { canManageGroupConversation } from "@/lib/group-conversation-ui";
+import { createGroupSystemEvent } from "@/lib/group-system-event-service";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ convers
 
 export async function POST(req: Request, { params }: { params: Promise<{ conversationId: string }> }) {
   try {
+    const profile = await currentProfile();
+    if (!profile) return unauthorized();
+
     const resolvedParams = await params;
     const parsedParams = ParamsSchema.safeParse(resolvedParams);
     if (!parsedParams.success) return validationError(parsedParams.error);
@@ -122,6 +126,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ convers
     });
 
     if (!conversation) return apiError("Unable to add participants", 400);
+
+    const targetNameById = new Map(access.participants.map((participant) => [participant.memberId, participant.member.profile.name]));
+    for (const member of await db.member.findMany({
+      where: { id: { in: parsedBody.data.memberIds } },
+      select: { id: true, profile: { select: { name: true } } },
+    })) {
+      targetNameById.set(member.id, member.profile.name);
+    }
+
+    await createGroupSystemEvent({
+      conversationId: access.conversation.id,
+      actorProfileId: profile.id,
+      actorMemberId: access.currentMember.id,
+      serverId: access.currentMember.serverId,
+      event: {
+        type: "member_added",
+        actorName: profile.name,
+        targetNames: parsedBody.data.memberIds.map((memberId) => targetNameById.get(memberId) ?? "Участник"),
+      },
+      participants: conversation.participants,
+    });
 
     return Response.json({ conversation });
   } catch (error) {

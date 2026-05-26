@@ -34,6 +34,7 @@ async function main() {
   const typingIndicator = await import("../hooks/use-typing-indicator");
   const youtube = await import("../lib/youtube");
   const groupConversationUi = await import("../lib/group-conversation-ui");
+  const groupSystemEvents = await import("../lib/group-system-events");
 
   const {
     applySlashCommand,
@@ -59,6 +60,7 @@ async function main() {
     canTransferGroupOwnership,
     groupConversationHref,
   } = groupConversationUi;
+  const { buildGroupSystemEventContent, formatGroupSystemEvent, parseGroupSystemEvent } = groupSystemEvents;
 
   const videoId = "dQw4w9WgXcQ";
 
@@ -143,11 +145,29 @@ async function main() {
   assert.equal(canTransferGroupOwnership({ actorRole: "OWNER", targetRole: "ADMIN", isSelf: false }), true);
   assert.equal(canTransferGroupOwnership({ actorRole: "OWNER", targetRole: "OWNER", isSelf: false }), false);
 
+  const systemEventContent = buildGroupSystemEventContent({
+    type: "member_added",
+    actorName: "Максим",
+    targetNames: ["Анна", "Олег"],
+  });
+  assert.equal(systemEventContent.startsWith("__boltushka_group_system_event__:"), true);
+  assert.deepEqual(parseGroupSystemEvent(systemEventContent), {
+    type: "member_added",
+    actorName: "Максим",
+    targetNames: ["Анна", "Олег"],
+  });
+  assert.equal(parseGroupSystemEvent("обычное сообщение"), null);
+  assert.equal(parseGroupSystemEvent("__boltushka_group_system_event__:{bad"), null);
+  assert.equal(formatGroupSystemEvent({ type: "owner_transferred", actorName: "Максим", targetName: "Анна" }), "Максим передал(а) владение группой пользователю Анна");
+
   const modalStoreSource = readFileSync(resolve(process.cwd(), "hooks/use-modal-store.ts"), "utf8");
   const modalProviderSource = readFileSync(resolve(process.cwd(), "components/providers/modal-provider.tsx"), "utf8");
   const modalSource = readFileSync(resolve(process.cwd(), "components/modals/create-group-conversation-modal.tsx"), "utf8");
   const groupSettingsModalSource = readFileSync(resolve(process.cwd(), "components/modals/group-conversation-settings-modal.tsx"), "utf8");
   const chatHeaderActionsSource = readFileSync(resolve(process.cwd(), "components/chat/chat-header-actions.tsx"), "utf8");
+  const chatMessagesSource = readFileSync(resolve(process.cwd(), "components/chat/chat-messages.tsx"), "utf8");
+  const chatSystemEventSource = readFileSync(resolve(process.cwd(), "components/chat/chat-system-event.tsx"), "utf8");
+  const groupParticipantRouteSource = readFileSync(resolve(process.cwd(), "app/api/conversations/group/[conversationId]/participants/[memberId]/route.ts"), "utf8");
   assert.equal(modalStoreSource.includes('"createGroupConversation"'), true);
   assert.equal(modalStoreSource.includes('"groupConversationSettings"'), true);
   assert.equal(modalProviderSource.includes("CreateGroupConversationModal"), true);
@@ -163,6 +183,13 @@ async function main() {
   assert.equal(groupSettingsModalSource.includes('"transfer_owner"'), true);
   assert.equal(chatHeaderActionsSource.includes('onOpen("groupConversationSettings"'), true);
   assert.equal(chatHeaderActionsSource.includes("isGroupConversation"), true);
+  assert.equal(chatMessagesSource.includes("parseGroupSystemEvent"), true);
+  assert.equal(chatMessagesSource.includes("ChatSystemEvent"), true);
+  assert.equal(chatSystemEventSource.includes("Системное событие"), true);
+  assert.equal(chatSystemEventSource.includes("Ответить"), false);
+  assert.equal(chatSystemEventSource.includes("Редактировать"), false);
+  assert.equal(groupParticipantRouteSource.includes("createGroupSystemEvent"), true);
+  assert.equal(groupParticipantRouteSource.includes("owner_transferred"), true);
 
   assert.equal(REACTION_LONG_PRESS_MS, 500);
   assert.equal(movedBeyondReactionTolerance({ x: 10, y: 10 }, { x: 18, y: 17 }), false);

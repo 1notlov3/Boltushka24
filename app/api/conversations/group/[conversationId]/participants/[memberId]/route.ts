@@ -15,6 +15,7 @@ import {
   canRemoveGroupParticipant,
   canTransferGroupOwnership,
 } from "@/lib/group-conversation-ui";
+import { createGroupSystemEvent } from "@/lib/group-system-event-service";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,9 @@ async function loadAccess(conversationId: string) {
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ conversationId: string; memberId: string }> }) {
   try {
+    const profile = await currentProfile();
+    if (!profile) return unauthorized();
+
     const resolvedParams = await params;
     const parsedParams = ParamsSchema.safeParse(resolvedParams);
     if (!parsedParams.success) return validationError(parsedParams.error);
@@ -67,6 +71,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ conver
       });
 
       if (!conversation) return apiError("Unable to promote participant", 400);
+      await createGroupSystemEvent({
+        conversationId: access.conversation.id,
+        actorProfileId: profile.id,
+        actorMemberId: access.currentMember.id,
+        serverId: access.currentMember.serverId,
+        event: { type: "role_changed", actorName: profile.name, targetName: target.member.profile.name, role: "ADMIN" },
+        participants: conversation.participants,
+      });
       return Response.json({ conversation });
     }
 
@@ -81,6 +93,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ conver
       });
 
       if (!conversation) return apiError("Unable to demote participant", 400);
+      await createGroupSystemEvent({
+        conversationId: access.conversation.id,
+        actorProfileId: profile.id,
+        actorMemberId: access.currentMember.id,
+        serverId: access.currentMember.serverId,
+        event: { type: "role_changed", actorName: profile.name, targetName: target.member.profile.name, role: "MEMBER" },
+        participants: conversation.participants,
+      });
       return Response.json({ conversation });
     }
 
@@ -93,6 +113,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ conver
     });
 
     if (!conversation) return apiError("Unable to transfer ownership", 400);
+    await createGroupSystemEvent({
+      conversationId: access.conversation.id,
+      actorProfileId: profile.id,
+      actorMemberId: access.currentMember.id,
+      serverId: access.currentMember.serverId,
+      event: { type: "owner_transferred", actorName: profile.name, targetName: target.member.profile.name },
+      participants: conversation.participants,
+    });
     return Response.json({ conversation });
   } catch (error) {
     console.log("[CONVERSATION_GROUP_PARTICIPANT_PATCH]", error);
@@ -102,6 +130,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ conver
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ conversationId: string; memberId: string }> }) {
   try {
+    const profile = await currentProfile();
+    if (!profile) return unauthorized();
+
     const resolvedParams = await params;
     const parsedParams = ParamsSchema.safeParse(resolvedParams);
     if (!parsedParams.success) return validationError(parsedParams.error);
@@ -131,6 +162,17 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ conv
     });
 
     if (!conversation) return apiError("Unable to remove participant", 400);
+
+    await createGroupSystemEvent({
+      conversationId: access.conversation.id,
+      actorProfileId: profile.id,
+      actorMemberId: access.currentMember.id,
+      serverId: access.currentMember.serverId,
+      event: isSelf
+        ? { type: "member_left", targetName: target.member.profile.name }
+        : { type: "member_removed", actorName: profile.name, targetName: target.member.profile.name },
+      participants: conversation.participants,
+    });
 
     return Response.json({ conversation, left: isSelf });
   } catch (error) {

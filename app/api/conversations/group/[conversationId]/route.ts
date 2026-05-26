@@ -6,6 +6,7 @@ import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { getConversationAccess } from "@/lib/conversation";
 import { buildGroupSettingsPayload, canManageGroupConversation, canSubmitGroupSettings } from "@/lib/group-conversation-ui";
+import { createGroupSystemEvent } from "@/lib/group-system-event-service";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ convers
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ conversationId: string }> }) {
   try {
+    const profile = await currentProfile();
+    if (!profile) return unauthorized();
+
     const resolvedParams = await params;
     const parsedParams = ParamsSchema.safeParse(resolvedParams);
     if (!parsedParams.success) return validationError(parsedParams.error);
@@ -100,6 +104,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ conver
         name: payload.name,
         imageUrl: payload.imageUrl,
       },
+    });
+
+    await createGroupSystemEvent({
+      conversationId: access.conversation.id,
+      actorProfileId: profile.id,
+      actorMemberId: access.currentMember.id,
+      serverId: access.currentMember.serverId,
+      event: { type: "group_renamed", actorName: profile.name, name: payload.name },
+      participants: access.participants,
     });
 
     return Response.json({ conversation });
