@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-import { apiError, unauthorized, validationError } from "@/lib/api-response";
+import { apiError, forbidden, unauthorized, validationError } from "@/lib/api-response";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { canControlWatchSession } from "@/lib/permissions";
 import { broadcast } from "@/lib/realtime";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,17 @@ export async function DELETE(req: Request, context: { params: Promise<{ itemId: 
 
     const member = await db.member.findFirst({
       where: { serverId: parsedQuery.data.serverId, profileId: profile.id },
-      select: { id: true },
+      select: {
+        id: true,
+        role: true,
+        serverRoles: {
+          select: {
+            role: {
+              select: { permissions: true },
+            },
+          },
+        },
+      },
     });
 
     if (!member) return unauthorized();
@@ -50,10 +61,14 @@ export async function DELETE(req: Request, context: { params: Promise<{ itemId: 
         id: true,
         sessionId: true,
         position: true,
+        addedById: true,
       },
     });
 
     if (!item) return apiError("Queue item not found", 404);
+    if (!canControlWatchSession(member) && item.addedById !== profile.id) {
+      return forbidden("Only hosts or the item author can remove this queue item");
+    }
 
     await db.watchQueueItem.delete({ where: { id: item.id } });
     await db.watchQueueItem.updateMany({

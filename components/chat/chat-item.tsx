@@ -6,7 +6,7 @@ import qs from "query-string";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Member, MemberRole, Profile } from "@prisma/client";
-import { Bookmark, Copy, Edit, FileIcon, Forward, Link, MoreHorizontal, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
+import { Bookmark, Copy, Edit, FileIcon, Flag, Forward, Link, MoreHorizontal, Pin, Reply, ShieldAlert, ShieldCheck, SmilePlus, Trash } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, memo } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
@@ -188,6 +188,7 @@ export const ChatItem = memo(({
   const canDeleteMessage = !deleted && (isAdmin || isModerator || isOwner);
   const canEditMessage = !deleted && isOwner && !fileUrl;
   const canPinMessage = !deleted && (isAdmin || isModerator || isOwner);
+  const canReportMessage = !deleted && !isOwner && chatType === "channel";
   const isPDF = fileType === "pdf" && fileUrl;
   const isAudio = !!fileUrl && isAudioUrl(fileUrl);
   const isImage = !!fileUrl && isImageUrl(fileUrl);
@@ -325,6 +326,11 @@ export const ChatItem = memo(({
   const openDeleteModal = () => onOpen("deleteMessage", {
     apiUrl: `${socketUrl}/${id}`,
     query: socketQuery,
+  });
+
+  const openReportModal = () => onOpen("reportMessage", {
+    serverId: typeof params?.serverId === "string" ? params.serverId : socketQuery.serverId,
+    message: { id, content, fileUrl },
   });
 
   const startEditing = () => {
@@ -539,6 +545,12 @@ export const ChatItem = memo(({
                       <DropdownMenuItem onSelect={openDeleteModal} className="text-rose-600 focus:text-rose-600">
                         <Trash className="mr-2 h-4 w-4" />
                         Удалить
+                      </DropdownMenuItem>
+                    )}
+                    {canReportMessage && (
+                      <DropdownMenuItem onSelect={openReportModal} className="text-amber-600 focus:text-amber-600">
+                        <Flag className="mr-2 h-4 w-4" />
+                        Пожаловаться
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>

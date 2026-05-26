@@ -4,6 +4,7 @@ import { z } from "zod";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { serverIconDataUri } from "@/lib/server-icon";
+import { normalizeServerDescription } from "@/lib/discovery";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,8 @@ const ImageUrlSchema = z
 const UpdateServerSchema = z.object({
   name: z.string().min(1).max(100),
   imageUrl: ImageUrlSchema.optional(),
+  description: z.string().trim().max(500).optional().nullable(),
+  isPublic: z.boolean().optional(),
 });
 
 export async function DELETE(
@@ -85,8 +88,9 @@ export async function PATCH(
       return new NextResponse("Validation Error", { status: 400 });
     }
 
-    const { name } = validationResult.data;
+    const { name, isPublic } = validationResult.data;
     const imageUrl = validationResult.data.imageUrl || serverIconDataUri(name);
+    const description = normalizeServerDescription(validationResult.data.description);
 
     const server = await db.server.update({
       where: {
@@ -96,6 +100,8 @@ export async function PATCH(
       data: {
         name,
         imageUrl,
+        description,
+        ...(typeof isPublic === "boolean" ? { isPublic } : {}),
       },
     });
 

@@ -2,7 +2,7 @@
 
 import { useClerk } from "@clerk/nextjs";
 import { ChannelType } from "@prisma/client";
-import { Hash, LogOut, Moon, PlusCircle, Search, Settings, Sun, User } from "lucide-react";
+import { Hash, LogOut, MessageCirclePlus, Moon, PlusCircle, Search, Settings, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -146,6 +146,12 @@ export function CommandPalette() {
             <CommandItem onSelect={() => run(() => onOpen("createChannel"))}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Создать канал
+            </CommandItem>
+          )}
+          {serverId && (
+            <CommandItem onSelect={() => run(() => onOpen("createGroupConversation", { serverId }))}>
+              <MessageCirclePlus className="mr-2 h-4 w-4" />
+              Создать групповой чат
             </CommandItem>
           )}
           <CommandItem onSelect={() => run(() => onOpen("userSettings"))}>

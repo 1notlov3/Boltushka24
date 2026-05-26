@@ -1,8 +1,11 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
-const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY!;
+import { publicEnv } from "@/lib/public-env";
+import { serverEnv } from "@/lib/server-env";
+
+const SUPABASE_URL = publicEnv.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = publicEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_SECRET_KEY = serverEnv.SUPABASE_SECRET_KEY;
 
 export const UPLOAD_BUCKET = "uploads";
 

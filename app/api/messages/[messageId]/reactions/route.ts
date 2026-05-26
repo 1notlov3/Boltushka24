@@ -5,6 +5,7 @@ import { apiError, forbidden, notFound, rateLimitError, unauthorized, validation
 import { channelMessageInclude } from "@/lib/chat-includes";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { assertNoActiveMemberTimeout } from "@/lib/moderation-enforcement";
 import { canReactToMessage } from "@/lib/permissions";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 import { broadcast } from "@/lib/realtime";
@@ -80,6 +81,9 @@ export async function POST(req: Request, context: { params: Promise<{ messageId:
 
     if (!member) return unauthorized();
     if (!canReactToMessage(member)) return forbidden();
+
+    const timeoutError = await assertNoActiveMemberTimeout(message.channel.serverId, member.id, "У вас таймаут на реакции");
+    if (timeoutError) return timeoutError;
 
     const limit = await checkRateLimit({
       key: rateLimitKey("message:reaction", profile.id, "global"),

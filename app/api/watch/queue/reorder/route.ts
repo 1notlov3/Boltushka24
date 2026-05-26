@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-import { apiError, unauthorized, validationError } from "@/lib/api-response";
+import { apiError, forbidden, unauthorized, validationError } from "@/lib/api-response";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+import { canControlWatchSession } from "@/lib/permissions";
 import { broadcast } from "@/lib/realtime";
 
 export const dynamic = "force-dynamic";
@@ -24,24 +25,66 @@ export async function POST(req: Request) {
     const { serverId, channelId, itemIds } = parsedBody.data;
     const member = await db.member.findFirst({
       where: { serverId, profileId: profile.id },
-      select: { id: true },
+      select: {
+        id: true,
+        role: true,
+        serverRoles: {
+          select: {
+            role: {
+              select: { permissions: true },
+            },
+          },
+        },
+      },
     });
 
     if (!member) return unauthorized();
+    if (!canControlWatchSession(member)) return forbidden("Only hosts can reorder the watch queue");
 
     const session = await db.watchSession.findFirst({
       where: {
         channelId,
         channel: { serverId },
       },
-      select: { id: true },
+      select: {
+        id: true,
+        queue: {
+          select: {
+            id: true,
+            _count: { select: { votes: true } },
+          },
+        },
+      },
     });
 
     if (!session) return apiError("Watch session not found", 404);
 
+    const uniqueItemIds = new Set(itemIds);
+    const sessionItemIds = new Set(session.queue.map((item) => item.id));
+    if (uniqueItemIds.size !== itemIds.length || uniqueItemIds.size !== sessionItemIds.size) {
+      return validationError(BodySchema.refine(() => false, "Queue reorder must include each item exactly once").safeParse(parsedBody.data).error!);
+    }
+
+    const hasOnlySessionItems = itemIds.every((id) => sessionItemIds.has(id));
+    if (!hasOnlySessionItems) {
+      return validationError(BodySchema.refine(() => false, "Queue reorder contains unknown items").safeParse(parsedBody.data).error!);
+    }
+
+    const orderedItems = itemIds
+      .map((id) => session.queue.find((item) => item.id === id))
+      .filter((item): item is NonNullable<typeof item> => !!item);
+    const isMovingVotedItemDown = orderedItems.some((item, index) => {
+      const previous = orderedItems[index - 1];
+      return !!previous && item._count.votes > previous._count.votes;
+    });
+
+    if (isMovingVotedItemDown) {
+      return validationError(BodySchema.refine(() => false, "Queue reorder cannot move higher-voted items below lower-voted items").safeParse(parsedBody.data).error!);
+    }
+
     await db.$transaction(itemIds.map((id, position) => (
       db.watchQueueItem.update({
-        where: { id },
+        where: { id, sessionId: session.id },
         data: { position },
       })
     )));

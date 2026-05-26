@@ -25,11 +25,13 @@ const permissionLabels: Record<Permission, string> = {
   "server.invite": "Приглашения",
   "channel.manage": "Каналы",
   "member.manage": "Участники",
+  "moderation.manage": "Очередь модерации",
   "message.manage": "Модерация сообщений",
   "message.create": "Отправка сообщений",
   "message.react": "Реакции",
   "message.pin": "Закрепления",
   "message.save": "Избранное",
+  "watch.control": "Управление совместным просмотром",
 };
 
 export function RolesModal() {

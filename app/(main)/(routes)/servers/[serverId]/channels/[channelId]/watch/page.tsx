@@ -40,7 +40,14 @@ const WatchPage = async ({ params, searchParams }: WatchPageProps) => {
         serverId: resolvedParams.serverId,
         profileId: profile.id,
       },
-      include: { profile: true },
+      include: {
+        profile: true,
+        serverRoles: {
+          include: {
+            role: true,
+          },
+        },
+      },
     }),
   ]);
 

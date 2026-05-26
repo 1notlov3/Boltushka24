@@ -14,6 +14,7 @@ interface ChatHeaderProps {
   imageUrl?: string;
   channelId?: string;
   conversationId?: string;
+  isGroupConversation?: boolean;
 }
 
 export const ChatHeader = ({
@@ -23,6 +24,7 @@ export const ChatHeader = ({
   imageUrl,
   channelId,
   conversationId,
+  isGroupConversation = false,
 }: ChatHeaderProps) => {
   const chatId = type === "channel" ? channelId : conversationId;
 
@@ -50,6 +52,7 @@ export const ChatHeader = ({
             chatId={chatId}
             channelId={channelId}
             conversationId={conversationId}
+            isGroupConversation={isGroupConversation}
           />
         )}
         {type === "channel" && channelId && (

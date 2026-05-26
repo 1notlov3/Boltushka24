@@ -1,7 +1,7 @@
 "use client";
 
 import { ChannelType, MemberRole } from "@prisma/client";
-import { Plus, Settings } from "lucide-react";
+import { Plus, Settings, Users } from "lucide-react";
 
 import { ServerWithMembersWithProfiles } from "@/types";
 import { ActionTooltip } from "@/components/action-tooltip";
@@ -42,16 +42,29 @@ export const ServerSection = ({
           </button>
         </ActionTooltip>
       )}
-      {role === MemberRole.ADMIN && sectionType === "members" && (
-        <ActionTooltip label="Управлять участниками" side="top">
-          <button
-            onClick={() => onOpen("members", { server })}
-            className="text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300 transition"
-            aria-label="Управлять участниками"
-          >
-            <Settings className="h-4 w-4" />
-          </button>
-        </ActionTooltip>
+      {sectionType === "members" && (
+        <div className="flex items-center gap-2">
+          <ActionTooltip label="Создать групповой чат" side="top">
+            <button
+              onClick={() => onOpen("createGroupConversation", { serverId: server?.id })}
+              className="text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300 transition"
+              aria-label="Создать групповой чат"
+            >
+              <Users className="h-4 w-4" />
+            </button>
+          </ActionTooltip>
+          {role === MemberRole.ADMIN && (
+            <ActionTooltip label="Управлять участниками" side="top">
+              <button
+                onClick={() => onOpen("members", { server })}
+                className="text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300 transition"
+                aria-label="Управлять участниками"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+            </ActionTooltip>
+          )}
+        </div>
       )}
     </div>
   )

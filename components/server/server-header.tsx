@@ -8,6 +8,7 @@ import {
   FolderPlus,
   LogOut, 
   PlusCircle, 
+  ShieldAlert,
   ShieldCheck,
   Settings, 
   Trash, 
@@ -105,6 +106,14 @@ export const ServerHeader = ({
         )}
         {isModerator && (
           <DropdownMenuSeparator />
+        )}
+        {isModerator && (
+          <DropdownMenuItem onClick={() => onOpen("moderationQueue", { server })}
+            className="px-3 py-2 text-sm cursor-pointer"
+          >
+            Модерация
+            <ShieldAlert className="h-4 w-4 ml-auto" />
+          </DropdownMenuItem>
         )}
          {/* Новый пункт рейтинга */}
          <DropdownMenuItem

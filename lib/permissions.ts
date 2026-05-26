@@ -5,11 +5,27 @@ export type Permission =
   | "server.invite"
   | "channel.manage"
   | "member.manage"
+  | "moderation.manage"
   | "message.manage"
   | "message.create"
   | "message.react"
   | "message.pin"
-  | "message.save";
+  | "message.save"
+  | "watch.control";
+
+export const ALL_PERMISSIONS: Permission[] = [
+  "server.manage",
+  "server.invite",
+  "channel.manage",
+  "member.manage",
+  "moderation.manage",
+  "message.manage",
+  "message.create",
+  "message.react",
+  "message.pin",
+  "message.save",
+  "watch.control",
+];
 
 type MinimalMember = Pick<Member, "id" | "role">;
 type MemberWithCustomRoles = MinimalMember & {
@@ -26,21 +42,25 @@ const permissionsByRole: Record<MemberRole, Permission[]> = {
     "server.invite",
     "channel.manage",
     "member.manage",
+    "moderation.manage",
     "message.manage",
     "message.create",
     "message.react",
     "message.pin",
     "message.save",
+    "watch.control",
   ],
   [MemberRole.MODERATOR]: [
     "server.invite",
     "channel.manage",
     "member.manage",
+    "moderation.manage",
     "message.manage",
     "message.create",
     "message.react",
     "message.pin",
     "message.save",
+    "watch.control",
   ],
   [MemberRole.GUEST]: [
     "message.create",
@@ -57,18 +77,7 @@ export function hasPermission(role: MemberRole | null | undefined, permission: P
 function permissionList(value: unknown): Permission[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is Permission => (
-    typeof item === "string" &&
-    [
-      "server.manage",
-      "server.invite",
-      "channel.manage",
-      "member.manage",
-      "message.manage",
-      "message.create",
-      "message.react",
-      "message.pin",
-      "message.save",
-    ].includes(item)
+    typeof item === "string" && ALL_PERMISSIONS.includes(item as Permission)
   ));
 }
 
@@ -91,6 +100,10 @@ export function canManageChannels(member: MemberWithCustomRoles | null | undefin
 
 export function canManageMembers(member: MemberWithCustomRoles | null | undefined) {
   return memberHasPermission(member, "member.manage");
+}
+
+export function canManageModeration(member: MemberWithCustomRoles | null | undefined) {
+  return memberHasPermission(member, "moderation.manage");
 }
 
 export function canDeleteMessage(member: MemberWithCustomRoles | null | undefined, authorMemberId: string) {
@@ -117,4 +130,8 @@ export function canCreateMessage(member: MemberWithCustomRoles | null | undefine
 
 export function canSaveMessage(member: MemberWithCustomRoles | null | undefined) {
   return memberHasPermission(member, "message.save");
+}
+
+export function canControlWatchSession(member: MemberWithCustomRoles | null | undefined) {
+  return memberHasPermission(member, "watch.control");
 }

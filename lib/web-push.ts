@@ -1,6 +1,7 @@
 import webPush, { WebPushError } from "web-push";
 
 import { db } from "@/lib/db";
+import { serverEnv, serverFeatures } from "@/lib/server-env";
 
 type PushPayload = {
   title: string;
@@ -8,14 +9,14 @@ type PushPayload = {
   url: string;
 };
 
-const publicKey = process.env.VAPID_PUBLIC_KEY;
-const privateKey = process.env.VAPID_PRIVATE_KEY;
-const subject = process.env.VAPID_SUBJECT || "mailto:admin@example.com";
+const publicKey = serverEnv.VAPID_PUBLIC_KEY;
+const privateKey = serverEnv.VAPID_PRIVATE_KEY;
+const subject = serverEnv.VAPID_SUBJECT;
 
 let configured = false;
 
 export function isWebPushEnabled() {
-  return !!publicKey && !!privateKey && !!subject;
+  return serverFeatures.webPush;
 }
 
 export function getVapidPublicKey() {

@@ -19,6 +19,8 @@ import { ImageLightbox } from "@/components/chat/image-lightbox";
 import { isImageUrl } from "@/lib/upload";
 import { UserAvatar } from "@/components/user-avatar";
 import type { TypingUser } from "@/components/providers/server-activity-provider";
+import { ChatSystemEvent } from "@/components/chat/chat-system-event";
+import { formatGroupSystemEvent, parseGroupSystemEvent } from "@/lib/group-system-events";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -121,8 +123,9 @@ export const ChatMessages = ({
     if (!normalizedLocalSearch) return messages;
 
     return messages.filter((message) => {
+      const systemEvent = parseGroupSystemEvent(message.content);
       const haystack = [
-        message.content,
+        systemEvent ? formatGroupSystemEvent(systemEvent) : message.content,
         message.fileUrl ?? "",
         message.member.profile.name,
       ].join(" ").toLowerCase();
@@ -138,7 +141,9 @@ export const ChatMessages = ({
     ))))
   ), [messages]);
   const mentionIds = useMemo(() => (
-    Array.from(new Set(messages.flatMap((message) => extractMentionMemberIds(message.content))))
+    Array.from(new Set(messages.flatMap((message) => (
+      parseGroupSystemEvent(message.content) ? [] : extractMentionMemberIds(message.content)
+    ))))
   ), [messages]);
 
   useEffect(() => {
@@ -245,35 +250,52 @@ export const ChatMessages = ({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const renderMessage = (message: MessageWithMemberWithProfile) => (
-    <ChatItem
-      key={message.id}
-      id={message.id}
-      currentMember={member}
-      member={message.member}
-      content={message.content}
-      fileUrl={message.fileUrl}
-      deleted={message.deleted}
-      timestamp={format(new Date(message.createdAt), DATE_FORMAT)}
-      isUpdated={new Date(message.updatedAt).getTime() !== new Date(message.createdAt).getTime()}
-      socketUrl={socketUrl}
-      socketQuery={socketQuery}
-      queryKey={queryKey}
-      chatType={type}
-      reactions={message.reactions ?? []}
-      savedByCurrentMember={!!message.savedBy?.length}
-      pinned={message.pinned}
-      parent={message.parentMessage ?? message.parentDirectMessage ?? null}
-      poll={message.poll ?? null}
-      outbox={!!message.outbox}
-      repliesCount={message._count?.replies ?? 0}
-      mentionNames={mentionNames}
-      highlighted={highlightedMessageId === message.id}
-      onReply={onReply}
-      onOpenThread={type === "channel" ? onOpenThread : undefined}
-      onOpenImage={setActiveImageUrl}
-    />
-  );
+  const renderMessage = (message: MessageWithMemberWithProfile) => {
+    const systemEvent = parseGroupSystemEvent(message.content);
+    const timestamp = format(new Date(message.createdAt), DATE_FORMAT);
+
+    if (systemEvent) {
+      return (
+        <ChatSystemEvent
+          key={message.id}
+          id={message.id}
+          event={systemEvent}
+          timestamp={timestamp}
+          highlighted={highlightedMessageId === message.id}
+        />
+      );
+    }
+
+    return (
+      <ChatItem
+        key={message.id}
+        id={message.id}
+        currentMember={member}
+        member={message.member}
+        content={message.content}
+        fileUrl={message.fileUrl}
+        deleted={message.deleted}
+        timestamp={timestamp}
+        isUpdated={new Date(message.updatedAt).getTime() !== new Date(message.createdAt).getTime()}
+        socketUrl={socketUrl}
+        socketQuery={socketQuery}
+        queryKey={queryKey}
+        chatType={type}
+        reactions={message.reactions ?? []}
+        savedByCurrentMember={!!message.savedBy?.length}
+        pinned={message.pinned}
+        parent={message.parentMessage ?? message.parentDirectMessage ?? null}
+        poll={message.poll ?? null}
+        outbox={!!message.outbox}
+        repliesCount={message._count?.replies ?? 0}
+        mentionNames={mentionNames}
+        highlighted={highlightedMessageId === message.id}
+        onReply={onReply}
+        onOpenThread={type === "channel" ? onOpenThread : undefined}
+        onOpenImage={setActiveImageUrl}
+      />
+    );
+  };
 
   if (status === "pending") {
     return (

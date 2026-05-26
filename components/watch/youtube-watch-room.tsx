@@ -9,6 +9,7 @@ import { useSocket } from "@/components/providers/socket-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSupabaseBrowser } from "@/lib/supabase";
+import { canControlWatchSession } from "@/lib/permissions";
 import { extractYoutubeId } from "@/lib/youtube";
 
 interface YouTubeWatchRoomProps {
@@ -20,7 +21,7 @@ interface YouTubeWatchRoomProps {
 }
 
 type RemoteEvent = {
-  action: "load" | "play" | "pause" | "seek" | "sync" | "ended" | "queue" | "queue:delete" | "queue:reorder";
+  action: "load" | "play" | "pause" | "seek" | "sync" | "ended" | "queue" | "queue:delete" | "queue:reorder" | "queue:vote";
   videoId?: string | null;
   time: number;
   isPlaying: boolean;
@@ -32,8 +33,11 @@ type QueueItem = {
   videoId: string;
   title: string | null;
   thumbnail: string | null;
+  addedById: string;
   addedByName: string;
   position: number;
+  voteCount: number;
+  votedByMe: boolean;
 };
 
 declare global {
@@ -59,10 +63,12 @@ export const YouTubeWatchRoom = ({
   const [lastSyncBy, setLastSyncBy] = useState<string>("");
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [participants, setParticipants] = useState<string[]>([]);
+  const [votingItemId, setVotingItemId] = useState<string | null>(null);
 
   const playerRef = useRef<any>(null);
   const suppressRef = useRef(false);
   const eventKey = useMemo(() => `watch:${channelId}:state`, [channelId]);
+  const canControlWatch = canControlWatchSession(currentMember);
 
   const loadSession = useCallback(async () => {
     const response = await fetch(`/api/watch?serverId=${serverId}&channelId=${channelId}`);
@@ -197,6 +203,8 @@ export const YouTubeWatchRoom = ({
 
             const currentTime = Number(playerRef.current.getCurrentTime?.() ?? 0);
 
+            if (!canControlWatch) return;
+
             if (event.data === window.YT.PlayerState.PLAYING) {
               setStatus("Воспроизведение");
               await postState({ action: "play", videoId, time: currentTime });
@@ -226,7 +234,7 @@ export const YouTubeWatchRoom = ({
     return () => {
       window.onYouTubeIframeAPIReady = undefined;
     };
-  }, [videoId, postState]);
+  }, [videoId, postState, canControlWatch]);
 
   useEffect(() => {
     if (!socket) return;
@@ -239,6 +247,11 @@ export const YouTubeWatchRoom = ({
   }, [socket, eventKey, applyRemoteState]);
 
   const startVideo = async () => {
+    if (!canControlWatch) {
+      setStatus("Только ведущий может загружать видео");
+      return;
+    }
+
     const parsedId = extractYoutubeId(videoInput);
     if (!parsedId) {
       setStatus("Некорректная YouTube ссылка");
@@ -269,6 +282,22 @@ export const YouTubeWatchRoom = ({
       body: JSON.stringify({ serverId, channelId, videoId: parsedId }),
     });
     await loadSession();
+    setStatus("Добавлено в очередь");
+    setVideoInput("");
+  };
+
+  const voteQueueItem = async (item: QueueItem) => {
+    setVotingItemId(item.id);
+    try {
+      await fetch(`/api/watch/queue/${item.id}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serverId, channelId, voted: !item.votedByMe }),
+      });
+      await loadSession();
+    } finally {
+      setVotingItemId(null);
+    }
   };
 
   const deleteQueueItem = async (itemId: string) => {
@@ -279,6 +308,8 @@ export const YouTubeWatchRoom = ({
   };
 
   const moveQueueItem = async (index: number, direction: -1 | 1) => {
+    if (!canControlWatch) return;
+
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= queue.length) return;
 
@@ -295,6 +326,10 @@ export const YouTubeWatchRoom = ({
   };
 
   const syncCurrentTime = async () => {
+    if (!canControlWatch) {
+      setStatus("Только ведущий может синхронизировать просмотр");
+      return;
+    }
     if (!playerRef.current || !videoId) return;
 
     const currentTime = Number(playerRef.current.getCurrentTime?.() ?? 0);
@@ -310,6 +345,9 @@ export const YouTubeWatchRoom = ({
           <p className="text-xs text-zinc-500">
             Статус: {status} · Socket: {isConnected ? "online" : "offline"}
             {lastSyncBy ? ` · Последняя синхра: ${lastSyncBy}` : ""}
+          </p>
+          <p className="mt-1 text-xs text-indigo-500">
+            {canControlWatch ? "Вы ведущий: можно управлять видео и очередью" : "Гость: можно добавлять видео в очередь, управление у модераторов"}
           </p>
         </div>
 
@@ -327,9 +365,9 @@ export const YouTubeWatchRoom = ({
           placeholder="YouTube ссылка или video ID"
           className="bg-zinc-100 dark:bg-zinc-900"
         />
-        <Button onClick={startVideo}>Загрузить видео</Button>
+        <Button onClick={startVideo} disabled={!canControlWatch}>Загрузить видео</Button>
         <Button variant="secondary" onClick={addToQueue}>В очередь</Button>
-        <Button variant="secondary" onClick={syncCurrentTime}>Синхронизировать текущее время</Button>
+        <Button variant="secondary" onClick={syncCurrentTime} disabled={!canControlWatch}>Синхронизировать текущее время</Button>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -342,9 +380,10 @@ export const YouTubeWatchRoom = ({
         <aside className="flex min-h-0 flex-col border-t border-zinc-200 dark:border-zinc-800 lg:border-l lg:border-t-0">
           <div className="border-b border-zinc-200 p-3 dark:border-zinc-800">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-sm font-semibold">Очередь</p>
+              <p className="text-sm font-semibold">Очередь · голосование</p>
               <p className="text-xs text-zinc-500">{participants.length} онлайн</p>
             </div>
+            <p className="mb-2 text-[11px] text-zinc-500">Голосуй за следующее видео. Больше голосов — выше в очереди.</p>
             <div className="flex -space-x-2 pb-2">
               {participants.slice(0, 8).map((name) => (
                 <span
@@ -357,25 +396,58 @@ export const YouTubeWatchRoom = ({
               ))}
             </div>
             <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
-              {queue.map((item, index) => (
-                <div key={item.id} className="flex gap-2 rounded-md bg-zinc-100 p-2 dark:bg-zinc-800">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.thumbnail ?? `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`}
-                    alt=""
-                    className="h-12 w-20 rounded-sm object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-semibold">{item.title || item.videoId}</p>
-                    <p className="truncate text-[11px] text-zinc-500">{item.addedByName}</p>
-                    <div className="mt-1 flex gap-2">
-                      <button type="button" className="text-[11px] text-zinc-500" onClick={() => moveQueueItem(index, -1)}>Выше</button>
-                      <button type="button" className="text-[11px] text-zinc-500" onClick={() => moveQueueItem(index, 1)}>Ниже</button>
-                      <button type="button" className="text-[11px] text-rose-500" onClick={() => deleteQueueItem(item.id)}>Убрать</button>
+              {queue.length === 0 ? (
+                <div className="rounded-md border border-dashed border-zinc-300 p-4 text-center text-xs text-zinc-500 dark:border-zinc-700">
+                  Очередь пустая. Добавь YouTube ссылку выше — участники смогут голосовать.
+                </div>
+              ) : null}
+              {queue.map((item, index) => {
+                const isCurrentVideo = !!videoId && item.videoId === videoId;
+                const isNextUp = !isCurrentVideo && index === queue.findIndex((queueItem) => queueItem.videoId !== videoId);
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex gap-2 rounded-md border bg-zinc-100 p-2 dark:bg-zinc-800 ${isNextUp ? "border-indigo-500" : "border-transparent"}`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.thumbnail ?? `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`}
+                      alt=""
+                      className="h-12 w-20 rounded-sm object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${isNextUp ? "bg-indigo-500 text-white" : "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"}`}>
+                          {isCurrentVideo ? "Сейчас играет" : isNextUp ? "Следующее" : `#${index + 1}`}
+                        </span>
+                      </div>
+                      <p className="truncate text-xs font-semibold">{item.title || item.videoId}</p>
+                      <p className="truncate text-[11px] text-zinc-500">Добавил: {item.addedByName}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={votingItemId === item.id}
+                          className={`rounded-full px-2 py-1 text-[11px] font-semibold transition ${item.votedByMe ? "bg-indigo-500 text-white" : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200"}`}
+                          onClick={() => voteQueueItem(item)}
+                        >
+                          👍 {item.voteCount}
+                        </button>
+                        <span className="text-[11px] text-zinc-500">{item.voteCount === 0 ? "Пока без голосов" : `${item.voteCount} голос(ов)`}</span>
+                        {canControlWatch ? (
+                          <>
+                            <button type="button" className="text-[11px] text-zinc-500" onClick={() => moveQueueItem(index, -1)}>Выше</button>
+                            <button type="button" className="text-[11px] text-zinc-500" onClick={() => moveQueueItem(index, 1)}>Ниже</button>
+                          </>
+                        ) : null}
+                        {(canControlWatch || item.addedById === currentMember.profileId) ? (
+                          <button type="button" className="text-[11px] text-rose-500" onClick={() => deleteQueueItem(item.id)}>Убрать</button>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
           <div className="min-h-0 flex-1">
