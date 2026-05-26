@@ -148,6 +148,7 @@ export const YouTubeWatchRoom = ({
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
+    if (!supabase) return;
     const channel = supabase.channel(`presence:watch:${channelId}`, {
       config: { presence: { key: currentMember.id } },
     });

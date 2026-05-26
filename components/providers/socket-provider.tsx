@@ -52,7 +52,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const socket: RealtimeSocket = useMemo(() => {
-    const supabase = typeof window !== "undefined" ? getSupabaseBrowser() : null;
+    let supabase: ReturnType<typeof getSupabaseBrowser> = null;
+    try {
+      supabase = typeof window !== "undefined" ? getSupabaseBrowser() : null;
+    } catch (e) {
+      console.warn("[SocketProvider] Supabase client unavailable, realtime disabled", e);
+    }
 
     return {
       on(topic, listener) {
@@ -128,12 +133,17 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    const supabase = typeof window !== "undefined" ? getSupabaseBrowser() : null;
+    let supabase: ReturnType<typeof getSupabaseBrowser> = null;
+    try {
+      supabase = typeof window !== "undefined" ? getSupabaseBrowser() : null;
+    } catch {
+      // Already warned in useMemo above
+    }
     const channels = channelsRef.current;
     return () => {
       if (!supabase) return;
       channels.forEach(({ channel }) => {
-        supabase.removeChannel(channel);
+        supabase!.removeChannel(channel);
       });
       channels.clear();
       setIsConnected(false);

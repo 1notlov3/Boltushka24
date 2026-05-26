@@ -89,7 +89,7 @@ export function ServerActivityProvider({
   const [members, setMembers] = useState<Record<string, PresencePayload>>({});
   const [typingByChatId, setTypingByChatId] = useState<Record<string, TypingUser[]>>({});
   const typingEntriesRef = useRef<Record<string, TypingEntry[]>>({});
-  const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowser>["channel"]> | null>(null);
+  const channelRef = useRef<ReturnType<NonNullable<ReturnType<typeof getSupabaseBrowser>>["channel"]> | null>(null);
   const statusRef = useRef(status);
 
   useEffect(() => {
@@ -107,6 +107,7 @@ export function ServerActivityProvider({
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
+    if (!supabase) return;
     const presenceChannel = supabase.channel(`presence:server:${serverId}`, {
       config: {
         presence: {
@@ -152,6 +153,7 @@ export function ServerActivityProvider({
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
+    if (!supabase) return;
     const typingChannel = supabase.channel(`typing:server:${serverId}`, {
       config: {
         broadcast: {
@@ -220,7 +222,7 @@ export function useServerTyping(chatId: string) {
 }
 
 type OnlineWatchEntry = {
-  channel: ReturnType<ReturnType<typeof getSupabaseBrowser>["channel"]>;
+  channel: ReturnType<NonNullable<ReturnType<typeof getSupabaseBrowser>>["channel"]>;
   count: number;
   listeners: Set<(count: number) => void>;
 };
@@ -235,6 +237,7 @@ export function useServerOnlineCount(serverId: string) {
 
     if (!entry) {
       const supabase = getSupabaseBrowser();
+      if (!supabase) return;
       const channel = supabase.channel(`presence:server-online-watch:${serverId}`);
       const newEntry: OnlineWatchEntry = {
         channel,
@@ -264,7 +267,8 @@ export function useServerOnlineCount(serverId: string) {
 
       current.listeners.delete(listener);
       if (current.listeners.size === 0) {
-        getSupabaseBrowser().removeChannel(current.channel);
+        const supabase = getSupabaseBrowser();
+        if (supabase) supabase.removeChannel(current.channel);
         onlineWatchers.delete(serverId);
       }
     };

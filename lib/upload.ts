@@ -39,6 +39,9 @@ export function validateUploadFile(file: File, allowedTypes: readonly string[]) 
 
 export async function uploadToSupabase(file: File | Blob, kind: UploadKind, fileName?: string) {
   const supabase = getSupabaseBrowser();
+  if (!supabase) {
+    throw new Error("Загрузка недоступна — Supabase не настроен");
+  }
   const ext = fileName?.split(".").pop() || file.type.split("/").pop()?.replace("mpeg", "mp3") || "bin";
   const path = `${kind}/${crypto.randomUUID()}.${ext}`;
   const { error: uploadError } = await supabase.storage

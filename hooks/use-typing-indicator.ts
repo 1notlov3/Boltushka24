@@ -28,13 +28,14 @@ export function removeTypingUser(current: TypingPayload[], memberId: string) {
 export function useTypingIndicator(chatId: string, currentMemberId: string, serverId?: string) {
   const topic = useMemo(() => `typing:${chatId}`, [chatId]);
   const serverTopic = useMemo(() => serverId ? `typing:server:${serverId}` : null, [serverId]);
-  const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowser>["channel"]> | null>(null);
-  const serverChannelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowser>["channel"]> | null>(null);
+  const channelRef = useRef<ReturnType<NonNullable<ReturnType<typeof getSupabaseBrowser>>["channel"]> | null>(null);
+  const serverChannelRef = useRef<ReturnType<NonNullable<ReturnType<typeof getSupabaseBrowser>>["channel"]> | null>(null);
   const expiryTimersRef = useRef<Map<string, number>>(new Map());
   const [typing, setTyping] = useState<TypingPayload[]>([]);
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
+    if (!supabase) return;
     const channel = supabase.channel(topic, { config: { broadcast: { self: false } } });
     channelRef.current = channel;
 
