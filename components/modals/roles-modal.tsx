@@ -30,6 +30,7 @@ const permissionLabels: Record<Permission, string> = {
   "message.react": "Реакции",
   "message.pin": "Закрепления",
   "message.save": "Избранное",
+  "watch.control": "Управление совместным просмотром",
 };
 
 export function RolesModal() {

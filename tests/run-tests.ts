@@ -44,7 +44,7 @@ async function main() {
     parseQuoteContent,
     parseTodoContent,
   } = messageFormatting;
-  const { canDeleteMessage, canEditMessage, hasPermission } = permissions;
+  const { canControlWatchSession, canDeleteMessage, canEditMessage, hasPermission } = permissions;
   const { movedBeyondReactionTolerance, REACTION_LONG_PRESS_MS, shouldIgnoreReactionTrigger } = reactionTrigger;
   const { removeTypingUser, TYPING_TTL, upsertTypingUser } = typingIndicator;
   const { extractYoutubeId } = youtube;
@@ -100,6 +100,14 @@ async function main() {
   assert.equal(hasPermission(MemberRole.ADMIN, "server.manage"), true);
   assert.equal(hasPermission(MemberRole.MODERATOR, "channel.manage"), true);
   assert.equal(hasPermission(MemberRole.GUEST, "channel.manage"), false);
+  assert.equal(canControlWatchSession({ id: "m-admin", role: MemberRole.ADMIN }), true);
+  assert.equal(canControlWatchSession({ id: "m-mod", role: MemberRole.MODERATOR }), true);
+  assert.equal(canControlWatchSession({ id: "m-guest", role: MemberRole.GUEST }), false);
+  assert.equal(canControlWatchSession({
+    id: "m-custom",
+    role: MemberRole.GUEST,
+    serverRoles: [{ role: { permissions: ["watch.control"] } }],
+  }), true);
   assert.equal(canDeleteMessage({ id: "m1", role: MemberRole.GUEST }, "m1"), true);
   assert.equal(canDeleteMessage({ id: "m2", role: MemberRole.MODERATOR }, "m1"), true);
   assert.equal(canEditMessage({ id: "m2", role: MemberRole.MODERATOR }, "m1"), false);
@@ -167,6 +175,7 @@ async function main() {
   const chatHeaderActionsSource = readFileSync(resolve(process.cwd(), "components/chat/chat-header-actions.tsx"), "utf8");
   const chatMessagesSource = readFileSync(resolve(process.cwd(), "components/chat/chat-messages.tsx"), "utf8");
   const chatSystemEventSource = readFileSync(resolve(process.cwd(), "components/chat/chat-system-event.tsx"), "utf8");
+  const watchRoomSource = readFileSync(resolve(process.cwd(), "components/watch/youtube-watch-room.tsx"), "utf8");
   const groupParticipantRouteSource = readFileSync(resolve(process.cwd(), "app/api/conversations/group/[conversationId]/participants/[memberId]/route.ts"), "utf8");
   assert.equal(modalStoreSource.includes('"createGroupConversation"'), true);
   assert.equal(modalStoreSource.includes('"groupConversationSettings"'), true);
@@ -188,6 +197,9 @@ async function main() {
   assert.equal(chatSystemEventSource.includes("Системное событие"), true);
   assert.equal(chatSystemEventSource.includes("Ответить"), false);
   assert.equal(chatSystemEventSource.includes("Редактировать"), false);
+  assert.equal(watchRoomSource.includes("canControlWatchSession"), true);
+  assert.equal(watchRoomSource.includes("disabled={!canControlWatch}"), true);
+  assert.equal(watchRoomSource.includes("Гость: можно добавлять видео в очередь"), true);
   assert.equal(groupParticipantRouteSource.includes("createGroupSystemEvent"), true);
   assert.equal(groupParticipantRouteSource.includes("owner_transferred"), true);
 

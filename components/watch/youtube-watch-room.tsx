@@ -9,6 +9,7 @@ import { useSocket } from "@/components/providers/socket-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSupabaseBrowser } from "@/lib/supabase";
+import { canControlWatchSession } from "@/lib/permissions";
 import { extractYoutubeId } from "@/lib/youtube";
 
 interface YouTubeWatchRoomProps {
@@ -32,6 +33,7 @@ type QueueItem = {
   videoId: string;
   title: string | null;
   thumbnail: string | null;
+  addedById: string;
   addedByName: string;
   position: number;
 };
@@ -63,6 +65,7 @@ export const YouTubeWatchRoom = ({
   const playerRef = useRef<any>(null);
   const suppressRef = useRef(false);
   const eventKey = useMemo(() => `watch:${channelId}:state`, [channelId]);
+  const canControlWatch = canControlWatchSession(currentMember);
 
   const loadSession = useCallback(async () => {
     const response = await fetch(`/api/watch?serverId=${serverId}&channelId=${channelId}`);
@@ -197,6 +200,8 @@ export const YouTubeWatchRoom = ({
 
             const currentTime = Number(playerRef.current.getCurrentTime?.() ?? 0);
 
+            if (!canControlWatch) return;
+
             if (event.data === window.YT.PlayerState.PLAYING) {
               setStatus("Воспроизведение");
               await postState({ action: "play", videoId, time: currentTime });
@@ -226,7 +231,7 @@ export const YouTubeWatchRoom = ({
     return () => {
       window.onYouTubeIframeAPIReady = undefined;
     };
-  }, [videoId, postState]);
+  }, [videoId, postState, canControlWatch]);
 
   useEffect(() => {
     if (!socket) return;
@@ -239,6 +244,11 @@ export const YouTubeWatchRoom = ({
   }, [socket, eventKey, applyRemoteState]);
 
   const startVideo = async () => {
+    if (!canControlWatch) {
+      setStatus("Только ведущий может загружать видео");
+      return;
+    }
+
     const parsedId = extractYoutubeId(videoInput);
     if (!parsedId) {
       setStatus("Некорректная YouTube ссылка");
@@ -279,6 +289,8 @@ export const YouTubeWatchRoom = ({
   };
 
   const moveQueueItem = async (index: number, direction: -1 | 1) => {
+    if (!canControlWatch) return;
+
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= queue.length) return;
 
@@ -295,6 +307,10 @@ export const YouTubeWatchRoom = ({
   };
 
   const syncCurrentTime = async () => {
+    if (!canControlWatch) {
+      setStatus("Только ведущий может синхронизировать просмотр");
+      return;
+    }
     if (!playerRef.current || !videoId) return;
 
     const currentTime = Number(playerRef.current.getCurrentTime?.() ?? 0);
@@ -310,6 +326,9 @@ export const YouTubeWatchRoom = ({
           <p className="text-xs text-zinc-500">
             Статус: {status} · Socket: {isConnected ? "online" : "offline"}
             {lastSyncBy ? ` · Последняя синхра: ${lastSyncBy}` : ""}
+          </p>
+          <p className="mt-1 text-xs text-indigo-500">
+            {canControlWatch ? "Вы ведущий: можно управлять видео и очередью" : "Гость: можно добавлять видео в очередь, управление у модераторов"}
           </p>
         </div>
 
@@ -327,9 +346,9 @@ export const YouTubeWatchRoom = ({
           placeholder="YouTube ссылка или video ID"
           className="bg-zinc-100 dark:bg-zinc-900"
         />
-        <Button onClick={startVideo}>Загрузить видео</Button>
+        <Button onClick={startVideo} disabled={!canControlWatch}>Загрузить видео</Button>
         <Button variant="secondary" onClick={addToQueue}>В очередь</Button>
-        <Button variant="secondary" onClick={syncCurrentTime}>Синхронизировать текущее время</Button>
+        <Button variant="secondary" onClick={syncCurrentTime} disabled={!canControlWatch}>Синхронизировать текущее время</Button>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -369,9 +388,15 @@ export const YouTubeWatchRoom = ({
                     <p className="truncate text-xs font-semibold">{item.title || item.videoId}</p>
                     <p className="truncate text-[11px] text-zinc-500">{item.addedByName}</p>
                     <div className="mt-1 flex gap-2">
-                      <button type="button" className="text-[11px] text-zinc-500" onClick={() => moveQueueItem(index, -1)}>Выше</button>
-                      <button type="button" className="text-[11px] text-zinc-500" onClick={() => moveQueueItem(index, 1)}>Ниже</button>
-                      <button type="button" className="text-[11px] text-rose-500" onClick={() => deleteQueueItem(item.id)}>Убрать</button>
+                      {canControlWatch ? (
+                        <>
+                          <button type="button" className="text-[11px] text-zinc-500" onClick={() => moveQueueItem(index, -1)}>Выше</button>
+                          <button type="button" className="text-[11px] text-zinc-500" onClick={() => moveQueueItem(index, 1)}>Ниже</button>
+                        </>
+                      ) : null}
+                      {(canControlWatch || item.addedById === currentMember.profileId) ? (
+                        <button type="button" className="text-[11px] text-rose-500" onClick={() => deleteQueueItem(item.id)}>Убрать</button>
+                      ) : null}
                     </div>
                   </div>
                 </div>

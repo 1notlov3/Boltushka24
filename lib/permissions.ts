@@ -9,7 +9,8 @@ export type Permission =
   | "message.create"
   | "message.react"
   | "message.pin"
-  | "message.save";
+  | "message.save"
+  | "watch.control";
 
 type MinimalMember = Pick<Member, "id" | "role">;
 type MemberWithCustomRoles = MinimalMember & {
@@ -31,6 +32,7 @@ const permissionsByRole: Record<MemberRole, Permission[]> = {
     "message.react",
     "message.pin",
     "message.save",
+    "watch.control",
   ],
   [MemberRole.MODERATOR]: [
     "server.invite",
@@ -41,6 +43,7 @@ const permissionsByRole: Record<MemberRole, Permission[]> = {
     "message.react",
     "message.pin",
     "message.save",
+    "watch.control",
   ],
   [MemberRole.GUEST]: [
     "message.create",
@@ -68,6 +71,7 @@ function permissionList(value: unknown): Permission[] {
       "message.react",
       "message.pin",
       "message.save",
+      "watch.control",
     ].includes(item)
   ));
 }
@@ -117,4 +121,8 @@ export function canCreateMessage(member: MemberWithCustomRoles | null | undefine
 
 export function canSaveMessage(member: MemberWithCustomRoles | null | undefined) {
   return memberHasPermission(member, "message.save");
+}
+
+export function canControlWatchSession(member: MemberWithCustomRoles | null | undefined) {
+  return memberHasPermission(member, "watch.control");
 }

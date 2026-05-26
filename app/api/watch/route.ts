@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-import { apiError, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
+import { apiError, forbidden, rateLimitError, unauthorized, validationError } from "@/lib/api-response";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { canControlWatchSession } from "@/lib/permissions";
 import { broadcast } from "@/lib/realtime";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,17 @@ const ensureAccess = async (serverId: string, channelId: string, profileId: stri
   const [member, channel] = await Promise.all([
     db.member.findFirst({
       where: { serverId, profileId },
-      select: { id: true },
+      select: {
+        id: true,
+        role: true,
+        serverRoles: {
+          select: {
+            role: {
+              select: { permissions: true },
+            },
+          },
+        },
+      },
     }),
     db.channel.findFirst({
       where: { id: channelId, serverId },
@@ -82,6 +93,7 @@ export async function POST(req: Request) {
     const { serverId, channelId, videoId, action, time } = parsedBody.data;
     const member = await ensureAccess(serverId, channelId, profile.id);
     if (!member) return unauthorized();
+    if (!canControlWatchSession(member)) return forbidden("Only hosts can control watch playback");
 
     const limit = await checkRateLimit({
       key: rateLimitKey("watch:update", profile.id, channelId),
